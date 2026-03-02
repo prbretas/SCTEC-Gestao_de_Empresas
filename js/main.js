@@ -23,16 +23,18 @@ const resetarFormulario = () => {
   inputId.value = "";
 };
 
+
 const renderizarLista = () => {
-    const termo = inputBusca.value.toLowerCase();
-    const tipo = selectTipoBusca.value;
+    const termo = inputBusca.value.toLowerCase(); // Captura o que foi digitado
+    const tipo = selectTipoBusca.value;           // Captura o tipo (nome, id, municipio, endereco)
     const empreendimentos = EmpreendimentoStorage.buscarTodos();
     
     listaCorpo.innerHTML = ''; 
 
     const dadosFiltrados = empreendimentos.filter(emp => {
-        if (!termo) return true; // Se vazio, mostra tudo
+        if (!termo) return true; // Se não houver termo, mostra tudo
 
+        // LÓGICA DE FILTRO SEGMENTADA
         switch (tipo) {
             case 'nome':
                 return emp.nome.toLowerCase().includes(termo);
@@ -40,10 +42,14 @@ const renderizarLista = () => {
                 return emp.id.toString().includes(termo);
             case 'municipio':
                 return emp.municipio.toLowerCase().includes(termo);
-            default: // Caso 'todos'
+            case 'endereco':
+                // filtra endereço
+                return (emp.endereco || "").toLowerCase().includes(termo);
+            default: // Caso "todos" ou erro de seleção
                 return emp.nome.toLowerCase().includes(termo) || 
                        emp.id.toString().includes(termo) ||
-                       emp.municipio.toLowerCase().includes(termo);
+                       emp.municipio.toLowerCase().includes(termo) ||
+                       (emp.endereco || "").toLowerCase().includes(termo);
         }
     });
 
@@ -90,15 +96,17 @@ const manipularEnvioFormulario = (event) => {
   }
 
   resetarFormulario();
-  renderizarLista();
+  renderizarLista(); 
 };
 
 // --- EVENTOS ---
 
 form.addEventListener("submit", manipularEnvioFormulario);
+
+// Inicia a lista ao carregar a página
 document.addEventListener("DOMContentLoaded", () => renderizarLista());
 
-// Ouvintes para a busca avançada
+// Escuta tanto a digitação quanto a mudança no tipo de busca
 inputBusca.addEventListener('input', renderizarLista);
 selectTipoBusca.addEventListener('change', renderizarLista);
 
