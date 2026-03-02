@@ -2,7 +2,7 @@
  * main.js - Interface Controller
  */
 
-// Seletores
+// Seletores básicos
 const form = document.querySelector("#form-empreendimento");
 const listaCorpo = document.querySelector("#lista-corpo");
 const inputId = document.querySelector("#emp-id");
@@ -18,12 +18,16 @@ const selectTipoBusca = document.querySelector("#tipo-busca");
 const selectTipoPessoa = document.querySelector("#tipo-pessoa");
 const inputDocumento = document.querySelector("#documento");
 
-// Seletores de UI para Edição
+// Seletores de UI
 const btnCancelar = document.querySelector("#btn-cancelar");
 const btnSalvar = document.querySelector("#btn-salvar");
 const tituloForm = document.querySelector("#titulo-form");
+const modalConteudo = document.querySelector("#modal-conteudo");
+const instanciaModal = new bootstrap.Modal(
+  document.getElementById("modalVisualizar"),
+);
 
-// --- EVENTOS DE MÁSCARA ---
+// --- EVENTOS ---
 inputDocumento.addEventListener("input", (e) => {
   e.target.value = Utils.aplicarMascaraDocumento(
     e.target.value,
@@ -37,12 +41,9 @@ selectTipoPessoa.addEventListener("change", () => {
     selectTipoPessoa.value === "CPF" ? "000.000.000-00" : "00.000.000/0000-00";
 });
 
-// --- INTERFACE (REFORMULADA COM CANCELAR) ---
 const resetarFormulario = () => {
   form.reset();
   inputId.value = "";
-
-  // Reseta elementos visuais para modo "Cadastro"
   btnCancelar.style.display = "none";
   btnSalvar.textContent = "Confirmar e Salvar";
   btnSalvar.classList.replace("btn-warning", "btn-success");
@@ -82,6 +83,7 @@ const renderizarLista = () => {
 
   dadosFiltrados.forEach((emp) => {
     const tr = document.createElement("tr");
+    // Removida a data da grid conforme solicitado
     tr.innerHTML = `
             <td><small class="text-muted">#${emp.id}</small></td>
             <td>
@@ -90,21 +92,17 @@ const renderizarLista = () => {
             </td>
             <td>${emp.municipio}</td>
             <td><span class="badge bg-light text-dark border">${emp.segmento}</span></td>
-            <td>
-                <span class="badge ${emp.status === "Ativo" ? "bg-success" : "bg-danger"}">${emp.status}</span>
-                <br>
-                <small class="text-muted" style="font-size: 0.7rem;">Atu. em: ${Utils.formatarDataHora(emp.dataAtualizacao)}</small>
-            </td>
+            <td><span class="badge ${emp.status === "Ativo" ? "bg-success" : "bg-danger"}">${emp.status}</span></td>
             <td class="text-center">
-                <button class="btn btn-sm btn-outline-warning me-1" onclick="prepararEdicao(${emp.id})">Editar</button>
-                <button class="btn btn-sm btn-outline-danger" onclick="confirmarExclusao(${emp.id})">Excluir</button>
+                <button class="btn btn-sm btn-outline-primary me-1" title="Visualizar" onclick="visualizarRegistro(${emp.id})">👁️</button>
+                <button class="btn btn-sm btn-outline-warning me-1" title="Editar" onclick="prepararEdicao(${emp.id})">✏️</button>
+                <button class="btn btn-sm btn-outline-danger" title="Excluir" onclick="confirmarExclusao(${emp.id})">🗑️</button>
             </td>
         `;
     listaCorpo.appendChild(tr);
   });
 };
 
-// --- CRUD (COM CONFIRMAÇÃO) ---
 const manipularEnvioFormulario = (event) => {
   event.preventDefault();
 
@@ -122,14 +120,12 @@ const manipularEnvioFormulario = (event) => {
   };
 
   if (inputId.value) {
-    // Modo Edição com Confirmação
     if (confirm(`Confirma as alterações no registro #${inputId.value}?`)) {
       EmpreendimentoStorage.atualizar(inputId.value, dados);
     } else {
-      return; // Cancela a gravação
+      return;
     }
   } else {
-    // Modo Novo Cadastro
     EmpreendimentoStorage.adicionar(dados);
   }
 
@@ -137,16 +133,50 @@ const manipularEnvioFormulario = (event) => {
   renderizarLista();
 };
 
-form.addEventListener("submit", manipularEnvioFormulario);
-document.addEventListener("DOMContentLoaded", () => renderizarLista());
-inputBusca.addEventListener("input", renderizarLista);
-selectTipoBusca.addEventListener("change", renderizarLista);
+// --- FUNÇÃO DE VISUALIZAÇÃO (MODAL) ---
+window.visualizarRegistro = (id) => {
+  const lista = EmpreendimentoStorage.buscarTodos();
+  const emp = lista.find((item) => item.id === Number(id));
 
-// --- FUNÇÕES GLOBAIS ---
-window.confirmarExclusao = (id) => {
-  if (confirm("Deseja remover este registro?")) {
-    EmpreendimentoStorage.excluir(id);
-    renderizarLista();
+  if (emp) {
+    modalConteudo.innerHTML = `
+            <div class="mb-3 border-bottom pb-2">
+                <small class="text-muted d-block">ID do Registro</small>
+                <strong>#${emp.id}</strong>
+            </div>
+            <div class="row mb-3">
+                <div class="col-6">
+                    <small class="text-muted d-block">Empresa</small>
+                    <strong>${emp.nome}</strong>
+                </div>
+                <div class="col-6">
+                    <small class="text-muted d-block">${emp.tipoPessoa}</small>
+                    <strong>${emp.documento}</strong>
+                </div>
+            </div>
+            <div class="mb-3">
+                <small class="text-muted d-block">Responsável / Contato</small>
+                <span>${emp.responsavel} (${emp.contato})</span>
+            </div>
+            <div class="mb-3">
+                <small class="text-muted d-block">Endereço</small>
+                <span>${emp.endereco}, ${emp.municipio} - SC</span>
+            </div>
+            <div class="row mb-3">
+                <div class="col-6">
+                    <small class="text-muted d-block">Segmento</small>
+                    <span class="badge bg-info text-dark">${emp.segmento}</span>
+                </div>
+                <div class="col-6">
+                    <small class="text-muted d-block">Status</small>
+                    <span class="badge ${emp.status === "Ativo" ? "bg-success" : "bg-danger"}">${emp.status}</span>
+                </div>
+            </div>
+            <div class="mt-4 pt-2 border-top text-end">
+                <small class="text-muted">Última atualização: ${Utils.formatarDataHora(emp.dataAtualizacao)}</small>
+            </div>
+        `;
+    instanciaModal.show();
   }
 };
 
@@ -166,7 +196,6 @@ window.prepararEdicao = (id) => {
     selectSegmento.value = emp.segmento;
     selectStatus.value = emp.status;
 
-    // Altera interface para modo de Edição
     btnCancelar.style.display = "block";
     btnSalvar.textContent = "Atualizar Registro";
     btnSalvar.classList.replace("btn-success", "btn-warning");
@@ -176,3 +205,15 @@ window.prepararEdicao = (id) => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 };
+
+window.confirmarExclusao = (id) => {
+  if (confirm("Deseja remover este registro?")) {
+    EmpreendimentoStorage.excluir(id);
+    renderizarLista();
+  }
+};
+
+form.addEventListener("submit", manipularEnvioFormulario);
+document.addEventListener("DOMContentLoaded", () => renderizarLista());
+inputBusca.addEventListener("input", renderizarLista);
+selectTipoBusca.addEventListener("change", renderizarLista);
