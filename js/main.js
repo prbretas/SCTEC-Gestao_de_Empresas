@@ -93,13 +93,27 @@ const manipularEnvioFormulario = (event) => {
     municipio: inputMunicipio.value,
     segmento: selectSegmento.value,
     status: selectStatus.value,
-    dataAtualizacao: new Date().toISOString() // REGISTRA O MOMENTO DA GRAVAÇÃO
+    dataAtualizacao: new Date().toISOString()
   };
-  
+
+  // VERIFICAÇÃO SE É EDIÇÃO OU NOVO
   if (inputId.value) {
-    EmpreendimentoStorage.atualizar(inputId.value, dados);
+    // Se EDIÇÃO: Solicita confirmação antes de salvar
+    const confirmar = confirm(
+      `ATENÇÃO: Você está alterando o registro #${inputId.value} (${dados.nome}).\n\nConfirma as alterações?`
+    );
+
+    if (confirmar) {
+      EmpreendimentoStorage.atualizar(inputId.value, dados);
+      alert("Registro atualizado com sucesso!");
+    } else {
+      // Se o usuário cancelar, interrompe a função aqui
+      return; 
+    }
   } else {
+    // É um NOVO CADASTRO: Salva direto (Agilidade)
     EmpreendimentoStorage.adicionar(dados);
+    alert("Novo empreendimento cadastrado!");
   }
 
   resetarFormulario();
@@ -118,7 +132,7 @@ window.confirmarExclusao = (id) => {
     renderizarLista();
   }
 };
-
+// --- FUNÇÃO DE EDIÇÃO (CARREGAR CAMPOS) ---
 window.prepararEdicao = (id) => {
   const lista = EmpreendimentoStorage.buscarTodos();
   const emp = lista.find((item) => item.id === Number(id));
@@ -134,6 +148,10 @@ window.prepararEdicao = (id) => {
     inputMunicipio.value = emp.municipio;
     selectSegmento.value = emp.segmento;
     selectStatus.value = emp.status;
+
+    // Feedback visual para o usuário saber que entrou em modo de edição
     window.scrollTo({ top: 0, behavior: "smooth" });
+    
+    console.log(`Editando registro: ${id}`);
   }
 };
