@@ -26,161 +26,40 @@
 
     <div class="container">
       <div class="row">
-        <div class="col-md-4">
-          <div class="card shadow-sm border-0 mb-4">
-            <div class="card-header bg-white py-3">
-              <h5 id="titulo-form" class="mb-0 text-primary">
-                Cadastro / Edição
-              </h5>
-            </div>
-            <div class="card-body">
-              <form id="form-empreendimento">
-                <input type="hidden" id="emp-id" />
-
-                <div class="mb-3">
-                  <label class="form-label">Nome da Empresa</label>
-                  <input
-                    type="text"
-                    id="nome"
-                    class="form-control"
-                    placeholder="Razão Social"
-                    required
-                  />
-                </div>
-
-                <div class="row mb-3">
-                  <div class="col-md-5">
-                    <label class="form-label">Tipo</label>
-                    <select id="tipo-pessoa" class="form-select">
-                      <option value="CPF">CPF</option>
-                      <option value="CNPJ">CNPJ</option>
-                    </select>
-                  </div>
-                  <div class="col-md-7">
-                    <label class="form-label">Documento</label>
-                    <input
-                      type="text"
-                      id="documento"
-                      class="form-control"
-                      placeholder="000.000.000-00"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label">Responsável</label>
-                  <input
-                    type="text"
-                    id="responsavel"
-                    class="form-control"
-                    required
-                  />
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label">E-mail de Contato</label>
-                  <input
-                    type="email"
-                    id="contato"
-                    class="form-control"
-                    placeholder="email@exemplo.com"
-                    required
-                  />
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label">Endereço Completo</label>
-                  <input
-                    type="text"
-                    id="endereco"
-                    class="form-control"
-                    placeholder="Rua, Nº, Bairro"
-                    required
-                  />
-                </div>
-
-                <div class="mb-3">
-                  <label class="form-label">Município (SC)</label>
-                  <input
-                    type="text"
-                    id="municipio"
-                    class="form-control"
-                    required
-                  />
-                </div>
-
-                <div class="row mb-3">
-                  <div class="col">
-                    <label class="form-label">Segmento</label>
-                    <select id="segmento" class="form-select">
-                      <option value="Tecnologia">Tecnologia</option>
-                      <option value="Logística">Logística</option>
-                      <option value="Indústria">Indústria</option>
-                      <option value="Comércio">Comércio</option>
-                      <option value="Transportes">Transportes</option>
-                      <option value="Fornecedor">Fornecedor</option>
-                      <option value="Cliente">Cliente</option>
-                    </select>
-                  </div>
-                  <div class="col">
-                    <label class="form-label">Status</label>
-                    <select id="status" class="form-select">
-                      <option value="Ativo">Ativo</option>
-                      <option value="Inativo">Inativo</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="d-flex gap-2">
-                  <button
-                    type="submit"
-                    id="btn-salvar"
-                    class="btn btn-success flex-grow-1 py-2 shadow-sm"
-                  >
-                    Confirmar e Salvar
-                  </button>
-                  <button
-                    type="button"
-                    id="btn-cancelar"
-                    class="btn btn-outline-secondary py-2 shadow-sm"
-                    style="display: none"
-                    onclick="resetarFormulario()"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-8">
-          <div class="card shadow-sm border-0 p-3">
-            <div class="mb-4">
-              <label class="form-label fw-bold text-muted"
-                >Pesquisa Avançada</label
+        <div class="col-12">
+          <div class="card shadow-sm border-0 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h4 class="text-primary mb-0">Listagem de Empreendimentos</h4>
+              <button
+                class="btn btn-success shadow-sm px-4"
+                onclick="abrirModalCadastro()"
               >
-              <div class="input-group shadow-sm">
-                <select
-                  id="tipo-busca"
-                  class="form-select bg-light"
-                  style="max-width: 140px"
-                >
-                  <option value="todos">Todos</option>
-                  <option value="nome">Empresa</option>
-                  <option value="id">Código</option>
-                  <option value="municipio">Município</option>
-                  <option value="endereco">Endereço</option>
-                  <option value="segmento">Segmento</option>
-                </select>
-                <input
-                  type="text"
-                  id="busca-empresa"
-                  class="form-control"
-                  placeholder="O que você procura?"
-                />
-                <span class="input-group-text bg-white">🔍</span>
+                + Novo Empreendimento
+              </button>
+            </div>
+
+            <div class="row mb-4">
+              <div class="col-md-8">
+                <div class="input-group shadow-sm">
+                  <select
+                    id="tipo-busca"
+                    class="form-select bg-light"
+                    style="max-width: 140px"
+                  >
+                    <option value="todos">Todos</option>
+                    <option value="nome">Empresa</option>
+                    <option value="id">Código</option>
+                    <option value="municipio">Município</option>
+                    <option value="segmento">Segmento</option>
+                  </select>
+                  <input
+                    type="text"
+                    id="busca-empresa"
+                    class="form-control"
+                    placeholder="Pesquisar..."
+                  />
+                  <span class="input-group-text bg-white">🔍</span>
+                </div>
               </div>
             </div>
 
@@ -206,17 +85,159 @@
 
     <div
       class="modal fade"
+      id="modalFormulario"
+      tabindex="-1"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+          <div class="modal-header bg-primary text-white">
+            <h5 id="titulo-modal-form" class="modal-title">
+              Cadastro de Empreendimento
+            </h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body p-4">
+            <form id="form-empreendimento">
+              <input type="hidden" id="emp-id" />
+
+              <div class="row mb-3">
+                <div class="col-md-12">
+                  <label class="form-label">Nome da Empresa</label>
+                  <input
+                    type="text"
+                    id="nome"
+                    class="form-control"
+                    placeholder="Razão Social"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-4">
+                  <label class="form-label">Tipo</label>
+                  <select id="tipo-pessoa" class="form-select">
+                    <option value="CPF">CPF</option>
+                    <option value="CNPJ">CNPJ</option>
+                  </select>
+                </div>
+                <div class="col-md-8">
+                  <label class="form-label">Documento</label>
+                  <input
+                    type="text"
+                    id="documento"
+                    class="form-control"
+                    placeholder="000.000.000-00"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Responsável</label>
+                  <input
+                    type="text"
+                    id="responsavel"
+                    class="form-control"
+                    required
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">E-mail de Contato</label>
+                  <input
+                    type="email"
+                    id="contato"
+                    class="form-control"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-8">
+                  <label class="form-label">Endereço Completo</label>
+                  <input
+                    type="text"
+                    id="endereco"
+                    class="form-control"
+                    required
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Município (SC)</label>
+                  <input
+                    type="text"
+                    id="municipio"
+                    class="form-control"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Segmento</label>
+                  <select id="segmento" class="form-select">
+                    <option value="Tecnologia">Tecnologia</option>
+                    <option value="Logística">Logística</option>
+                    <option value="Indústria">Indústria</option>
+                    <option value="Comércio">Comércio</option>
+                    <option value="Transportes">Transportes</option>
+                    <option value="Fornecedor">Fornecedor</option>
+                    <option value="Cliente">Cliente</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Status</label>
+                  <select id="status" class="form-select">
+                    <option value="Ativo">Ativo</option>
+                    <option value="Inativo">Inativo</option>
+                  </select>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer bg-light">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              form="form-empreendimento"
+              id="btn-salvar"
+              class="btn btn-success px-4"
+            >
+              Salvar Registro
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="modal fade"
       id="modalVisualizar"
       tabindex="-1"
       aria-hidden="true"
     >
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-          <div class="modal-header bg-primary text-white">
+          <div class="modal-header bg-info text-dark">
             <h5 class="modal-title">📄 Detalhes do Empreendimento</h5>
             <button
               type="button"
-              class="btn-close btn-close-white"
+              class="btn-close"
               data-bs-dismiss="modal"
               aria-label="Close"
             ></button>
@@ -225,7 +246,7 @@
           <div class="modal-footer bg-light">
             <button
               type="button"
-              class="btn btn-secondary px-4"
+              class="btn btn-secondary"
               data-bs-dismiss="modal"
             >
               Fechar
