@@ -2,6 +2,7 @@
  * main.js - Interface Controller
  */
 
+// Seletores
 const form = document.querySelector("#form-empreendimento");
 const listaCorpo = document.querySelector("#lista-corpo");
 const inputId = document.querySelector("#emp-id");
@@ -17,51 +18,75 @@ const selectTipoBusca = document.querySelector("#tipo-busca");
 const selectTipoPessoa = document.querySelector("#tipo-pessoa");
 const inputDocumento = document.querySelector("#documento");
 
-// --- EVENTOS DE MÁSCARA (Usando Utils) ---
+// Seletores de UI para Edição
+const btnCancelar = document.querySelector("#btn-cancelar");
+const btnSalvar = document.querySelector("#btn-salvar");
+const tituloForm = document.querySelector("#titulo-form");
+
+// --- EVENTOS DE MÁSCARA ---
 inputDocumento.addEventListener("input", (e) => {
-  e.target.value = Utils.aplicarMascaraDocumento(e.target.value, selectTipoPessoa.value);
+  e.target.value = Utils.aplicarMascaraDocumento(
+    e.target.value,
+    selectTipoPessoa.value,
+  );
 });
 
 selectTipoPessoa.addEventListener("change", () => {
   inputDocumento.value = "";
-  inputDocumento.placeholder = selectTipoPessoa.value === "CPF" ? "000.000.000-00" : "00.000.000/0000-00";
+  inputDocumento.placeholder =
+    selectTipoPessoa.value === "CPF" ? "000.000.000-00" : "00.000.000/0000-00";
 });
 
-// --- INTERFACE ---
+// --- INTERFACE (REFORMULADA COM CANCELAR) ---
 const resetarFormulario = () => {
   form.reset();
   inputId.value = "";
+
+  // Reseta elementos visuais para modo "Cadastro"
+  btnCancelar.style.display = "none";
+  btnSalvar.textContent = "Confirmar e Salvar";
+  btnSalvar.classList.replace("btn-warning", "btn-success");
+  tituloForm.textContent = "Cadastro / Edição";
+  tituloForm.classList.remove("text-warning");
 };
+
 const renderizarLista = () => {
   const termo = inputBusca.value.toLowerCase();
   const tipoFiltro = selectTipoBusca.value;
   const empreendimentos = EmpreendimentoStorage.buscarTodos();
-  
+
   listaCorpo.innerHTML = "";
 
   const dadosFiltrados = empreendimentos.filter((emp) => {
     if (!termo) return true;
     switch (tipoFiltro) {
-      case "nome": return emp.nome.toLowerCase().includes(termo);
-      case "id": return emp.id.toString().includes(termo);
-      case "municipio": return emp.municipio.toLowerCase().includes(termo);
-      case "endereco": return (emp.endereco || "").toLowerCase().includes(termo);
-      case "segmento": return emp.segmento.toLowerCase().includes(termo);
-      default: 
-        return emp.nome.toLowerCase().includes(termo) || 
-               emp.id.toString().includes(termo) || 
-               emp.municipio.toLowerCase().includes(termo) ||
-               emp.segmento.toLowerCase().includes(termo);
+      case "nome":
+        return emp.nome.toLowerCase().includes(termo);
+      case "id":
+        return emp.id.toString().includes(termo);
+      case "municipio":
+        return emp.municipio.toLowerCase().includes(termo);
+      case "endereco":
+        return (emp.endereco || "").toLowerCase().includes(termo);
+      case "segmento":
+        return emp.segmento.toLowerCase().includes(termo);
+      default:
+        return (
+          emp.nome.toLowerCase().includes(termo) ||
+          emp.id.toString().includes(termo) ||
+          emp.municipio.toLowerCase().includes(termo) ||
+          emp.segmento.toLowerCase().includes(termo)
+        );
     }
   });
-dadosFiltrados.forEach((emp) => {
+
+  dadosFiltrados.forEach((emp) => {
     const tr = document.createElement("tr");
-    // Adicionado o campo de data de atualização no canto (small text-muted)
     tr.innerHTML = `
             <td><small class="text-muted">#${emp.id}</small></td>
             <td>
                 <strong>${emp.nome}</strong><br>
-                <small class="text-secondary">${emp.tipoPessoa || 'DOC'}: ${emp.documento || 'N/A'}</small>
+                <small class="text-secondary">${emp.tipoPessoa || "DOC"}: ${emp.documento || "N/A"}</small>
             </td>
             <td>${emp.municipio}</td>
             <td><span class="badge bg-light text-dark border">${emp.segmento}</span></td>
@@ -79,7 +104,7 @@ dadosFiltrados.forEach((emp) => {
   });
 };
 
-// --- CRUD ---
+// --- CRUD (COM CONFIRMAÇÃO) ---
 const manipularEnvioFormulario = (event) => {
   event.preventDefault();
 
@@ -93,27 +118,19 @@ const manipularEnvioFormulario = (event) => {
     municipio: inputMunicipio.value,
     segmento: selectSegmento.value,
     status: selectStatus.value,
-    dataAtualizacao: new Date().toISOString()
+    dataAtualizacao: new Date().toISOString(),
   };
 
-  // VERIFICAÇÃO SE É EDIÇÃO OU NOVO
   if (inputId.value) {
-    // Se EDIÇÃO: Solicita confirmação antes de salvar
-    const confirmar = confirm(
-      `ATENÇÃO: Você está alterando o registro #${inputId.value} (${dados.nome}).\n\nConfirma as alterações?`
-    );
-
-    if (confirmar) {
+    // Modo Edição com Confirmação
+    if (confirm(`Confirma as alterações no registro #${inputId.value}?`)) {
       EmpreendimentoStorage.atualizar(inputId.value, dados);
-      alert("Registro atualizado com sucesso!");
     } else {
-      // Se o usuário cancelar, interrompe a função aqui
-      return; 
+      return; // Cancela a gravação
     }
   } else {
-    // É um NOVO CADASTRO: Salva direto (Agilidade)
+    // Modo Novo Cadastro
     EmpreendimentoStorage.adicionar(dados);
-    alert("Novo empreendimento cadastrado!");
   }
 
   resetarFormulario();
@@ -125,14 +142,14 @@ document.addEventListener("DOMContentLoaded", () => renderizarLista());
 inputBusca.addEventListener("input", renderizarLista);
 selectTipoBusca.addEventListener("change", renderizarLista);
 
-// --- GLOBAIS ---
+// --- FUNÇÕES GLOBAIS ---
 window.confirmarExclusao = (id) => {
   if (confirm("Deseja remover este registro?")) {
     EmpreendimentoStorage.excluir(id);
     renderizarLista();
   }
 };
-// --- FUNÇÃO DE EDIÇÃO (CARREGAR CAMPOS) ---
+
 window.prepararEdicao = (id) => {
   const lista = EmpreendimentoStorage.buscarTodos();
   const emp = lista.find((item) => item.id === Number(id));
@@ -149,9 +166,13 @@ window.prepararEdicao = (id) => {
     selectSegmento.value = emp.segmento;
     selectStatus.value = emp.status;
 
-    // Feedback visual para o usuário saber que entrou em modo de edição
+    // Altera interface para modo de Edição
+    btnCancelar.style.display = "block";
+    btnSalvar.textContent = "Atualizar Registro";
+    btnSalvar.classList.replace("btn-success", "btn-warning");
+    tituloForm.textContent = `Editando: #${emp.id}`;
+    tituloForm.classList.add("text-warning");
+
     window.scrollTo({ top: 0, behavior: "smooth" });
-    
-    console.log(`Editando registro: ${id}`);
   }
 };
