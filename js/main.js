@@ -1,8 +1,7 @@
 /**
- * Módulo Principal (Interface Controller)
+ * main.js - Interface Controller
  */
 
-// Seletores de Elementos da Interface
 const form = document.querySelector("#form-empreendimento");
 const listaCorpo = document.querySelector("#lista-corpo");
 const inputId = document.querySelector("#emp-id");
@@ -15,32 +14,12 @@ const selectSegmento = document.querySelector("#segmento");
 const selectStatus = document.querySelector("#status");
 const inputBusca = document.querySelector("#busca-empresa");
 const selectTipoBusca = document.querySelector("#tipo-busca");
-
-// NOVOS SELETORES (CPF/CNPJ)
 const selectTipoPessoa = document.querySelector("#tipo-pessoa");
 const inputDocumento = document.querySelector("#documento");
 
-// --- MÁSCARA DE DOCUMENTO ---
-const aplicarMascaraDocumento = (valor, tipo) => {
-  valor = valor.replace(/\D/g, ""); 
-  if (tipo === "CPF") {
-    valor = valor.substring(0, 11);
-    return valor
-      .replace(/(\d{3})(\d)/, "$1.$2")
-      .replace(/(\d{3})(\d)/, "$1.$2")
-      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-  } else {
-    valor = valor.substring(0, 14);
-    return valor
-      .replace(/^(\d{2})(\d)/, "$1.$2")
-      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
-      .replace(/\.(\d{3})(\d)/, ".$1/$2")
-      .replace(/(\d{4})(\d)/, "$1-$2");
-  }
-};
-
+// --- EVENTOS DE MÁSCARA (Usando Utils) ---
 inputDocumento.addEventListener("input", (e) => {
-  e.target.value = aplicarMascaraDocumento(e.target.value, selectTipoPessoa.value);
+  e.target.value = Utils.aplicarMascaraDocumento(e.target.value, selectTipoPessoa.value);
 });
 
 selectTipoPessoa.addEventListener("change", () => {
@@ -48,7 +27,7 @@ selectTipoPessoa.addEventListener("change", () => {
   inputDocumento.placeholder = selectTipoPessoa.value === "CPF" ? "000.000.000-00" : "00.000.000/0000-00";
 });
 
-// --- FUNÇÕES DE INTERFACE --
+// --- INTERFACE ---
 const resetarFormulario = () => {
   form.reset();
   inputId.value = "";
@@ -68,7 +47,12 @@ const renderizarLista = () => {
       case "id": return emp.id.toString().includes(termo);
       case "municipio": return emp.municipio.toLowerCase().includes(termo);
       case "endereco": return (emp.endereco || "").toLowerCase().includes(termo);
-      default: return emp.nome.toLowerCase().includes(termo) || emp.id.toString().includes(termo);
+      case "segmento": return emp.segmento.toLowerCase().includes(termo); // BUSCA POR SEGMENTO
+      default: 
+        return emp.nome.toLowerCase().includes(termo) || 
+               emp.id.toString().includes(termo) || 
+               emp.municipio.toLowerCase().includes(termo) ||
+               emp.segmento.toLowerCase().includes(termo);
     }
   });
 
@@ -81,10 +65,10 @@ const renderizarLista = () => {
                 <small class="text-secondary">${emp.tipoPessoa || 'DOC'}: ${emp.documento || 'N/A'}</small>
             </td>
             <td>${emp.municipio}</td>
-            <td>${emp.segmento}</td>
+            <td><span class="badge bg-light text-dark border">${emp.segmento}</span></td>
             <td><span class="badge ${emp.status === "Ativo" ? "bg-success" : "bg-danger"}">${emp.status}</span></td>
-            <td>
-                <button class="btn btn-sm btn-outline-warning" onclick="prepararEdicao(${emp.id})">Editar</button>
+            <td class="text-center">
+                <button class="btn btn-sm btn-outline-warning me-1" onclick="prepararEdicao(${emp.id})">Editar</button>
                 <button class="btn btn-sm btn-outline-danger" onclick="confirmarExclusao(${emp.id})">Excluir</button>
             </td>
         `;
@@ -92,14 +76,14 @@ const renderizarLista = () => {
   });
 };
 
-// --- LOGICA DE NEGÓCIO ---
+// --- CRUD ---
 const manipularEnvioFormulario = (event) => {
   event.preventDefault();
 
   const dados = {
     nome: inputNome.value,
-    tipoPessoa: selectTipoPessoa.value, // Salvando o tipo
-    documento: inputDocumento.value,   // Salvando o documento
+    tipoPessoa: selectTipoPessoa.value,
+    documento: inputDocumento.value,
     responsavel: inputResponsavel.value,
     contato: inputContato.value,
     endereco: inputEndereco.value,
@@ -118,13 +102,12 @@ const manipularEnvioFormulario = (event) => {
   renderizarLista();
 };
 
-// --- EVENTOS ---
 form.addEventListener("submit", manipularEnvioFormulario);
 document.addEventListener("DOMContentLoaded", () => renderizarLista());
 inputBusca.addEventListener("input", renderizarLista);
 selectTipoBusca.addEventListener("change", renderizarLista);
 
-// --- FUNÇÕES GLOBAIS ---
+// --- GLOBAIS ---
 window.confirmarExclusao = (id) => {
   if (confirm("Deseja remover este registro?")) {
     EmpreendimentoStorage.excluir(id);
@@ -137,7 +120,6 @@ window.prepararEdicao = (id) => {
   const emp = lista.find((item) => item.id === Number(id));
 
   if (emp) {
-    // PREENCHIMENTO DOS CAMPOS (Resolvendo o erro de não voltar ao input)
     inputId.value = emp.id;
     inputNome.value = emp.nome;
     selectTipoPessoa.value = emp.tipoPessoa || "CPF";
@@ -148,8 +130,6 @@ window.prepararEdicao = (id) => {
     inputMunicipio.value = emp.municipio;
     selectSegmento.value = emp.segmento;
     selectStatus.value = emp.status;
-
-    // Scroll para o topo para facilitar a visualização do formulário
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 };
