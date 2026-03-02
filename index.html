@@ -39,7 +39,7 @@
             </div>
 
             <div class="row mb-4">
-              <div class="col-md-8">
+              <div class="col-md-6">
                 <div class="input-group shadow-sm">
                   <select
                     id="tipo-busca"
@@ -60,6 +60,14 @@
                   />
                   <span class="input-group-text bg-white">🔍</span>
                 </div>
+              </div>
+              <div class="col-md-6 text-end">
+                <a
+                  href="#"
+                  class="text-decoration-none small"
+                  onclick="Utils.baixarModeloCSV()"
+                  >📝 Baixar Modelo de Planilha (.csv)</a
+                >
               </div>
             </div>
 
@@ -92,9 +100,7 @@
       <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
           <div class="modal-header bg-primary text-white">
-            <h5 id="titulo-modal-form" class="modal-title">
-              Cadastro de Empreendimento
-            </h5>
+            <h5 id="titulo-modal-form" class="modal-title">Cadastro</h5>
             <button
               type="button"
               class="btn-close btn-close-white"
@@ -105,20 +111,12 @@
           <div class="modal-body p-4">
             <form id="form-empreendimento">
               <input type="hidden" id="emp-id" />
-
               <div class="row mb-3">
-                <div class="col-md-12">
+                <div class="col-12">
                   <label class="form-label">Nome da Empresa</label>
-                  <input
-                    type="text"
-                    id="nome"
-                    class="form-control"
-                    placeholder="Razão Social"
-                    required
-                  />
+                  <input type="text" id="nome" class="form-control" required />
                 </div>
               </div>
-
               <div class="row mb-3">
                 <div class="col-md-4">
                   <label class="form-label">Tipo</label>
@@ -133,12 +131,10 @@
                     type="text"
                     id="documento"
                     class="form-control"
-                    placeholder="000.000.000-00"
                     required
                   />
                 </div>
               </div>
-
               <div class="row mb-3">
                 <div class="col-md-6">
                   <label class="form-label">Responsável</label>
@@ -150,7 +146,7 @@
                   />
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label">E-mail de Contato</label>
+                  <label class="form-label">E-mail</label>
                   <input
                     type="email"
                     id="contato"
@@ -159,10 +155,9 @@
                   />
                 </div>
               </div>
-
               <div class="row mb-3">
                 <div class="col-md-8">
-                  <label class="form-label">Endereço Completo</label>
+                  <label class="form-label">Endereço</label>
                   <input
                     type="text"
                     id="endereco"
@@ -171,7 +166,7 @@
                   />
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">Município (SC)</label>
+                  <label class="form-label">Município</label>
                   <input
                     type="text"
                     id="municipio"
@@ -180,7 +175,6 @@
                   />
                 </div>
               </div>
-
               <div class="row mb-3">
                 <div class="col-md-6">
                   <label class="form-label">Segmento</label>
@@ -202,6 +196,17 @@
                   </select>
                 </div>
               </div>
+              <div class="row">
+                <div class="col-12">
+                  <label class="form-label">Observações</label>
+                  <textarea
+                    id="observacoes"
+                    class="form-control"
+                    rows="3"
+                    placeholder="Informações adicionais..."
+                  ></textarea>
+                </div>
+              </div>
             </form>
           </div>
           <div class="modal-footer bg-light">
@@ -218,7 +223,7 @@
               id="btn-salvar"
               class="btn btn-success px-4"
             >
-              Salvar Registro
+              Salvar
             </button>
           </div>
         </div>
@@ -234,7 +239,7 @@
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
           <div class="modal-header bg-info text-dark">
-            <h5 class="modal-title">📄 Detalhes do Empreendimento</h5>
+            <h5 class="modal-title">📄 Detalhes</h5>
             <button
               type="button"
               class="btn-close"

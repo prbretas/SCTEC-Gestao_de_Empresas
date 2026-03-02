@@ -40,6 +40,34 @@ const renderizarLista = () => {
   const termo = inputBusca.value.toLowerCase();
   const tipoFiltro = selectTipoBusca.value;
   const empreendimentos = EmpreendimentoStorage.buscarTodos();
+
+// Inicialização segura dos Modais do Bootstrap
+let modalForm, modalVisu;
+document.addEventListener("DOMContentLoaded", () => {
+  modalForm = new bootstrap.Modal(document.getElementById("modalFormulario"));
+  modalVisu = new bootstrap.Modal(document.getElementById("modalVisualizar"));
+  renderizarLista();
+});
+
+// --- EVENTOS ---
+inputDocumento.addEventListener("input", (e) => {
+  e.target.value = Utils.aplicarMascaraDocumento(
+    e.target.value,
+    selectTipoPessoa.value,
+  );
+});
+
+selectTipoPessoa.addEventListener("change", () => {
+  inputDocumento.value = "";
+  inputDocumento.placeholder =
+    selectTipoPessoa.value === "CPF" ? "000.000.000-00" : "00.000.000/0000-00";
+});
+
+const renderizarLista = () => {
+  const termo = inputBusca.value.toLowerCase();
+  const tipoFiltro = selectTipoBusca.value;
+  const empreendimentos = EmpreendimentoStorage.buscarTodos(); //
+
   listaCorpo.innerHTML = "";
 
   const dadosFiltrados = empreendimentos.filter((emp) => {
@@ -154,6 +182,10 @@ form.addEventListener("submit", (e) => {
     if (duplicado) return alert("ERRO: Este CPF/CNPJ já existe na base de dados!");
 
     EmpreendimentoStorage.adicionar(dados);
+  }else{
+    if (confirm("Deseja salvar as alterações?"))
+      EmpreendimentoStorage.atualizar(inputId.value, dados);
+    else return;
   }
 
   modalForm.hide();
@@ -198,7 +230,7 @@ window.prepararEdicao = (id) => {
 };
 
 window.confirmarExclusao = (id) => {
-  if (confirm("Deseja remover este registro permanentemente?")) {
+  if (confirm("Excluir permanentemente?")) {
     EmpreendimentoStorage.excluir(id);
     renderizarLista();
   }
