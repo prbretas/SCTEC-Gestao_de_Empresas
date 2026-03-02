@@ -1,8 +1,9 @@
 /**
  * main.js - Interface Controller
+ * Responsável por gerenciar a UI e as validações de negócio.
  */
 
-// Seletores
+// Seletores da Interface
 const form = document.querySelector("#form-empreendimento");
 const listaCorpo = document.querySelector("#lista-corpo");
 const inputId = document.querySelector("#emp-id");
@@ -13,176 +14,115 @@ const inputContato = document.querySelector("#contato");
 const inputMunicipio = document.querySelector("#municipio");
 const selectSegmento = document.querySelector("#segmento");
 const selectStatus = document.querySelector("#status");
+const inputObs = document.querySelector("#observacoes");
 const inputBusca = document.querySelector("#busca-empresa");
 const selectTipoBusca = document.querySelector("#tipo-busca");
 const selectTipoPessoa = document.querySelector("#tipo-pessoa");
 const inputDocumento = document.querySelector("#documento");
 
-// Seletores de UI
 const tituloModalForm = document.querySelector("#titulo-modal-form");
 const btnSalvar = document.querySelector("#btn-salvar");
 const modalConteudo = document.querySelector("#modal-conteudo");
 
-// Instâncias de Modais do Bootstrap
-const modalForm = new bootstrap.Modal(
-  document.getElementById("modalFormulario"),
-);
-const modalVisu = new bootstrap.Modal(
-  document.getElementById("modalVisualizar"),
-);
+let modalForm, modalVisu;
 
-// --- EVENTOS DE MÁSCARA ---
-inputDocumento.addEventListener("input", (e) => {
-  e.target.value = Utils.aplicarMascaraDocumento(
-    e.target.value,
-    selectTipoPessoa.value,
-  );
+// Inicialização dos componentes após o carregamento do DOM
+document.addEventListener("DOMContentLoaded", () => {
+  modalForm = new bootstrap.Modal(document.getElementById("modalFormulario"));
+  modalVisu = new bootstrap.Modal(document.getElementById("modalVisualizar"));
+  renderizarLista();
 });
 
-selectTipoPessoa.addEventListener("change", () => {
-  inputDocumento.value = "";
-  inputDocumento.placeholder =
-    selectTipoPessoa.value === "CPF" ? "000.000.000-00" : "00.000.000/0000-00";
-});
-
-// --- INTERFACE ---
-const resetarFormulario = () => {
-  form.reset();
-  inputId.value = "";
-};
-
+/**
+ * Renderiza a tabela de empreendimentos com Badges Coloridas
+ */
 const renderizarLista = () => {
   const termo = inputBusca.value.toLowerCase();
   const tipoFiltro = selectTipoBusca.value;
   const empreendimentos = EmpreendimentoStorage.buscarTodos();
-
   listaCorpo.innerHTML = "";
 
   const dadosFiltrados = empreendimentos.filter((emp) => {
-    const termoBusca = termo;
-    if (!termoBusca) return true;
-
-    switch (tipoFiltro) {
-      case "nome":
-        return emp.nome.toLowerCase().includes(termoBusca);
-      case "id":
-        return emp.id.toString().includes(termoBusca);
-      case "municipio":
-        return emp.municipio.toLowerCase().includes(termoBusca);
-      case "segmento":
-        return emp.segmento.toLowerCase().includes(termoBusca);
-      default:
-        return (
-          emp.nome.toLowerCase().includes(termoBusca) ||
-          emp.id.toString().includes(termoBusca) ||
-          emp.municipio.toLowerCase().includes(termoBusca)
-        );
+    if (!termo) return true;
+    const valorBusca = String(emp[tipoFiltro] || emp.nome).toLowerCase();
+    
+    if (tipoFiltro === "todos") {
+        return emp.nome.toLowerCase().includes(termo) || 
+               emp.id.toString().includes(termo) || 
+               emp.municipio.toLowerCase().includes(termo);
     }
+    return valorBusca.includes(termo);
   });
 
   dadosFiltrados.forEach((emp) => {
+    // Busca a configuração de cor definida no utils.js
+    const estilo = Utils.obterConfigSegmento ? Utils.obterConfigSegmento(emp.segmento) : { bg: '#f8f9fa', text: '#6c757d', border: '#dee2e6' };
+    
     const tr = document.createElement("tr");
     tr.innerHTML = `
-            <td><small class="text-muted">#${emp.id}</small></td>
-            <td>
-                <strong>${emp.nome}</strong><br>
-                <small class="text-secondary">${emp.tipoPessoa || "DOC"}: ${emp.documento || "N/A"}</small>
-            </td>
-            <td>${emp.municipio}</td>
-            <td><span class="badge bg-light text-dark border">${emp.segmento}</span></td>
-            <td><span class="badge ${emp.status === "Ativo" ? "bg-success" : "bg-danger"}">${emp.status}</span></td>
-            <td class="text-center">
-                <button class="btn btn-sm btn-outline-primary me-1" title="Visualizar" onclick="visualizarRegistro(${emp.id})">👁️</button>
-                <button class="btn btn-sm btn-outline-warning me-1" title="Editar" onclick="prepararEdicao(${emp.id})">✏️</button>
-                <button class="btn btn-sm btn-outline-danger" title="Excluir" onclick="confirmarExclusao(${emp.id})">🗑️</button>
-            </td>
-        `;
+        <td><small class="text-muted">#${emp.id}</small></td>
+        <td>
+            <strong>${emp.nome}</strong><br>
+            <small class="text-muted">${emp.documento}</small>
+        </td>
+        <td>${emp.municipio}</td>
+        <td>
+            <span class="badge" style="background-color: ${estilo.bg}; color: ${estilo.text}; border: 1px solid ${estilo.border}; font-weight: 500;">
+                ${emp.segmento}
+            </span>
+        </td>
+        <td><span class="badge ${emp.status === "Ativo" ? "bg-success" : "bg-danger"}">${emp.status}</span></td>
+        <td class="text-center">
+            <div class="btn-group">
+                <button class="btn btn-sm btn-outline-primary" onclick="visualizarRegistro(${emp.id})" title="Visualizar">👁️</button>
+                <button class="btn btn-sm btn-outline-warning mx-1" onclick="prepararEdicao(${emp.id})" title="Editar">✏️</button>
+                <button class="btn btn-sm btn-outline-danger" onclick="confirmarExclusao(${emp.id})" title="Excluir">🗑️</button>
+            </div>
+        </td>
+    `;
     listaCorpo.appendChild(tr);
   });
 };
 
-// --- LOGICA DE MODAIS ---
-window.abrirModalCadastro = () => {
-  resetarFormulario();
-  tituloModalForm.textContent = "Novo Empreendimento";
-  btnSalvar.textContent = "Confirmar e Salvar";
-  btnSalvar.className = "btn btn-success px-4";
-  modalForm.show();
-};
-
-window.prepararEdicao = (id) => {
-  const lista = EmpreendimentoStorage.buscarTodos();
-  const emp = lista.find((item) => item.id === Number(id));
-
-  if (emp) {
-    inputId.value = emp.id;
-    inputNome.value = emp.nome;
-    selectTipoPessoa.value = emp.tipoPessoa || "CPF";
-    inputDocumento.value = emp.documento || "";
-    inputResponsavel.value = emp.responsavel;
-    inputContato.value = emp.contato;
-    inputEndereco.value = emp.endereco;
-    inputMunicipio.value = emp.municipio;
-    selectSegmento.value = emp.segmento;
-    selectStatus.value = emp.status;
-
-    tituloModalForm.textContent = `Editando Registro #${emp.id}`;
-    btnSalvar.textContent = "Atualizar Alterações";
-    btnSalvar.className = "btn btn-warning px-4";
-    modalForm.show();
-  }
-};
-
+/**
+ * Abre o modal de visualização com detalhes completos
+ */
 window.visualizarRegistro = (id) => {
-  const lista = EmpreendimentoStorage.buscarTodos();
-  const emp = lista.find((item) => item.id === Number(id));
-
+  const emp = EmpreendimentoStorage.buscarTodos().find((item) => item.id === Number(id));
   if (emp) {
     modalConteudo.innerHTML = `
-            <div class="mb-3 border-bottom pb-2">
-                <small class="text-muted d-block">ID do Registro</small>
-                <strong>#${emp.id}</strong>
-            </div>
-            <div class="row mb-3">
-                <div class="col-6">
-                    <small class="text-muted d-block">Empresa</small>
-                    <strong>${emp.nome}</strong>
-                </div>
-                <div class="col-6">
-                    <small class="text-muted d-block">${emp.tipoPessoa}</small>
-                    <strong>${emp.documento}</strong>
-                </div>
-            </div>
-            <div class="mb-3">
-                <small class="text-muted d-block">Responsável / Contato</small>
-                <span>${emp.responsavel} (${emp.contato})</span>
-            </div>
-            <div class="mb-3">
-                <small class="text-muted d-block">Endereço</small>
-                <span>${emp.endereco}, ${emp.municipio} - SC</span>
-            </div>
-            <div class="row mb-3">
-                <div class="col-6">
-                    <small class="text-muted d-block">Segmento</small>
-                    <span class="badge bg-info text-dark">${emp.segmento}</span>
-                </div>
-                <div class="col-6">
-                    <small class="text-muted d-block">Status</small>
-                    <span class="badge ${emp.status === "Ativo" ? "bg-success" : "bg-danger"}">${emp.status}</span>
+        <div class="mb-3">
+            <h5 class="text-primary mb-0">${emp.nome}</h5>
+            <small class="text-muted">Código Interno: #${emp.id}</small>
+        </div>
+        <div class="row g-3">
+            <div class="col-6"><strong>Documento:</strong><br>${emp.tipoPessoa} - ${emp.documento}</div>
+            <div class="col-6"><strong>Status:</strong><br>${emp.status}</div>
+            <div class="col-6"><strong>Responsável:</strong><br>${emp.responsavel}</div>
+            <div class="col-6"><strong>Contato:</strong><br>${emp.contato}</div>
+            <div class="col-12"><strong>Endereço:</strong><br>${emp.endereco}, ${emp.municipio}</div>
+            <div class="col-12"><strong>Segmento:</strong><br>${emp.segmento}</div>
+            <div class="col-12">
+                <div class="bg-light p-3 rounded border">
+                    <strong>Observações Adicionais:</strong><br>
+                    ${emp.observacoes || "Nenhuma observação registrada."}
                 </div>
             </div>
-            <div class="mt-4 pt-2 border-top text-end">
-                <small class="text-muted">Última atualização: ${Utils.formatarDataHora(emp.dataAtualizacao)}</small>
-            </div>
-        `;
+        </div>
+        <div class="mt-3 text-end">
+            <small class="text-muted">Última atualização: ${Utils.formatarDataHora(emp.dataAtualizacao)}</small>
+        </div>
+    `;
     modalVisu.show();
   }
 };
 
-// --- CRUD ---
-form.addEventListener("submit", (event) => {
-  event.preventDefault();
-
+/**
+ * Validação e salvamento do formulário
+ */
+form.addEventListener("submit", (e) => {
+  e.preventDefault();
+  
   const dados = {
     nome: inputNome.value,
     tipoPessoa: selectTipoPessoa.value,
@@ -193,22 +133,69 @@ form.addEventListener("submit", (event) => {
     municipio: inputMunicipio.value,
     segmento: selectSegmento.value,
     status: selectStatus.value,
+    observacoes: inputObs.value,
     dataAtualizacao: new Date().toISOString(),
   };
 
+  const existentes = EmpreendimentoStorage.buscarTodos();
+
+  // Trava de Duplicidade por CPF/CNPJ
   if (inputId.value) {
-    if (confirm(`Confirmar as alterações no registro #${inputId.value}?`)) {
+    // Verificação na Edição (Ignora o próprio ID)
+    const duplicado = existentes.some((e) => e.documento === dados.documento && e.id !== Number(inputId.value));
+    if (duplicado) return alert("ATENÇÃO: Este documento já está cadastrado em outro empreendimento!");
+    
+    if (confirm("Deseja salvar as alterações realizadas?")) {
       EmpreendimentoStorage.atualizar(inputId.value, dados);
-    } else {
-      return;
-    }
+    } else return;
   } else {
+    // Verificação no Novo Cadastro
+    const duplicado = existentes.some((e) => e.documento === dados.documento);
+    if (duplicado) return alert("ERRO: Este CPF/CNPJ já existe na base de dados!");
+
     EmpreendimentoStorage.adicionar(dados);
   }
 
   modalForm.hide();
   renderizarLista();
 });
+
+// Máscara dinâmica de documento
+inputDocumento.addEventListener("input", (e) => {
+  e.target.value = Utils.aplicarMascaraDocumento(e.target.value, selectTipoPessoa.value);
+});
+
+// Muda máscara ao trocar tipo de pessoa
+selectTipoPessoa.addEventListener("change", () => {
+    inputDocumento.value = "";
+    inputDocumento.placeholder = selectTipoPessoa.value === "CPF" ? "000.000.000-00" : "00.000.000/0000-00";
+});
+
+window.abrirModalCadastro = () => {
+  form.reset();
+  inputId.value = "";
+  tituloModalForm.textContent = "Novo Empreendimento";
+  modalForm.show();
+};
+
+window.prepararEdicao = (id) => {
+  const emp = EmpreendimentoStorage.buscarTodos().find((item) => item.id === Number(id));
+  if (emp) {
+    inputId.value = emp.id;
+    inputNome.value = emp.nome;
+    selectTipoPessoa.value = emp.tipoPessoa;
+    inputDocumento.value = emp.documento;
+    inputResponsavel.value = emp.responsavel;
+    inputContato.value = emp.contato;
+    inputEndereco.value = emp.endereco;
+    inputMunicipio.value = emp.municipio;
+    selectSegmento.value = emp.segmento;
+    selectStatus.value = emp.status;
+    inputObs.value = emp.observacoes || "";
+    tituloModalForm.textContent = `Editando: ${emp.nome}`;
+    modalForm.show();
+  }
+};
 
 window.confirmarExclusao = (id) => {
   if (confirm("Deseja remover este registro permanentemente?")) {
@@ -217,6 +204,6 @@ window.confirmarExclusao = (id) => {
   }
 };
 
-document.addEventListener("DOMContentLoaded", renderizarLista);
+// Eventos de Busca
 inputBusca.addEventListener("input", renderizarLista);
 selectTipoBusca.addEventListener("change", renderizarLista);
