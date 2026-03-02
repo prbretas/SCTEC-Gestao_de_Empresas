@@ -19,5 +19,13 @@ const Utils = {
                 .replace(/\.(\d{3})(\d)/, ".$1/$2")
                 .replace(/(\d{4})(\d)/, "$1-$2");
         }
+    },
+
+    //Formata data ISO para padrão BR amigável
+    formatarDataHora(isoString) {
+        if (!isoString) return "N/A";
+        const data = new Date(isoString);
+        return data.toLocaleDateString('pt-BR') + ' ' + 
+               data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     }
 };

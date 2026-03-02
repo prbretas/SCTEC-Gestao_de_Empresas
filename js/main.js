@@ -32,7 +32,6 @@ const resetarFormulario = () => {
   form.reset();
   inputId.value = "";
 };
-
 const renderizarLista = () => {
   const termo = inputBusca.value.toLowerCase();
   const tipoFiltro = selectTipoBusca.value;
@@ -47,7 +46,7 @@ const renderizarLista = () => {
       case "id": return emp.id.toString().includes(termo);
       case "municipio": return emp.municipio.toLowerCase().includes(termo);
       case "endereco": return (emp.endereco || "").toLowerCase().includes(termo);
-      case "segmento": return emp.segmento.toLowerCase().includes(termo); // BUSCA POR SEGMENTO
+      case "segmento": return emp.segmento.toLowerCase().includes(termo);
       default: 
         return emp.nome.toLowerCase().includes(termo) || 
                emp.id.toString().includes(termo) || 
@@ -55,9 +54,9 @@ const renderizarLista = () => {
                emp.segmento.toLowerCase().includes(termo);
     }
   });
-
-  dadosFiltrados.forEach((emp) => {
+dadosFiltrados.forEach((emp) => {
     const tr = document.createElement("tr");
+    // Adicionado o campo de data de atualização no canto (small text-muted)
     tr.innerHTML = `
             <td><small class="text-muted">#${emp.id}</small></td>
             <td>
@@ -66,7 +65,11 @@ const renderizarLista = () => {
             </td>
             <td>${emp.municipio}</td>
             <td><span class="badge bg-light text-dark border">${emp.segmento}</span></td>
-            <td><span class="badge ${emp.status === "Ativo" ? "bg-success" : "bg-danger"}">${emp.status}</span></td>
+            <td>
+                <span class="badge ${emp.status === "Ativo" ? "bg-success" : "bg-danger"}">${emp.status}</span>
+                <br>
+                <small class="text-muted" style="font-size: 0.7rem;">Atu. em: ${Utils.formatarDataHora(emp.dataAtualizacao)}</small>
+            </td>
             <td class="text-center">
                 <button class="btn btn-sm btn-outline-warning me-1" onclick="prepararEdicao(${emp.id})">Editar</button>
                 <button class="btn btn-sm btn-outline-danger" onclick="confirmarExclusao(${emp.id})">Excluir</button>
@@ -90,8 +93,9 @@ const manipularEnvioFormulario = (event) => {
     municipio: inputMunicipio.value,
     segmento: selectSegmento.value,
     status: selectStatus.value,
+    dataAtualizacao: new Date().toISOString() // REGISTRA O MOMENTO DA GRAVAÇÃO
   };
-
+  
   if (inputId.value) {
     EmpreendimentoStorage.atualizar(inputId.value, dados);
   } else {
