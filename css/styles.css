@@ -1,0 +1,54 @@
+:root {
+    --sc-blue: #005596; /* Azul Institucional */
+    --sc-green: #00a859; /* Verde (Status Ativo) */
+    --sc-red: #da291c; /* Vermelho (Status Inativo) */
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+}
+
+.navbar {
+    background-color: var(--sc-blue) !important;
+    border-bottom: 4px solid var(--sc-green);
+}
+
+.card {
+    border: none;
+    border-radius: 8px;
+}
+
+.card-header {
+    font-weight: bold;
+    color: var(--sc-blue);
+    border-bottom: 2px solid #f0f0f0;
+}
+
+/* Estilo para a tabela de empreendimentos */
+.table thead {
+    background-color: #f8f9fa;
+    color: var(--sc-blue);
+}
+
+.badge-ativo { background-color: var(--sc-green); }
+.badge-inativo { background-color: var(--sc-red); }
+
+/* Efeito de hover nas linhas da tabela */
+.table-hover tbody tr:hover {
+    background-color: #f1f7ff;
+    transition: 0.3s;
+}
+
+/* Customização dos botões para parecerem mais modernos */
+.btn-success { background-color: var(--sc-green); border: none; }
+.btn-success:hover { background-color: #008f4c; }
+
+/* Responsividade para o vídeo pitch no futuro */
+.video-container {
+    margin-top: 20px;
+    padding: 15px;
+    background: #e9ecef;
+    border-radius: 8px;
+    text-align: center;
+}
