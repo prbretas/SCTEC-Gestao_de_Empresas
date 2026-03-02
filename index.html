@@ -2,97 +2,99 @@
 <html lang="pt-br">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link
       rel="icon"
       type="image/png"
       href="https://images.emojiterra.com/google/noto-emoji/unicode-16.0/color/svg/1f3ed.svg"
     />
-    <title>SCTEC - Gestão Empresarial</title>
-    <!--LINK BOOTSTRAP-->
+    <title>SCTEC - Gestão Empresarial SC</title>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
-    <!--LINK STYLES CSS-->
     <link rel="stylesheet" href="./css/styles.css" />
   </head>
   <body class="bg-light">
-    <nav class="navbar navbar-dark bg-primary mb-4">
+    <nav class="navbar navbar-dark bg-primary mb-4 shadow">
       <div class="container">
-        <span class="navbar-brand mb-0 h1"
-          >🏭 SCTEC - Gestão de Empreendimentos SC</span
-        >
+        <span class="navbar-brand mb-0 h1">
+          🏭 SCTEC - Gestão de Empreendimentos SC
+        </span>
       </div>
     </nav>
 
     <div class="container">
       <div class="row">
         <div class="col-md-4">
-          <div class="card shadow-sm">
-            <div class="card-header bg-white"><h5>Novo Empreendimento</h5></div>
+          <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3">
+              <h5 class="mb-0 text-primary">Cadastro / Edição</h5>
+            </div>
             <div class="card-body">
               <form id="form-empreendimento">
                 <input type="hidden" id="emp-id" />
-                <div class="mb-2">
-                  <label>Nome da Empresa</label>
-                  <input type="text" id="nome" class="form-control" required />
-                </div>
-                <div class="mb-2">
-                  <label>Endereço Completo</label>
-                  <input
-                    type="text"
-                    id="endereco"
-                    class="form-control"
-                    placeholder="Rua, Número, Bairro"
-                  />
-                </div>
-                <div class="mb-2">
-                  <label>Responsável</label>
-                  <input
-                    type="text"
-                    id="responsavel"
-                    class="form-control"
-                    required
-                  />
-                </div>
-                <div class="mb-2">
-                  <label>E-mail de Contato</label>
-                  <input
-                    type="email"
-                    id="contato"
-                    class="form-control"
-                    placeholder="exemplo@empresa.com.br"
-                    required
-                  />
+                
+                <div class="mb-3">
+                  <label class="form-label">Nome da Empresa</label>
+                  <input type="text" id="nome" class="form-control" placeholder="Razão Social" required />
                 </div>
 
-                <div class="mb-2">
-                  <label>Município (SC)</label>
-                  <input
-                    type="text"
-                    id="municipio"
-                    class="form-control"
-                    required
-                  />
+                <div class="row mb-3">
+                  <div class="col-md-5">
+                    <label class="form-label">Tipo</label>
+                    <select id="tipo-pessoa" class="form-select">
+                      <option value="CPF">CPF</option>
+                      <option value="CNPJ">CNPJ</option>
+                    </select>
+                  </div>
+                  <div class="col-md-7">
+                    <label class="form-label">Documento</label>
+                    <input type="text" id="documento" class="form-control" placeholder="000.000.000-00" required />
+                  </div>
                 </div>
-                <div class="mb-2">
-                  <label>Segmento</label>
-                  <select id="segmento" class="form-select">
-                    <option value="Tecnologia">Tecnologia</option>
-                    <option value="Logística">Logística (Extra)</option>
-                    <option value="Indústria">Indústria</option>
-                    <option value="Serviços">Serviços</option>
-                  </select>
+
+                <div class="mb-3">
+                  <label class="form-label">Responsável</label>
+                  <input type="text" id="responsavel" class="form-control" required />
                 </div>
-                <div class="mb-2">
-                  <label>Status</label>
-                  <select id="status" class="form-select">
-                    <option value="Ativo">Ativo</option>
-                    <option value="Inativo">Inativo</option>
-                  </select>
+
+                <div class="mb-3">
+                  <label class="form-label">E-mail de Contato</label>
+                  <input type="email" id="contato" class="form-control" placeholder="email@exemplo.com" required />
                 </div>
-                <button type="submit" class="btn btn-success w-100 mt-3">
-                  Salvar Registro
+
+                <div class="mb-3">
+                  <label class="form-label">Endereço Completo</label>
+                  <input type="text" id="endereco" class="form-control" placeholder="Rua, Nº, Bairro" required />
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Município (SC)</label>
+                  <input type="text" id="municipio" class="form-control" required />
+                </div>
+
+                <div class="row mb-3">
+                  <div class="col">
+                    <label class="form-label">Segmento</label>
+                    <select id="segmento" class="form-select">
+                      <option value="Tecnologia">Tecnologia</option>
+                      <option value="Logística">Logística</option>
+                      <option value="Indústria">Indústria</option>
+                      <option value="Comércio">Comércio</option>
+                    </select>
+                  </div>
+                  <div class="col">
+                    <label class="form-label">Status</label>
+                    <select id="status" class="form-select">
+                      <option value="Ativo">Ativo</option>
+                      <option value="Inativo">Inativo</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button type="submit" class="btn btn-success w-100 py-2 shadow-sm">
+                  Confirmar e Salvar
                 </button>
               </form>
             </div>
@@ -100,43 +102,43 @@
         </div>
 
         <div class="col-md-8">
-          <div class="table-responsive bg-white p-3 shadow-sm rounded">
-            
-            
-            <div class="mb-3">
-  <div class="input-group">
-    <select id="tipo-busca" class="form-select" style="max-width: 150px;">
-      <option value="todos">Todos</option>
-      <option value="nome">Empresa</option>
-      <option value="id">Código</option>
-      <option value="municipio">Município</option>
-      <option value="endereco">Endereço</option>
-    </select>
-    
-    <input
-      type="text"
-      id="busca-empresa"
-      class="form-control"
-      placeholder="Digite para pesquisar..."
-    />
-    <span class="input-group-text">🔍</span>
-  </div>
-  <small class="text-muted">Dica: Selecione o tipo de filtro para uma busca mais precisa.</small>
-</div>
+          <div class="card shadow-sm border-0 p-3">
+            <div class="mb-4">
+              <label class="form-label fw-bold text-muted">Pesquisa Avançada</label>
+              <div class="input-group shadow-sm">
+                <select id="tipo-busca" class="form-select bg-light" style="max-width: 140px">
+                  <option value="todos">Todos</option>
+                  <option value="nome">Empresa</option>
+                  <option value="id">Código</option>
+                  <option value="municipio">Município</option>
+                  <option value="endereco">Endereço</option>
+                </select>
 
-            <table class="table table-hover">
-              <thead>
-                <tr>
-                  <th>Cód.</th>
-                  <th>Empresa</th>
-                  <th>Cidade</th>
-                  <th>Segmento</th>
-                  <th>Status</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody id="lista-corpo"></tbody>
-            </table>
+                <input
+                  type="text"
+                  id="busca-empresa"
+                  class="form-control"
+                  placeholder="O que você procura?"
+                />
+                <span class="input-group-text bg-white">🔍</span>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead class="table-light text-primary">
+                  <tr>
+                    <th>Cód.</th>
+                    <th>Empreendimento / Doc</th>
+                    <th>Localização</th>
+                    <th>Status</th>
+                    <th class="text-center">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="lista-corpo">
+                  </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
