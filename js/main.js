@@ -2,7 +2,7 @@
  * main.js - Interface Controller
  */
 
-// Seletores
+// Seletores (Baseado no index.html enviado)
 const form = document.querySelector("#form-empreendimento");
 const listaCorpo = document.querySelector("#lista-corpo");
 const inputId = document.querySelector("#emp-id");
@@ -13,25 +13,25 @@ const inputContato = document.querySelector("#contato");
 const inputMunicipio = document.querySelector("#municipio");
 const selectSegmento = document.querySelector("#segmento");
 const selectStatus = document.querySelector("#status");
+const inputObs = document.querySelector("#observacoes");
 const inputBusca = document.querySelector("#busca-empresa");
 const selectTipoBusca = document.querySelector("#tipo-busca");
 const selectTipoPessoa = document.querySelector("#tipo-pessoa");
 const inputDocumento = document.querySelector("#documento");
 
-// Seletores de UI
 const tituloModalForm = document.querySelector("#titulo-modal-form");
 const btnSalvar = document.querySelector("#btn-salvar");
 const modalConteudo = document.querySelector("#modal-conteudo");
 
-// Instâncias de Modais do Bootstrap
-const modalForm = new bootstrap.Modal(
-  document.getElementById("modalFormulario"),
-);
-const modalVisu = new bootstrap.Modal(
-  document.getElementById("modalVisualizar"),
-);
+// Inicialização segura dos Modais do Bootstrap
+let modalForm, modalVisu;
+document.addEventListener("DOMContentLoaded", () => {
+  modalForm = new bootstrap.Modal(document.getElementById("modalFormulario"));
+  modalVisu = new bootstrap.Modal(document.getElementById("modalVisualizar"));
+  renderizarLista();
+});
 
-// --- EVENTOS DE MÁSCARA ---
+// --- EVENTOS ---
 inputDocumento.addEventListener("input", (e) => {
   e.target.value = Utils.aplicarMascaraDocumento(
     e.target.value,
@@ -45,37 +45,27 @@ selectTipoPessoa.addEventListener("change", () => {
     selectTipoPessoa.value === "CPF" ? "000.000.000-00" : "00.000.000/0000-00";
 });
 
-// --- INTERFACE ---
-const resetarFormulario = () => {
-  form.reset();
-  inputId.value = "";
-};
-
 const renderizarLista = () => {
   const termo = inputBusca.value.toLowerCase();
   const tipoFiltro = selectTipoBusca.value;
-  const empreendimentos = EmpreendimentoStorage.buscarTodos();
-
+  const empreendimentos = EmpreendimentoStorage.buscarTodos(); //
   listaCorpo.innerHTML = "";
 
   const dadosFiltrados = empreendimentos.filter((emp) => {
-    const termoBusca = termo;
-    if (!termoBusca) return true;
-
+    if (!termo) return true;
     switch (tipoFiltro) {
       case "nome":
-        return emp.nome.toLowerCase().includes(termoBusca);
+        return emp.nome.toLowerCase().includes(termo);
       case "id":
-        return emp.id.toString().includes(termoBusca);
+        return emp.id.toString().includes(termo);
       case "municipio":
-        return emp.municipio.toLowerCase().includes(termoBusca);
+        return emp.municipio.toLowerCase().includes(termo);
       case "segmento":
-        return emp.segmento.toLowerCase().includes(termoBusca);
+        return emp.segmento.toLowerCase().includes(termo);
       default:
         return (
-          emp.nome.toLowerCase().includes(termoBusca) ||
-          emp.id.toString().includes(termoBusca) ||
-          emp.municipio.toLowerCase().includes(termoBusca)
+          emp.nome.toLowerCase().includes(termo) ||
+          emp.id.toString().includes(termo)
         );
     }
   });
@@ -84,105 +74,71 @@ const renderizarLista = () => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
             <td><small class="text-muted">#${emp.id}</small></td>
-            <td>
-                <strong>${emp.nome}</strong><br>
-                <small class="text-secondary">${emp.tipoPessoa || "DOC"}: ${emp.documento || "N/A"}</small>
-            </td>
+            <td><strong>${emp.nome}</strong><br><small>${emp.documento}</small></td>
             <td>${emp.municipio}</td>
             <td><span class="badge bg-light text-dark border">${emp.segmento}</span></td>
             <td><span class="badge ${emp.status === "Ativo" ? "bg-success" : "bg-danger"}">${emp.status}</span></td>
             <td class="text-center">
-                <button class="btn btn-sm btn-outline-primary me-1" title="Visualizar" onclick="visualizarRegistro(${emp.id})">👁️</button>
-                <button class="btn btn-sm btn-outline-warning me-1" title="Editar" onclick="prepararEdicao(${emp.id})">✏️</button>
-                <button class="btn btn-sm btn-outline-danger" title="Excluir" onclick="confirmarExclusao(${emp.id})">🗑️</button>
+                <button class="btn btn-sm btn-outline-primary" onclick="visualizarRegistro(${emp.id})">👁️</button>
+                <button class="btn btn-sm btn-outline-warning mx-1" onclick="prepararEdicao(${emp.id})">✏️</button>
+                <button class="btn btn-sm btn-outline-danger" onclick="confirmarExclusao(${emp.id})">🗑️</button>
             </td>
         `;
     listaCorpo.appendChild(tr);
   });
 };
 
-// --- LOGICA DE MODAIS ---
 window.abrirModalCadastro = () => {
-  resetarFormulario();
+  form.reset();
+  inputId.value = "";
   tituloModalForm.textContent = "Novo Empreendimento";
-  btnSalvar.textContent = "Confirmar e Salvar";
   btnSalvar.className = "btn btn-success px-4";
   modalForm.show();
 };
 
 window.prepararEdicao = (id) => {
-  const lista = EmpreendimentoStorage.buscarTodos();
-  const emp = lista.find((item) => item.id === Number(id));
-
+  const emp = EmpreendimentoStorage.buscarTodos().find(
+    (item) => item.id === Number(id),
+  );
   if (emp) {
     inputId.value = emp.id;
     inputNome.value = emp.nome;
-    selectTipoPessoa.value = emp.tipoPessoa || "CPF";
-    inputDocumento.value = emp.documento || "";
+    selectTipoPessoa.value = emp.tipoPessoa;
+    inputDocumento.value = emp.documento;
     inputResponsavel.value = emp.responsavel;
     inputContato.value = emp.contato;
     inputEndereco.value = emp.endereco;
     inputMunicipio.value = emp.municipio;
     selectSegmento.value = emp.segmento;
     selectStatus.value = emp.status;
-
-    tituloModalForm.textContent = `Editando Registro #${emp.id}`;
-    btnSalvar.textContent = "Atualizar Alterações";
+    inputObs.value = emp.observacoes || "";
+    tituloModalForm.textContent = `Editando #${emp.id}`;
     btnSalvar.className = "btn btn-warning px-4";
     modalForm.show();
   }
 };
 
 window.visualizarRegistro = (id) => {
-  const lista = EmpreendimentoStorage.buscarTodos();
-  const emp = lista.find((item) => item.id === Number(id));
-
+  const emp = EmpreendimentoStorage.buscarTodos().find(
+    (item) => item.id === Number(id),
+  );
   if (emp) {
     modalConteudo.innerHTML = `
-            <div class="mb-3 border-bottom pb-2">
-                <small class="text-muted d-block">ID do Registro</small>
-                <strong>#${emp.id}</strong>
-            </div>
-            <div class="row mb-3">
-                <div class="col-6">
-                    <small class="text-muted d-block">Empresa</small>
-                    <strong>${emp.nome}</strong>
-                </div>
-                <div class="col-6">
-                    <small class="text-muted d-block">${emp.tipoPessoa}</small>
-                    <strong>${emp.documento}</strong>
-                </div>
-            </div>
-            <div class="mb-3">
-                <small class="text-muted d-block">Responsável / Contato</small>
-                <span>${emp.responsavel} (${emp.contato})</span>
-            </div>
-            <div class="mb-3">
-                <small class="text-muted d-block">Endereço</small>
-                <span>${emp.endereco}, ${emp.municipio} - SC</span>
-            </div>
-            <div class="row mb-3">
-                <div class="col-6">
-                    <small class="text-muted d-block">Segmento</small>
-                    <span class="badge bg-info text-dark">${emp.segmento}</span>
-                </div>
-                <div class="col-6">
-                    <small class="text-muted d-block">Status</small>
-                    <span class="badge ${emp.status === "Ativo" ? "bg-success" : "bg-danger"}">${emp.status}</span>
-                </div>
-            </div>
-            <div class="mt-4 pt-2 border-top text-end">
-                <small class="text-muted">Última atualização: ${Utils.formatarDataHora(emp.dataAtualizacao)}</small>
-            </div>
+            <h6>${emp.nome} <small class="text-muted">#${emp.id}</small></h6>
+            <hr>
+            <p><strong>Doc:</strong> ${emp.tipoPessoa} - ${emp.documento}</p>
+            <p><strong>Contato:</strong> ${emp.responsavel} (${emp.contato})</p>
+            <p><strong>Localização:</strong> ${emp.endereco}, ${emp.municipio}</p>
+            <p><strong>Segmento:</strong> ${emp.segmento} | <strong>Status:</strong> ${emp.status}</p>
+            <div class="bg-light p-3 rounded border"><strong>Observações:</strong><br>${emp.observacoes || "Nenhuma observação registrada."}</div>
+            <p class="mt-3 mb-0 text-end"><small class="text-muted">Última atualização: ${Utils.formatarDataHora(emp.dataAtualizacao)}</small></p>
         `;
     modalVisu.show();
   }
 };
 
-// --- CRUD ---
-form.addEventListener("submit", (event) => {
-  event.preventDefault();
-
+form.addEventListener("submit", (e) => {
+  e.preventDefault();
   const dados = {
     nome: inputNome.value,
     tipoPessoa: selectTipoPessoa.value,
@@ -193,17 +149,22 @@ form.addEventListener("submit", (event) => {
     municipio: inputMunicipio.value,
     segmento: selectSegmento.value,
     status: selectStatus.value,
+    observacoes: inputObs.value,
     dataAtualizacao: new Date().toISOString(),
   };
 
-  if (inputId.value) {
-    if (confirm(`Confirmar as alterações no registro #${inputId.value}?`)) {
-      EmpreendimentoStorage.atualizar(inputId.value, dados);
-    } else {
-      return;
-    }
-  } else {
+  // Verificação de duplicidade no cadastro manual (Novo)
+  if (!inputId.value) {
+    const duplicado = EmpreendimentoStorage.buscarTodos().some(
+      (e) => e.documento === dados.documento,
+    );
+    if (duplicado)
+      return alert("Erro: Já existe um empreendimento com este documento!");
     EmpreendimentoStorage.adicionar(dados);
+  } else {
+    if (confirm("Deseja salvar as alterações?"))
+      EmpreendimentoStorage.atualizar(inputId.value, dados);
+    else return;
   }
 
   modalForm.hide();
@@ -211,12 +172,11 @@ form.addEventListener("submit", (event) => {
 });
 
 window.confirmarExclusao = (id) => {
-  if (confirm("Deseja remover este registro permanentemente?")) {
+  if (confirm("Excluir permanentemente?")) {
     EmpreendimentoStorage.excluir(id);
     renderizarLista();
   }
 };
 
-document.addEventListener("DOMContentLoaded", renderizarLista);
 inputBusca.addEventListener("input", renderizarLista);
 selectTipoBusca.addEventListener("change", renderizarLista);
