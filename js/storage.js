@@ -15,7 +15,7 @@ const EmpreendimentoStorage = {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
     },
 
-    // Nova função interna para gerir o próximo ID (Estilo Auto-incremento)
+    // Função interna para gerir o próximo ID (Estilo Auto-incremento)
     obterProximoId() {
         let ultimoId = localStorage.getItem(ID_KEY);
         // Se não existir, começa em 1, senão soma +1
@@ -28,7 +28,7 @@ const EmpreendimentoStorage = {
         const lista = this.buscarTodos();
         const novoRegistro = {
             ...objeto,
-            id: this.obterProximoId(), // Agora usa o sequenciador em vez de Date.now()
+            id: this.obterProximoId(),
             dataCadastro: new Date().toISOString()
         };
         lista.push(novoRegistro);

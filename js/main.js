@@ -15,6 +15,7 @@ const inputMunicipio = document.querySelector("#municipio");
 const selectSegmento = document.querySelector("#segmento");
 const selectStatus = document.querySelector("#status");
 const inputBusca = document.querySelector('#busca-empresa');
+const selectTipoBusca = document.querySelector("#tipo-busca");
 
 // --- FUNÇÕES DE INTERFACE --
 const resetarFormulario = () => {
@@ -22,16 +23,28 @@ const resetarFormulario = () => {
   inputId.value = "";
 };
 
-const renderizarLista = (termo = '') => {
+const renderizarLista = () => {
+    const termo = inputBusca.value.toLowerCase();
+    const tipo = selectTipoBusca.value;
     const empreendimentos = EmpreendimentoStorage.buscarTodos();
+    
     listaCorpo.innerHTML = ''; 
 
-    // Lógica de Filtro
     const dadosFiltrados = empreendimentos.filter(emp => {
-        const busca = termo.toLowerCase();
-        return emp.nome.toLowerCase().includes(busca) || 
-               emp.id.toString().includes(busca) ||
-               emp.municipio.toLowerCase().includes(busca);
+        if (!termo) return true; // Se vazio, mostra tudo
+
+        switch (tipo) {
+            case 'nome':
+                return emp.nome.toLowerCase().includes(termo);
+            case 'id':
+                return emp.id.toString().includes(termo);
+            case 'municipio':
+                return emp.municipio.toLowerCase().includes(termo);
+            default: // Caso 'todos'
+                return emp.nome.toLowerCase().includes(termo) || 
+                       emp.id.toString().includes(termo) ||
+                       emp.municipio.toLowerCase().includes(termo);
+        }
     });
 
     dadosFiltrados.forEach(emp => {
@@ -77,19 +90,17 @@ const manipularEnvioFormulario = (event) => {
   }
 
   resetarFormulario();
-  renderizarLista(); // Chama sem parâmetros para mostrar todos após salvar
+  renderizarLista();
 };
 
 // --- EVENTOS ---
 
 form.addEventListener("submit", manipularEnvioFormulario);
-
 document.addEventListener("DOMContentLoaded", () => renderizarLista());
 
-// Evento da Barra de Busca
-inputBusca.addEventListener('input', (e) => {
-    renderizarLista(e.target.value);
-});
+// Ouvintes para a busca avançada
+inputBusca.addEventListener('input', renderizarLista);
+selectTipoBusca.addEventListener('change', renderizarLista);
 
 // Funções Globais
 window.confirmarExclusao = (id) => {

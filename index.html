@@ -101,17 +101,28 @@
 
         <div class="col-md-8">
           <div class="table-responsive bg-white p-3 shadow-sm rounded">
+            
+            
             <div class="mb-3">
-              <div class="input-group">
-                <span class="input-group-text">🔍</span>
-                <input
-                  type="text"
-                  id="busca-empresa"
-                  class="form-control"
-                  placeholder="Buscar por nome ou código único..."
-                />
-              </div>
-            </div>
+  <div class="input-group">
+    <select id="tipo-busca" class="form-select" style="max-width: 150px;">
+      <option value="todos">Todos</option>
+      <option value="nome">Empresa</option>
+      <option value="id">Código</option>
+      <option value="municipio">Município</option>
+      <option value="endereco">Endereço</option>
+    </select>
+    
+    <input
+      type="text"
+      id="busca-empresa"
+      class="form-control"
+      placeholder="Digite para pesquisar..."
+    />
+    <span class="input-group-text">🔍</span>
+  </div>
+  <small class="text-muted">Dica: Selecione o tipo de filtro para uma busca mais precisa.</small>
+</div>
 
             <table class="table table-hover">
               <thead>
