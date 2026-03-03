@@ -2,19 +2,21 @@
  * utils.js - Ferramentas de apoio, I/O de arquivos e Estilização
  */
 const Utils = {
-obterConfigSegmento(segmento) {
-        const configs = {
-            Tecnologia:  { bg: "#0d6efd", text: "#ffffff", border: "#0d6efd" },
-            Indústria:   { bg: "#9c27b0", text: "#ffffff", border: "#9c27b0" },
-            Logística:   { bg: "#ef6c00", text: "#ffffff", border: "#ef6c00" },
-            Comércio:    { bg: "#2e7d32", text: "#ffffff", border: "#2e7d32" },
-            Serviços:    { bg: "#8f0e00", text: "#ffffff", border: "#8f0e00" },
-            Cliente:     { bg: "#00838f", text: "#ffffff", border: "#00838f" },
-            Transportes: { bg: "#602800", text: "#ffffff", border: "#451d00" },
-            Fornecedor:  { bg: "#cadd00", text: "#4b4b4b", border: "#b1c200" },
-        };
-        return configs[segmento] || { bg: "#f8f9fa", text: "#212529", border: "#dee2e6" };
-    },
+  obterConfigSegmento(segmento) {
+    const configs = {
+      Tecnologia: { bg: "#0d6efd", text: "#ffffff", border: "#0d6efd" },
+      Indústria: { bg: "#9c27b0", text: "#ffffff", border: "#9c27b0" },
+      Logística: { bg: "#ef6c00", text: "#ffffff", border: "#ef6c00" },
+      Comércio: { bg: "#2e7d32", text: "#ffffff", border: "#2e7d32" },
+      Serviços: { bg: "#8f0e00", text: "#ffffff", border: "#8f0e00" },
+      Cliente: { bg: "#00838f", text: "#ffffff", border: "#00838f" },
+      Transportes: { bg: "#602800", text: "#ffffff", border: "#451d00" },
+      Fornecedor: { bg: "#cadd00", text: "#4b4b4b", border: "#b1c200" },
+    };
+    return (
+      configs[segmento] || { bg: "#f8f9fa", text: "#212529", border: "#dee2e6" }
+    );
+  },
 
   aplicarMascaraDocumento(valor, tipo) {
     // Remove tudo que não é número para garantir pureza do dado
@@ -47,33 +49,71 @@ obterConfigSegmento(segmento) {
     );
   },
 
-  // --- FUNÇÃO DE IMPORTAÇÃO RESTAURADA ---
-  importarCSV(event) {
-    const arquivo = event.target.files[0];
+  // --- FUNÇÃO DE EXPORTAÇÃO ---
+  exportarCSV() {
+    const dados = EmpreendimentoStorage.buscarTodos();
+    if (dados.length === 0) return alert("Não há dados para exportar.");
+
+    // Cabeçalho idêntico ao esperado na importação
+    const cabecalho =
+      "Nome;TipoPessoa;Registro;Responsavel;Contato;Endereco;Municipio;Segmento;Status;Observacoes";
+    const csvRows = [cabecalho];
+
+    dados.forEach((item) => {
+      //Remove pontos e vírgulas e quebras de linha para não quebrar o CSV
+      const limpar = (texto) =>
+        (texto || "").toString().replace(/;/g, ",").replace(/\n/g, " ");
+
+      csvRows.push(
+        [
+          limpar(item.nome),
+          limpar(item.tipoPessoa),
+          limpar(item.registro),
+          limpar(item.responsavel),
+          limpar(item.contato),
+          limpar(item.endereco),
+          limpar(item.municipio),
+          limpar(item.segmento),
+          limpar(item.status),
+          limpar(item.observacoes),
+        ].join(";"),
+      );
+    });
+
+    // \ufeff garante que o Excel entenda como UTF-8
+    const blob = new Blob(["\ufeff" + csvRows.join("\n")], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `SCTEC_Export_${new Date().toLocaleDateString().replace(/\//g, "-")}.csv`;
+    link.click();
+  },
+
+  importarCSV(arquivo) {
     if (!arquivo) return;
 
     const leitor = new FileReader();
     leitor.onload = (e) => {
-      const texto = e.target.result;
-      const linhas = texto.split(/\r?\n/);
-      const separador = linhas[0].includes(";") ? ";" : ",";
+      const conteudo = e.target.result;
+      const linhas = conteudo.split(/\r?\n/);
+      if (linhas.length <= 1) return alert("Arquivo vazio ou sem dados.");
 
-      const existentes = EmpreendimentoStorage.buscarTodos();
+      const registrosExistentes = EmpreendimentoStorage.buscarTodos();
       const novosRegistros = [];
       let duplicadosCont = 0;
 
+      // Começa do 1 para pular o cabeçalho
       for (let i = 1; i < linhas.length; i++) {
-        if (!linhas[i].trim()) continue;
+        const colunas = linhas[i].split(";");
+        if (colunas.length < 9) continue; // Linha inválida
 
-        const colunas = linhas[i]
-          .split(separador)
-          .map((c) => c.replace(/"/g, "").trim());
-        const docImportado = colunas[2];
+        const registroLimpo = colunas[2]?.trim();
 
-        // Trava de duplicidade
+        // Validação de Duplicidade (Regra de Ouro em ERP)
         const jaExiste =
-          existentes.some((e) => e.registro === docImportado) ||
-          novosRegistros.some((n) => n.registro === docImportado);
+          registrosExistentes.some((r) => r.registro === registroLimpo) ||
+          novosRegistros.some((r) => r.registro === registroLimpo);
 
         if (jaExiste) {
           duplicadosCont++;
@@ -81,61 +121,39 @@ obterConfigSegmento(segmento) {
         }
 
         novosRegistros.push({
-          nome: colunas[0],
-          tipoPessoa: colunas[1],
-          registro: docImportado,
-          responsavel: colunas[3],
-          contato: colunas[4],
-          endereco: colunas[5],
-          municipio: colunas[6],
-          segmento: colunas[7],
-          status: colunas[8],
-          observacoes: colunas[9] || "",
-          dataAtualizacao: new Date().toISOString(),
+          nome: colunas[0]?.trim(),
+          tipoPessoa: colunas[1]?.trim(),
+          registro: registroLimpo,
+          responsavel: colunas[3]?.trim(),
+          contato: colunas[4]?.trim(),
+          endereco: colunas[5]?.trim(),
+          municipio: colunas[6]?.trim(),
+          segmento: colunas[7]?.trim(),
+          status: colunas[8]?.trim(),
+          observacoes: colunas[9]?.trim() || "",
         });
       }
 
       if (novosRegistros.length > 0) {
         if (
           confirm(
-            `Importar ${novosRegistros.length} registros? (${duplicadosCont} duplicados ignorados).`,
+            `Deseja importar ${novosRegistros.length} novos registros?\n(${duplicadosCont} duplicados foram ignorados).`,
           )
         ) {
           novosRegistros.forEach((r) => EmpreendimentoStorage.adicionar(r));
-          location.reload();
+          // Em vez de reload, chamamos a renderização se o UIController estiver disponível
+          if (window.UIController) {
+            window.UIController.renderizarLista();
+          } else {
+            location.reload();
+          }
         }
       } else {
-        alert("Nenhum registro novo para importar.");
+        alert(
+          "Nenhum novo registro encontrado para importar (Todos já existem ou arquivo inválido).",
+        );
       }
     };
     leitor.readAsText(arquivo, "UTF-8");
-  },
-
-  // --- FUNÇÃO DE EXPORTAÇÃO RESTAURADA ---
-  exportarCSV() {
-    const dados = EmpreendimentoStorage.buscarTodos();
-    if (dados.length === 0) return alert("Não há dados para exportar.");
-
-    const cabecalho =
-      "Nome;TipoPessoa;Registro;Responsavel;Contato;Endereco;Municipio;Segmento;Status;Observacoes";
-    const csvRows = [cabecalho];
-
-    dados.forEach((item) => {
-      csvRows.push(
-        `${item.nome};${item.tipoPessoa};${item.registro};${item.responsavel};${item.contato};${item.endereco};${item.municipio};${item.segmento};${item.status};${(item.observacoes || "").replace(/;/g, ",")}`,
-      );
-    });
-
-    const blob = new Blob(["\ufeff" + csvRows.join("\n")], {
-      type: "text/csv;charset=utf-8;",
-    });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.setAttribute("hidden", "");
-    a.setAttribute("href", url);
-    a.setAttribute("download", `sctec_backup_${new Date().getTime()}.csv`);
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
   },
 };
