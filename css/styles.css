@@ -25,7 +25,6 @@ body.dark-mode .modal-content {
     border: 1px solid #333;
 }
 
-/* CORREÇÃO DO GRID (TABELA) DARK */
 body.dark-mode .table {
     color: var(--dark-text) !important;
     background-color: transparent !important;
@@ -56,7 +55,7 @@ body.dark-mode .input-group-text {
 body.dark-mode ::-webkit-scrollbar { width: 8px; }
 body.dark-mode ::-webkit-scrollbar-track { background: #1e1e1e; }
 body.dark-mode ::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
-/* --- AJUSTE BOTÃO FILTRO (CORREÇÃO PH) --- */
+/* --- AJUSTE BOTÃO FILTRO  --- */
 /* Garante que o select de busca e o input fiquem visíveis no Dark Mode */
 body.dark-mode select#tipo-busca,
 body.dark-mode input#busca-empresa {
@@ -84,6 +83,28 @@ body.dark-mode input#busca-empresa {
 
 .btn-action:hover {
     transform: scale(1.1);
+}
+
+/* Ajusta o subtítulo abaixo de "Cadastros de Empreendimentos" */
+body.dark-mode .text-muted {
+    color: #bbb !important; /* Cinza claro para leitura no escuro */
+}
+
+/* Garante que o texto dentro do input de pesquisa e select seja branco */
+body.dark-mode .form-control, 
+body.dark-mode .form-select {
+    color: #fff !important;
+}
+
+/* Ajusta a cor do texto dentro da coluna Registro (que está escura na foto) */
+body.dark-mode .table td code,
+body.dark-mode .table td {
+    color: var(--dark-text) !important;
+}
+
+/* Ajuste específico para o placeholder do input de busca */
+body.dark-mode input::placeholder {
+    color: #888 !important;
 }
 /***************************************/
 

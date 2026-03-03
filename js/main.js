@@ -57,7 +57,7 @@ const renderizarLista = () => {
       case "nome":
         return emp.nome?.toLowerCase().includes(termo);
       case "registro":
-        return emp.registro?.toLowerCase().includes(termo); // Verificação corrigida
+        return emp.registro?.toLowerCase().includes(termo);
       case "localizacao":
         return (
           emp.municipio?.toLowerCase().includes(termo) ||
@@ -79,10 +79,10 @@ const renderizarLista = () => {
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
-        <td><strong>#${emp.id}</strong></td>
-        <td>${emp.nome}</td>
-        <td><code class="text-dark">${emp.registro || "N/A"}</code></td> <td>${emp.municipio}</td>
-        <td class="text-truncate" style="max-width: 150px;">${emp.endereco}</td>
+    <td><strong>#${emp.id}</strong></td>
+    <td>${emp.nome}</td>
+    <td><code class="text-reset">${emp.registro || "N/A"}</code></td> <td>${emp.municipio}</td>
+    <td class="text-truncate" style="max-width: 150px;">${emp.endereco}</td>
         <td>
             <span class="badge" style="background-color: ${config.bg}; color: ${config.text}; border: 1px solid ${config.border}">
                 ${emp.segmento}
@@ -103,9 +103,6 @@ const renderizarLista = () => {
   });
 };
 
-/**
- * Correção do Pop-up de Visualização (Removendo undefined)
- */
 window.visualizarRegistro = (id) => {
   const emp = EmpreendimentoStorage.buscarTodos().find(
     (item) => item.id === Number(id),
@@ -139,7 +136,7 @@ window.visualizarRegistro = (id) => {
   }
 };
 /**
- * Visualização Detalhada (Corrige o erro de campos indefinidos no modal)
+ * Visualização Detalhada
  */
 window.visualizarRegistro = (id) => {
   const emp = EmpreendimentoStorage.buscarTodos().find(
