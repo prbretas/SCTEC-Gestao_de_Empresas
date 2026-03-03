@@ -4,11 +4,14 @@
 const Utils = {
   obterConfigSegmento(segmento) {
     const configs = {
-      Tecnologia: { bg: "#e7f1ff", text: "#0d6efd", border: "#0d6efd" },
-      Indústria: { bg: "#f3e5f5", text: "#9c27b0", border: "#9c27b0" },
-      Logística: { bg: "#fff3e0", text: "#ef6c00", border: "#ef6c00" },
-      Comércio: { bg: "#e8f5e9", text: "#2e7d32", border: "#2e7d32" },
-      Serviços: { bg: "#e0f7fa", text: "#00838f", border: "#00838f" },
+      Tecnologia: { bg: "#0d6efd", text: "#e7f1ff", border: "#0d6efd" },
+      Indústria: { bg: "#9c27b0", text: "#f3e5f5", border: "#9c27b0" },
+      Logística: { bg: "#ef6c00", text: "#fff3e0", border: "#ef6c00" },
+      Comércio: { bg: "#2e7d32", text: "#e8f5e9", border: "#2e7d32" },
+      Serviços: { bg: "#8f0e00ff", text: "#fae0e0ff", border: "#8f0e00ff" },
+      Cliente: { bg: "#00838f", text: "#e0f7fa", border: "#00838f" },
+      Transportes: { bg: "#602800ff", text: "#faeee0ff", border: "#451d00ff" },
+      Fornecedor: { bg: "#cadd00ff", text: "#4b4b4bff", border: "#b1c200ff" },
     };
     return (
       configs[segmento] || { bg: "#f8f9fa", text: "#6c757d", border: "#dee2e6" }
@@ -68,8 +71,8 @@ const Utils = {
 
         // Trava de duplicidade
         const jaExiste =
-          existentes.some((e) => e.documento === docImportado) ||
-          novosRegistros.some((n) => n.documento === docImportado);
+          existentes.some((e) => e.registro === docImportado) ||
+          novosRegistros.some((n) => n.registro === docImportado);
 
         if (jaExiste) {
           duplicadosCont++;
@@ -79,7 +82,7 @@ const Utils = {
         novosRegistros.push({
           nome: colunas[0],
           tipoPessoa: colunas[1],
-          documento: docImportado,
+          registro: docImportado,
           responsavel: colunas[3],
           contato: colunas[4],
           endereco: colunas[5],
@@ -113,12 +116,12 @@ const Utils = {
     if (dados.length === 0) return alert("Não há dados para exportar.");
 
     const cabecalho =
-      "Nome;TipoPessoa;Documento;Responsavel;Contato;Endereco;Municipio;Segmento;Status;Observacoes";
+      "Nome;TipoPessoa;Registro;Responsavel;Contato;Endereco;Municipio;Segmento;Status;Observacoes";
     const csvRows = [cabecalho];
 
     dados.forEach((item) => {
       csvRows.push(
-        `${item.nome};${item.tipoPessoa};${item.documento};${item.responsavel};${item.contato};${item.endereco};${item.municipio};${item.segmento};${item.status};${(item.observacoes || "").replace(/;/g, ",")}`,
+        `${item.nome};${item.tipoPessoa};${item.registro};${item.responsavel};${item.contato};${item.endereco};${item.municipio};${item.segmento};${item.status};${(item.observacoes || "").replace(/;/g, ",")}`,
       );
     });
 

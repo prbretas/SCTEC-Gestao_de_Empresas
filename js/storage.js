@@ -1,9 +1,9 @@
 /**
- * Módulo de Persistência (Data Access Layer)
- * Responsável por todas as operações de I/O no localStorage
+ * storage.js - Módulo de Persistência (Data Access Layer)
  */
 const STORAGE_KEY = 'SCTEC_EMPREENDIMENTOS_DB';
 const ID_KEY = 'SCTEC_LAST_ID';
+
 const EmpreendimentoStorage = {
     
     buscarTodos() {
@@ -15,10 +15,8 @@ const EmpreendimentoStorage = {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
     },
 
-    // Função interna para gerir o próximo ID (Estilo Auto-incremento)
     obterProximoId() {
         let ultimoId = localStorage.getItem(ID_KEY);
-        // Se não existir, começa em 1, senão soma +1
         let proximoId = ultimoId ? parseInt(ultimoId) + 1 : 1;
         localStorage.setItem(ID_KEY, proximoId);
         return proximoId;
@@ -41,7 +39,7 @@ const EmpreendimentoStorage = {
         const index = lista.findIndex(item => item.id === Number(id));
         
         if (index !== -1) {
-            lista[index] = { ...lista[index], ...objetoAtualizado };
+            lista[index] = { ...lista[index], ...objetoAtualizado, dataAtualizacao: new Date().toISOString() };
             this.salvarTodos(lista);
             return true;
         }
@@ -49,8 +47,8 @@ const EmpreendimentoStorage = {
     },
 
     excluir(id) {
-        const lista = this.buscarTodos();
-        const novaLista = lista.filter(item => item.id !== Number(id));
-        this.salvarTodos(novaLista);
+        let lista = this.buscarTodos();
+        lista = lista.filter(item => item.id !== Number(id));
+        this.salvarTodos(lista);
     }
 };

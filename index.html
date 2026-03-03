@@ -16,11 +16,22 @@
     <link rel="stylesheet" href="./css/styles.css" />
   </head>
   <body class="bg-light">
-    <nav class="navbar navbar-dark bg-primary mb-4 shadow">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow mb-4">
       <div class="container">
-        <span class="navbar-brand mb-0 h1"
-          >🏭 SCTEC - Gestão de Empreendimentos SC</span
-        >
+        <span class="navbar-brand h1 mb-0">🏭 SCTEC - Gestão Empresarial</span>
+        <div class="d-flex align-items-center gap-3">
+          <div class="form-check form-switch text-light">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="dark-mode-switch"
+              style="cursor: pointer"
+            />
+            <label class="form-check-label" for="dark-mode-switch"
+              >🌙 Dark Mode</label
+            >
+          </div>
+        </div>
       </div>
     </nav>
 
@@ -68,25 +79,27 @@
 
             <div class="row mb-4">
               <div class="col-md-6">
-                <div class="input-group shadow-sm">
+                <div class="input-group">
                   <select
+                    class="form-select border-secondary"
                     id="tipo-busca"
-                    class="form-select bg-light"
-                    style="max-width: 140px"
+                    style="max-width: 180px"
                   >
                     <option value="todos">Todos</option>
-                    <option value="nome">Empresa</option>
-                    <option value="id">Código</option>
-                    <option value="municipio">Município</option>
+                    <option value="id">Código da Empresa</option>
+                    <option value="nome" selected>Nome da Empresa</option>
+                    <option value="registro">Registro (CPF/CNPJ)</option>
+                    <option value="localizacao">Localização</option>
                     <option value="segmento">Segmento</option>
+                    <option value="status">Status</option>
                   </select>
                   <input
                     type="text"
                     id="busca-empresa"
-                    class="form-control"
-                    placeholder="Pesquisar..."
+                    class="form-control border-secondary"
+                    placeholder="Digite para pesquisar..."
                   />
-                  <span class="input-group-text bg-white">🔍</span>
+                  <span class="input-group-text">🔍</span>
                 </div>
               </div>
               <div class="col-md-6 text-end">
@@ -104,8 +117,10 @@
                 <thead class="table-light text-primary">
                   <tr>
                     <th>Cód.</th>
-                    <th>Empreendimento / Doc</th>
-                    <th>Localização</th>
+                    <th>Empreendimento</th>
+                    <th>Registro (CPF/CNPJ)</th>
+                    <th>Município</th>
+                    <th>Endereço</th>
                     <th>Segmento</th>
                     <th>Status</th>
                     <th class="text-center">Ações</th>
@@ -154,10 +169,10 @@
                   </select>
                 </div>
                 <div class="col-md-8">
-                  <label class="form-label">Documento</label>
+                  <label class="form-label">Registro</label>
                   <input
                     type="text"
-                    id="documento"
+                    id="registro"
                     class="form-control"
                     required
                   />

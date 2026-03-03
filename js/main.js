@@ -18,7 +18,7 @@ const inputObs = document.querySelector("#observacoes");
 const inputBusca = document.querySelector("#busca-empresa");
 const selectTipoBusca = document.querySelector("#tipo-busca");
 const selectTipoPessoa = document.querySelector("#tipo-pessoa");
-const inputDocumento = document.querySelector("#documento");
+const inputRegistro = document.querySelector("#registro");
 
 const tituloModalForm = document.querySelector("#titulo-modal-form");
 const btnSalvar = document.querySelector("#btn-salvar");
@@ -37,54 +37,107 @@ document.addEventListener("DOMContentLoaded", () => {
   renderizarLista();
 });
 
-/**
- * Renderiza a tabela com tratamento de cores e proteção contra campos vazios
- */
 const renderizarLista = () => {
-  const termo = inputBusca.value.toLowerCase();
+  const termo = inputBusca.value.toLowerCase().trim();
   const tipoFiltro = selectTipoBusca.value;
-  const empreendimentos = EmpreendimentoStorage.buscarTodos();
-  listaCorpo.innerHTML = "";
+  const empresas = EmpreendimentoStorage.buscarTodos();
 
-  const dadosFiltrados = empreendimentos.filter((emp) => {
+  const filtrados = empresas.filter((emp) => {
     if (!termo) return true;
-    const campoParaFiltrar = String(emp[tipoFiltro] || emp.nome).toLowerCase();
-    return campoParaFiltrar.includes(termo);
+
+    // LÓGICA "TODOS": Busca em todos os atributos (agora incluindo 'registro')
+    if (tipoFiltro === "todos") {
+      const valores = Object.values(emp).join(" ").toLowerCase();
+      return valores.includes(termo);
+    }
+
+    switch (tipoFiltro) {
+      case "id":
+        return emp.id?.toString().includes(termo);
+      case "nome":
+        return emp.nome?.toLowerCase().includes(termo);
+      case "registro":
+        return emp.registro?.toLowerCase().includes(termo); // Verificação corrigida
+      case "localizacao":
+        return (
+          emp.municipio?.toLowerCase().includes(termo) ||
+          emp.endereco?.toLowerCase().includes(termo)
+        );
+      case "segmento":
+        return emp.segmento?.toLowerCase().includes(termo);
+      case "status":
+        return emp.status?.toLowerCase().includes(termo);
+      default:
+        return true;
+    }
   });
 
-  dadosFiltrados.forEach((emp) => {
-    // PROTEÇÃO: Se Utils.obterConfigSegmento não existir no utils.js, define uma cor padrão
-    const estilo =
-      typeof Utils.obterConfigSegmento === "function"
-        ? Utils.obterConfigSegmento(emp.segmento)
-        : { bg: "#f8f9fa", text: "#6c757d", border: "#dee2e6" };
+  listaCorpo.innerHTML = "";
 
+  filtrados.forEach((emp) => {
+    const config = Utils.obterConfigSegmento(emp.segmento);
     const tr = document.createElement("tr");
+
     tr.innerHTML = `
-        <td><small class="text-muted">#${emp.id}</small></td>
+        <td><strong>#${emp.id}</strong></td>
+        <td>${emp.nome}</td>
+        <td><code class="text-dark">${emp.registro || "N/A"}</code></td> <td>${emp.municipio}</td>
+        <td class="text-truncate" style="max-width: 150px;">${emp.endereco}</td>
         <td>
-            <strong>${emp.nome || "Sem Nome"}</strong><br>
-            <small class="text-muted">${emp.documento || "Sem Documento"}</small>
-        </td>
-        <td>${emp.municipio || "N/D"}</td>
-        <td>
-            <span class="badge" style="background-color: ${estilo.bg}; color: ${estilo.text}; border: 1px solid ${estilo.border}; font-weight: 500;">
-                ${emp.segmento || "Outros"}
+            <span class="badge" style="background-color: ${config.bg}; color: ${config.text}; border: 1px solid ${config.border}">
+                ${emp.segmento}
             </span>
         </td>
-        <td><span class="badge ${emp.status === "Ativo" ? "bg-success" : "bg-danger"}">${emp.status}</span></td>
+        <td>
+            <span class="badge ${emp.status === "Ativo" ? "bg-success" : "bg-danger"}">
+                ${emp.status}
+            </span>
+        </td>
         <td class="text-center">
-            <div class="btn-group">
-                <button class="btn btn-sm btn-outline-primary" onclick="visualizarRegistro(${emp.id})" title="Ver Detalhes">👁️</button>
-                <button class="btn btn-sm btn-outline-warning mx-1" onclick="prepararEdicao(${emp.id})" title="Editar">✏️</button>
-                <button class="btn btn-sm btn-outline-danger" onclick="confirmarExclusao(${emp.id})" title="Excluir">🗑️</button>
-            </div>
+            <button class="btn btn-sm btn-outline-info btn-action" onclick="window.visualizarRegistro(${emp.id})" title="Ver Detalhes">👁️</button>
+            <button class="btn btn-sm btn-outline-warning btn-action" onclick="window.prepararEdicao(${emp.id})" title="Editar">✏️</button>
+            <button class="btn btn-sm btn-outline-danger btn-action" onclick="window.confirmarExclusao(${emp.id})" title="Excluir">🗑️</button>
         </td>
     `;
     listaCorpo.appendChild(tr);
   });
 };
 
+/**
+ * Correção do Pop-up de Visualização (Removendo undefined)
+ */
+window.visualizarRegistro = (id) => {
+  const emp = EmpreendimentoStorage.buscarTodos().find(
+    (item) => item.id === Number(id),
+  );
+
+  if (emp && modalVisu) {
+    modalConteudo.innerHTML = `
+        <div class="mb-3 border-bottom pb-2">
+            <h5 class="text-primary mb-0">${emp.nome}</h5>
+            <small class="text-muted">ID Sistema: #${emp.id}</small>
+        </div>
+        <div class="row g-3">
+            <div class="col-6"><strong>Tipo:</strong><br>${emp.tipoPessoa || "N/A"}</div>
+            <div class="col-6"><strong>Registro:</strong><br>${emp.registro || "N/A"}</div>
+            <div class="col-6"><strong>Responsável:</strong><br>${emp.responsavel || "Não informado"}</div>
+            <div class="col-6"><strong>Contato:</strong><br>${emp.contato || "Não informado"}</div>
+            <div class="col-12"><strong>Localização:</strong><br>${emp.endereco}, ${emp.municipio}</div>
+            <div class="col-12"><strong>Segmento:</strong><br><span class="badge bg-light text-dark border">${emp.segmento}</span></div>
+            <div class="col-12">
+                <div class="bg-light p-3 rounded border">
+                    <strong>Observações:</strong><br>
+                    ${emp.observacoes || "Nenhuma observação registrada."}
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 text-end">
+            <small class="text-muted">Última atualização: ${Utils.formatarDataHora(emp.dataAtualizacao)}</small>
+        </div>
+    `;
+    modalVisu.show();
+  }
+};
 /**
  * Visualização Detalhada (Corrige o erro de campos indefinidos no modal)
  */
@@ -100,7 +153,7 @@ window.visualizarRegistro = (id) => {
         </div>
         <div class="row g-3">
             <div class="col-6"><strong>Tipo:</strong><br>${emp.tipoPessoa}</div>
-            <div class="col-6"><strong>Documento:</strong><br>${emp.documento}</div>
+            <div class="col-6"><strong>Registro:</strong><br>${emp.registro}</div>
             <div class="col-6"><strong>Responsável:</strong><br>${emp.responsavel || "Não informado"}</div>
             <div class="col-6"><strong>Contato:</strong><br>${emp.contato || "Não informado"}</div>
             <div class="col-12"><strong>Endereço:</strong><br>${emp.endereco}, ${emp.municipio}</div>
@@ -129,7 +182,7 @@ form.addEventListener("submit", (e) => {
   const dados = {
     nome: inputNome.value.trim(),
     tipoPessoa: selectTipoPessoa.value,
-    documento: inputDocumento.value.trim(),
+    registro: inputRegistro.value.trim(),
     responsavel: inputResponsavel.value.trim(),
     contato: inputContato.value.trim(),
     endereco: inputEndereco.value.trim(),
@@ -144,12 +197,12 @@ form.addEventListener("submit", (e) => {
 
   // Verificação de Unicidade (CPF/CNPJ não pode repetir)
   const duplicado = existentes.find(
-    (e) => e.documento === dados.documento && e.id !== Number(inputId.value),
+    (e) => e.registro === dados.registro && e.id !== Number(inputId.value),
   );
 
   if (duplicado) {
     alert(
-      `ALERTA DE SEGURANÇA: O documento ${dados.documento} já pertence a "${duplicado.nome}".`,
+      `ALERTA DE SEGURANÇA: O Registro ${dados.registro} já pertence a "${duplicado.nome}".`,
     );
     return;
   }
@@ -167,7 +220,7 @@ form.addEventListener("submit", (e) => {
 });
 
 // Eventos de Máscara e Interface
-inputDocumento.addEventListener("input", (e) => {
+inputRegistro.addEventListener("input", (e) => {
   e.target.value = Utils.aplicarMascaraDocumento(
     e.target.value,
     selectTipoPessoa.value,
@@ -175,8 +228,8 @@ inputDocumento.addEventListener("input", (e) => {
 });
 
 selectTipoPessoa.addEventListener("change", () => {
-  inputDocumento.value = "";
-  inputDocumento.placeholder =
+  inputRegistro.value = "";
+  inputRegistro.placeholder =
     selectTipoPessoa.value === "CPF" ? "000.000.000-00" : "00.000.000/0000-00";
 });
 
@@ -195,7 +248,7 @@ window.prepararEdicao = (id) => {
     inputId.value = emp.id;
     inputNome.value = emp.nome;
     selectTipoPessoa.value = emp.tipoPessoa;
-    inputDocumento.value = emp.documento;
+    inputRegistro.value = emp.registro;
     inputResponsavel.value = emp.responsavel;
     inputContato.value = emp.contato;
     inputEndereco.value = emp.endereco;
@@ -217,3 +270,32 @@ window.confirmarExclusao = (id) => {
 
 inputBusca.addEventListener("input", renderizarLista);
 selectTipoBusca.addEventListener("change", renderizarLista);
+
+/******************** DARK MODE INTEGRADO **********************/
+const darkModeSwitch = document.querySelector("#dark-mode-switch");
+
+const aplicarDarkMode = (isDark) => {
+  if (isDark) {
+    document.body.classList.add("dark-mode");
+    if (darkModeSwitch) darkModeSwitch.checked = true;
+    localStorage.setItem("SCTEC_THEME", "dark");
+  } else {
+    document.body.classList.remove("dark-mode");
+    if (darkModeSwitch) darkModeSwitch.checked = false;
+    localStorage.setItem("SCTEC_THEME", "light");
+  }
+};
+
+// Inicialização do Tema
+document.addEventListener("DOMContentLoaded", () => {
+  const temaSalvo = localStorage.getItem("SCTEC_THEME");
+  aplicarDarkMode(temaSalvo === "dark");
+
+  if (darkModeSwitch) {
+    darkModeSwitch.addEventListener("change", (e) => {
+      aplicarDarkMode(e.target.checked);
+    });
+  }
+
+  renderizarLista(); // Garante que o grid carregue com as classes novas
+});
