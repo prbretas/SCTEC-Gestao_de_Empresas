@@ -154,101 +154,122 @@
           <div class="modal-body p-4">
             <form id="form-empreendimento">
               <input type="hidden" id="emp-id" />
-              <div class="row mb-3">
-                <div class="col-12">
-                  <label class="form-label">Nome da Empresa</label>
-                  <input type="text" id="nome" class="form-control" required />
+
+              <div class="row">
+                <div class="col-md-12 mb-3">
+                  <label for="nome" class="form-label"
+                    >Nome do Empreendimento</label
+                  >
+                  <input type="text" class="form-control" id="nome" required />
                 </div>
               </div>
-              <div class="row mb-3">
-                <div class="col-md-4">
-                  <label class="form-label">Tipo</label>
-                  <select id="tipo-pessoa" class="form-select">
-                    <option value="CPF">CPF</option>
-                    <option value="CNPJ">CNPJ</option>
-                  </select>
-                </div>
-                <div class="col-md-8">
-                  <label class="form-label">Registro</label>
-                  <input
-                    type="text"
-                    id="registro"
-                    class="form-control"
-                    required
-                  />
-                </div>
-              </div>
-              <div class="row mb-3">
-                <div class="col-md-6">
-                  <label class="form-label">Responsável</label>
-                  <input
-                    type="text"
-                    id="responsavel"
-                    class="form-control"
-                    required
-                  />
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label">E-mail</label>
-                  <input
-                    type="email"
-                    id="contato"
-                    class="form-control"
-                    required
-                  />
-                </div>
-              </div>
-              <div class="row mb-3">
-                <div class="col-md-8">
-                  <label class="form-label">Endereço</label>
-                  <input
-                    type="text"
-                    id="endereco"
-                    class="form-control"
-                    required
-                  />
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label">Município</label>
-                  <input
-                    type="text"
-                    id="municipio"
-                    class="form-control"
-                    required
-                  />
-                </div>
-              </div>
-              <div class="row mb-3">
-                <div class="col-md-6">
-                  <label class="form-label">Segmento</label>
-                  <select id="segmento" class="form-select">
-                    <option value="Tecnologia">Tecnologia</option>
+
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="segmento" class="form-label">Segmento</label>
+               <select class="form-select select-colorido" id="segmento">
                     <option value="Logística">Logística</option>
-                    <option value="Indústria">Indústria</option>
-                    <option value="Comércio">Comércio</option>
                     <option value="Transportes">Transportes</option>
                     <option value="Fornecedor">Fornecedor</option>
-                    <option value="Cliente">Cliente</option>
+                    <option value="Tecnologia">Tecnologia</option>
+                    <option value="Indústria">Indústria</option>
+                    <option value="Comércio">Comércio</option>
+                    <option value="Serviços">Serviços</option>
                   </select>
                 </div>
-                <div class="col-md-6">
-                  <label class="form-label">Status</label>
-                  <select id="status" class="form-select">
-                    <option value="Ativo">Ativo</option>
-                    <option value="Inativo">Inativo</option>
+                <div class="col-md-6 mb-3">
+                  <label for="tipo-pessoa" class="form-label"
+                    >Tipo de Pessoa</label
+                  >
+                  <select class="form-select" id="tipo-pessoa">
+                    <option value="PJ">Pessoa Jurídica (CNPJ)</option>
+                    <option value="PF">Pessoa Física (CPF)</option>
                   </select>
                 </div>
               </div>
+
               <div class="row">
-                <div class="col-12">
-                  <label class="form-label">Observações</label>
-                  <textarea
-                    id="observacoes"
+                <div class="col-md-12 mb-3">
+                  <label for="registro" id="label-registro" class="form-label"
+                    >CNPJ</label
+                  >
+                  <input
+                    type="text"
                     class="form-control"
-                    rows="3"
-                    placeholder="Informações adicionais..."
-                  ></textarea>
+                    id="registro"
+                    placeholder="00.000.000/0000-00"
+                    required
+                  />
                 </div>
+              </div>
+
+              <div
+                class="row border p-2 m-1 bg-light rounded endereco-container"
+              >
+                <div class="col-md-4 mb-3">
+                  <label for="cep" class="form-label">CEP</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="cep"
+                    placeholder="00000-000"
+                  />
+                </div>
+                <div class="col-md-8 mb-3">
+                  <label for="endereco" class="form-label">Endereço</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="endereco"
+                    required
+                  />
+                </div>
+                <div class="col-md-12 mb-3">
+                  <label for="municipio" class="form-label">Município</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="municipio"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="row mt-3">
+                <div class="col-md-6 mb-3">
+                  <label for="responsavel" class="form-label"
+                    >Responsável</label
+                  >
+                  <input type="text" class="form-control" id="responsavel" />
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="contato" class="form-label"
+                    >Contato de Responsável</label
+                  >
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="contato"
+                    placeholder="E-mail ou Telefone"
+                  />
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="status" class="form-label">Status</label>
+                <select class="form-select" id="status">
+                  <option value="Ativo">Ativo</option>
+                  <option value="Inativo">Inativo</option>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label for="observacoes" class="form-label">Observações</label>
+                <textarea
+                  class="form-control"
+                  id="observacoes"
+                  rows="2"
+                ></textarea>
               </div>
             </form>
           </div>
@@ -308,5 +329,6 @@
     <script src="./js/storage.js"></script>
     <script src="./js/utils.js"></script>
     <script src="./js/main.js"></script>
+    <script src="./js/api.js "></script>
   </body>
 </html>

@@ -24,6 +24,8 @@ const tituloModalForm = document.querySelector("#titulo-modal-form");
 const btnSalvar = document.querySelector("#btn-salvar");
 const modalConteudo = document.querySelector("#modal-conteudo");
 
+const inputCep = document.querySelector("#cep");
+
 let modalForm, modalVisu;
 
 // Inicialização segura dos componentes
@@ -41,6 +43,7 @@ const renderizarLista = () => {
   const termo = inputBusca.value.toLowerCase().trim();
   const tipoFiltro = selectTipoBusca.value;
   const empresas = EmpreendimentoStorage.buscarTodos();
+  
 
   const filtrados = empresas.filter((emp) => {
     if (!termo) return true;
@@ -235,24 +238,27 @@ window.abrirModalCadastro = () => {
   inputId.value = "";
   tituloModalForm.textContent = "Novo Empreendimento";
   modalForm.show();
+  atualizarCorSelectSegmento();
 };
 
 window.prepararEdicao = (id) => {
-  const emp = EmpreendimentoStorage.buscarTodos().find(
-    (item) => item.id === Number(id),
-  );
+  const emp = EmpreendimentoStorage.buscarTodos().find((item) => item.id === Number(id));
+
   if (emp) {
     inputId.value = emp.id;
     inputNome.value = emp.nome;
-    selectTipoPessoa.value = emp.tipoPessoa;
-    inputRegistro.value = emp.registro;
+    inputRegistro.value = emp.registro || "";
+    inputEndereco.value = emp.endereco;
+    inputMunicipio.value = emp.municipio || ""; // Agora preenche o município
     inputResponsavel.value = emp.responsavel;
     inputContato.value = emp.contato;
-    inputEndereco.value = emp.endereco;
-    inputMunicipio.value = emp.municipio;
     selectSegmento.value = emp.segmento;
     selectStatus.value = emp.status;
     inputObs.value = emp.observacoes || "";
+    
+    // Limpa o campo de CEP para nova busca se desejar
+    if (document.querySelector("#cep")) document.querySelector("#cep").value = "";
+
     tituloModalForm.textContent = `Edição: ${emp.nome}`;
     modalForm.show();
   }
@@ -296,3 +302,98 @@ document.addEventListener("DOMContentLoaded", () => {
 
   renderizarLista(); // Garante que o grid carregue com as classes novas
 });
+
+if (inputCep) {
+  inputCep.addEventListener("blur", async () => {
+    const cep = inputCep.value;
+    if (cep.length >= 8) {
+      const dadosEndereco = await ApiService.buscarCep(cep);
+      if (dadosEndereco) {
+        // Preenche os campos automaticamente
+        inputEndereco.value = `${dadosEndereco.logradouro}, ${dadosEndereco.bairro}`;
+        inputMunicipio.value = dadosEndereco.localidade;
+        // O foco vai para o próximo campo disponível
+        selectSegmento.focus();
+      }
+    }
+  });
+}
+
+// Listener para a API de CEP dentro do Pop-up
+if (inputCep) {
+  inputCep.addEventListener("blur", async () => {
+    const cep = inputCep.value.replace(/\D/g, "");
+    if (cep.length === 8) {
+      inputEndereco.placeholder = "Buscando endereço...";
+      const dados = await ApiService.buscarCep(cep);
+      
+      if (dados && !dados.erro) {
+        inputEndereco.value = `${dados.logradouro}${dados.bairro ? ', ' + dados.bairro : ''}`;
+        inputMunicipio.value = dados.localidade;
+        inputEndereco.placeholder = "";
+      } else {
+        alert("CEP não encontrado.");
+        inputEndereco.placeholder = "";
+      }
+    }
+  });
+}
+
+
+// Função para aplicar máscara dinâmica
+const aplicarMascaraRegistro = () => {
+    const tipo = selectTipoPessoa.value;
+    const label = document.querySelector("#label-registro");
+
+    // Limpa o valor atual ao trocar o tipo para evitar confusão
+    inputRegistro.value = "";
+
+    if (tipo === "PF") {
+        label.textContent = "CPF";
+        inputRegistro.placeholder = "000.000.000-00";
+        inputRegistro.setAttribute("maxlength", "14");
+    } else {
+        label.textContent = "CNPJ";
+        inputRegistro.placeholder = "00.000.000/0000-00";
+        inputRegistro.setAttribute("maxlength", "18");
+    }
+};
+
+// Listener para quando o usuário mudar o Select
+selectTipoPessoa.addEventListener("change", aplicarMascaraRegistro);
+
+// Função de formatação enquanto digita (Input Event)
+inputRegistro.addEventListener("input", (e) => {
+    let v = e.target.value.replace(/\D/g, ""); // Remove tudo que não é número
+    const tipo = selectTipoPessoa.value;
+
+    if (tipo === "PF") {
+        // Máscara CPF: 000.000.000-00
+        v = v.replace(/(\d{3})(\d)/, "$1.$2");
+        v = v.replace(/(\d{3})(\d)/, "$1.$2");
+        v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+    } else {
+        // Máscara CNPJ: 00.000.000/0000-00
+        v = v.replace(/^(\d{2})(\d)/, "$1.$2");
+        v = v.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
+        v = v.replace(/\.(\d{3})(\d)/, ".$1/$2");
+        v = v.replace(/(\d{4})(\d)/, "$1-$2");
+    }
+    e.target.value = v;
+});
+
+
+
+const atualizarCorSelectSegmento = () => {
+    const segmento = selectSegmento.value;
+    const config = Utils.obterConfigSegmento(segmento);
+    
+    if (config) {
+        selectSegmento.style.backgroundColor = config.bg;
+        selectSegmento.style.color = config.text;
+        selectSegmento.style.borderColor = config.border;
+    }
+};
+
+// Registrar o evento de mudança no Select
+selectSegmento.addEventListener("change", atualizarCorSelectSegmento);

@@ -12,6 +12,26 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     transition: background-color 0.3s, color 0.3s;
 }
+
+/* --- ESTILO PARA O SELECT COLORIDO (SEGMENTO) --- */
+.select-colorido {
+    transition: background-color 0.3s, color 0.3s;
+    font-weight: 600;
+}
+
+/* Garante que as opções dentro do select tenham fundo padrão para leitura */
+.select-colorido option {
+    background-color: #fff;
+    color: #333;
+}
+
+/* Ajuste para Dark Mode no Select */
+body.dark-mode .select-colorido option {
+    background-color: var(--dark-card);
+    color: var(--dark-text);
+}
+
+
 /* --- TEMA DARK --- */
 body.dark-mode {
     background-color: var(--dark-bg) !important;
@@ -64,6 +84,18 @@ body.dark-mode input#busca-empresa {
     border: 1px solid #555;
 }
 
+
+/* --- AJUSTE DARK MODE PARA O BLOCO DE ENDEREÇO --- */
+body.dark-mode .endereco-container {
+    background-color: var(--dark-input) !important;
+    border-color: #444 !important;
+    color: var(--dark-text) !important;
+}
+
+/* Garante que os labels dentro dessa div fiquem claros */
+body.dark-mode .endereco-container .form-label {
+    color: var(--dark-text) !important;
+}
 /* --- COMPONENTES GERAIS --- */
 .navbar {
     background-color: var(--sc-blue) !important;
