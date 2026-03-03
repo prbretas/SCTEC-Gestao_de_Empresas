@@ -52,19 +52,23 @@
                 >
                   📥 Exportar CSV
                 </button>
-                <label
-                  class="btn btn-outline-secondary mb-0"
-                  style="cursor: pointer"
+                <input
+                  type="file"
+                  id="importar-csv"
+                  accept=".csv"
+                  style="display: none"
+                  onchange="
+                    Utils.importarCSV(this.files[0]);
+                    this.value = '';
+                  "
+                />
+
+                <button
+                  class="btn btn-outline-primary"
+                  onclick="document.getElementById('importar-csv').click()"
                 >
                   📤 Importar CSV
-                  <input
-                    type="file"
-                    id="importador-csv"
-                    hidden
-                    accept=".csv"
-                    onchange="Utils.importarCSV(event)"
-                  />
-                </label>
+                </button>
                 <button
                   class="btn btn-success shadow-sm px-4"
                   onclick="abrirModalCadastro()"
@@ -243,11 +247,12 @@
                   <label for="responsavel" class="form-label"
                     >Responsável</label
                   >
-                  <input 
-                  type="text" 
-                  class="form-control" 
-                  id="responsavel"
-                  placeholder="Insira o nome do Responsável" />
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="responsavel"
+                    placeholder="Insira o nome do Responsável"
+                  />
                 </div>
                 <div class="col-md-6 mb-3">
                   <label for="contato" class="form-label"
