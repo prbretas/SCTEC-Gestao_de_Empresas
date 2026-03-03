@@ -65,10 +65,16 @@ const FormController = {
 
     const config = Utils.obterConfigSegmento(select.value);
 
-    // Aplicamos os estilos com !important via setProperty para vencer o CSS do Dark Mode
-    select.style.setProperty("background-color", config.bg, "important");
-    select.style.setProperty("color", config.text, "important");
-    select.style.setProperty("border-color", config.border, "important");
+    // Injetamos as variáveis CSS diretamente no elemento.
+    // Isso vence qualquer regra do Dark Mode sem precisar de !important no JS.
+    select.style.setProperty("--seg-bg", config.bg);
+    select.style.setProperty("--seg-text", config.text);
+    select.style.setProperty("--seg-border", config.border);
+
+    // Forçamos o uso das variáveis
+    select.style.backgroundColor = "var(--seg-bg)";
+    select.style.color = "var(--seg-text)";
+    select.style.borderColor = "var(--seg-border)";
   },
 
   handleSave(e) {
@@ -98,6 +104,46 @@ const FormController = {
         `ERRO DE NEGÓCIO: O registro ${dados.registro} já está vinculado a "${duplicado.nome}".`,
       );
     }
+
+    id
+      ? EmpreendimentoStorage.atualizar(id, dados)
+      : EmpreendimentoStorage.adicionar(dados);
+
+    UIController.modalForm.hide();
+    UIController.renderizarLista();
+  },
+
+  prepararEdicao(id) {
+    const emp = EmpreendimentoStorage.buscarTodos().find(
+      (item) => item.id === Number(id),
+    );
+    if (!emp) return;
+
+    document.querySelector("#emp-id").value = emp.id;
+    document.querySelector("#nome").value = emp.nome;
+    document.querySelector("#tipo-pessoa").value = emp.tipoPessoa || "PJ";
+    document.querySelector("#registro").value = emp.registro;
+    document.querySelector("#responsavel").value = emp.responsavel || "";
+    document.querySelector("#contato").value = emp.contato || "";
+    document.querySelector("#endereco").value = emp.endereco;
+    document.querySelector("#municipio").value = emp.municipio;
+    document.querySelector("#segmento").value = emp.segmento;
+    document.querySelector("#status").value = emp.status;
+    document.querySelector("#observacoes").value = emp.observacoes || "";
+
+    document.querySelector("#titulo-modal-form").textContent =
+      `Edição: ${emp.nome}`;
+
+    // Dispara atualização visual
+    this.atualizarEstiloSegmento();
+
+    // Ajusta o label do registro conforme o que foi carregado
+    const labelReg = document.querySelector("#label-registro");
+    if (labelReg)
+      labelReg.textContent = emp.tipoPessoa === "PF" ? "CPF" : "CNPJ";
+
+    UIController.modalForm.show();
+  },
 };
 
 window.abrirModalCadastro = () => {

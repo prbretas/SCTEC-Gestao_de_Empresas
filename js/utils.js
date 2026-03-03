@@ -2,21 +2,20 @@
  * utils.js - Ferramentas de apoio, I/O de arquivos e Estilização
  */
 const Utils = {
-  obterConfigSegmento(segmento) {
-    const configs = {
-      Tecnologia: { bg: "#0d6efd", text: "#e7f1ff", border: "#0d6efd" },
-      Indústria: { bg: "#9c27b0", text: "#f3e5f5", border: "#9c27b0" },
-      Logística: { bg: "#ef6c00", text: "#fff3e0", border: "#ef6c00" },
-      Comércio: { bg: "#2e7d32", text: "#e8f5e9", border: "#2e7d32" },
-      Serviços: { bg: "#8f0e00ff", text: "#fae0e0ff", border: "#8f0e00ff" },
-      Cliente: { bg: "#00838f", text: "#e0f7fa", border: "#00838f" },
-      Transportes: { bg: "#602800ff", text: "#faeee0ff", border: "#451d00ff" },
-      Fornecedor: { bg: "#cadd00ff", text: "#4b4b4bff", border: "#b1c200ff" },
-    };
-    return (
-      configs[segmento] || { bg: "#f8f9fa", text: "#6c757d", border: "#dee2e6" }
-    );
-  },
+obterConfigSegmento(segmento) {
+        const configs = {
+            Tecnologia:  { bg: "#0d6efd", text: "#ffffff", border: "#0d6efd" },
+            Indústria:   { bg: "#9c27b0", text: "#ffffff", border: "#9c27b0" },
+            Logística:   { bg: "#ef6c00", text: "#ffffff", border: "#ef6c00" },
+            Comércio:    { bg: "#2e7d32", text: "#ffffff", border: "#2e7d32" },
+            Serviços:    { bg: "#8f0e00", text: "#ffffff", border: "#8f0e00" },
+            Cliente:     { bg: "#00838f", text: "#ffffff", border: "#00838f" },
+            Transportes: { bg: "#602800", text: "#ffffff", border: "#451d00" },
+            Fornecedor:  { bg: "#cadd00", text: "#4b4b4b", border: "#b1c200" },
+        };
+        return configs[segmento] || { bg: "#f8f9fa", text: "#212529", border: "#dee2e6" };
+    },
+
   aplicarMascaraDocumento(valor, tipo) {
     // Remove tudo que não é número para garantir pureza do dado
     let v = valor.replace(/\D/g, "");
