@@ -28,14 +28,42 @@
       <div class="row">
         <div class="col-12">
           <div class="card shadow-sm border-0 p-4">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-              <h4 class="text-primary mb-0">Cadastro de Empreendimentos</h4>
-              <button
-                class="btn btn-success shadow-sm px-4"
-                onclick="abrirModalCadastro()"
-              >
-                + Novo Empreendimento
-              </button>
+            <div
+              class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3"
+            >
+              <div>
+                <h4 class="text-primary mb-0">Cadastros de Empreendimentos</h4>
+                <small class="text-muted"
+                  >Gestão de dados via LocalStorage e Arquivos</small
+                >
+              </div>
+              <div class="d-flex gap-2">
+                <button
+                  class="btn btn-outline-primary"
+                  onclick="Utils.exportarCSV()"
+                >
+                  📥 Exportar CSV
+                </button>
+                <label
+                  class="btn btn-outline-secondary mb-0"
+                  style="cursor: pointer"
+                >
+                  📤 Importar CSV
+                  <input
+                    type="file"
+                    id="importador-csv"
+                    hidden
+                    accept=".csv"
+                    onchange="Utils.importarCSV(event)"
+                  />
+                </label>
+                <button
+                  class="btn btn-success shadow-sm px-4"
+                  onclick="abrirModalCadastro()"
+                >
+                  + Novo Registro
+                </button>
+              </div>
             </div>
 
             <div class="row mb-4">
