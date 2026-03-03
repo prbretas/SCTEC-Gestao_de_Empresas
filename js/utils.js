@@ -17,23 +17,25 @@ const Utils = {
       configs[segmento] || { bg: "#f8f9fa", text: "#6c757d", border: "#dee2e6" }
     );
   },
-
   aplicarMascaraDocumento(valor, tipo) {
-    valor = valor.replace(/\D/g, "");
-    if (tipo === "CPF") {
-      valor = valor.substring(0, 11);
-      return valor
-        .replace(/(\d{3})(\d)/, "$1.$2")
-        .replace(/(\d{3})(\d)/, "$1.$2")
-        .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+    // Remove tudo que não é número para garantir pureza do dado
+    let v = valor.replace(/\D/g, "");
+
+    if (tipo === "PF") {
+      // Máscara CPF: 000.000.000-00 (Máximo 11 dígitos numéricos)
+      v = v.substring(0, 11);
+      v = v.replace(/(\d{3})(\d)/, "$1.$2");
+      v = v.replace(/(\d{3})(\d)/, "$1.$2");
+      v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
     } else {
-      valor = valor.substring(0, 14);
-      return valor
-        .replace(/^(\d{2})(\d)/, "$1.$2")
-        .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
-        .replace(/\.(\d{3})(\d)/, ".$1/$2")
-        .replace(/(\d{4})(\d)/, "$1-$2");
+      // Máscara CNPJ: 00.000.000/0000-00 (Máximo 14 dígitos numéricos)
+      v = v.substring(0, 14);
+      v = v.replace(/^(\d{2})(\d)/, "$1.$2");
+      v = v.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
+      v = v.replace(/\.(\d{3})(\d)/, ".$1/$2");
+      v = v.replace(/(\d{4})(\d)/, "$1-$2");
     }
+    return v;
   },
 
   formatarDataHora(isoString) {

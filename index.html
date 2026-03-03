@@ -81,9 +81,8 @@
               <div class="col-md-6">
                 <div class="input-group">
                   <select
-                    class="form-select border-secondary"
+                    class="form-select border-secondary select-filter"
                     id="tipo-busca"
-                    style="max-width: 180px"
                   >
                     <option value="todos">Todos</option>
                     <option value="id">Código da Empresa</option>
@@ -99,7 +98,6 @@
                     class="form-control border-secondary"
                     placeholder="Digite para pesquisar..."
                   />
-                  <span class="input-group-text">🔍</span>
                 </div>
               </div>
               <div class="col-md-6 text-end">
@@ -160,14 +158,20 @@
                   <label for="nome" class="form-label"
                     >Nome do Empreendimento</label
                   >
-                  <input type="text" class="form-control" id="nome" required />
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="nome"
+                    placeholder="Insira o nome"
+                    required
+                  />
                 </div>
               </div>
 
               <div class="row">
                 <div class="col-md-6 mb-3">
                   <label for="segmento" class="form-label">Segmento</label>
-               <select class="form-select select-colorido" id="segmento">
+                  <select class="form-select select-colorido" id="segmento">
                     <option value="Logística">Logística</option>
                     <option value="Transportes">Transportes</option>
                     <option value="Fornecedor">Fornecedor</option>
@@ -181,7 +185,7 @@
                   <label for="tipo-pessoa" class="form-label"
                     >Tipo de Pessoa</label
                   >
-                  <select class="form-select" id="tipo-pessoa">
+                  <select class="form-select select-tpEmp" id="tipo-pessoa">
                     <option value="PJ">Pessoa Jurídica (CNPJ)</option>
                     <option value="PF">Pessoa Física (CPF)</option>
                   </select>
@@ -191,13 +195,13 @@
               <div class="row">
                 <div class="col-md-12 mb-3">
                   <label for="registro" id="label-registro" class="form-label"
-                    >CNPJ</label
+                    >Registro</label
                   >
                   <input
                     type="text"
                     class="form-control"
                     id="registro"
-                    placeholder="00.000.000/0000-00"
+                    placeholder="Insira o número do Registro"
                     required
                   />
                 </div>
@@ -221,6 +225,7 @@
                     type="text"
                     class="form-control"
                     id="endereco"
+                    placeholder="Rua, Avenida, Logradouro... "
                     required
                   />
                 </div>
@@ -230,6 +235,7 @@
                     type="text"
                     class="form-control"
                     id="municipio"
+                    placeholder="Insira o nome do Município"
                     required
                   />
                 </div>
@@ -240,7 +246,11 @@
                   <label for="responsavel" class="form-label"
                     >Responsável</label
                   >
-                  <input type="text" class="form-control" id="responsavel" />
+                  <input 
+                  type="text" 
+                  class="form-control" 
+                  id="responsavel"
+                  placeholder="Insira o nome do Responsável" />
                 </div>
                 <div class="col-md-6 mb-3">
                   <label for="contato" class="form-label"
@@ -257,7 +267,7 @@
 
               <div class="mb-3">
                 <label for="status" class="form-label">Status</label>
-                <select class="form-select" id="status">
+                <select class="form-select select-status" id="status">
                   <option value="Ativo">Ativo</option>
                   <option value="Inativo">Inativo</option>
                 </select>
@@ -268,7 +278,8 @@
                 <textarea
                   class="form-control"
                   id="observacoes"
-                  rows="2"
+                  rows="3"
+                  placeholder="Insira outras informações importantes..."
                 ></textarea>
               </div>
             </form>
@@ -327,8 +338,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="./js/storage.js"></script>
+    <script src="./js/api.js"></script>
     <script src="./js/utils.js"></script>
+    <script src="./js/ui.js"></script>
+    <script src="./js/forms.js"></script>
     <script src="./js/main.js"></script>
-    <script src="./js/api.js "></script>
   </body>
 </html>
