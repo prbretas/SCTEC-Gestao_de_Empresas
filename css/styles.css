@@ -1,11 +1,21 @@
 :root {
-  --sc-blue: #005596;
-  --sc-green: #00a859;
-  --sc-red: #da291c;
-  --dark-bg: #121212;
-  --dark-card: #1e1e1e;
-  --dark-input: #2c2c2c;
-  --dark-text: #e0e0e0;
+  /* Default Colors */
+  --sc-header:     #333a60;
+  --sc-header2:     #00a6ff;
+  
+  --sc-btn:         #006ebc;
+  --sc-btn-hover:   #005490;
+
+  /*Dark Mode Colors - Custom*/
+  --dark-bg:        #141414;
+  --dark-bg-grid:   #2b2b2b;
+  --dark-input:     #2c2c2c;
+  --dark-text:      #e0e0e0;
+  
+  
+  --seg-bg:         #f8f9fa;
+  --seg-text:       #212529;
+  --seg-border:     #dee2e6;
 }
 
 body {
@@ -16,30 +26,25 @@ body {
 }
 
 .select-filter {
-    max-width: 250px
+  max-width: 250px;
 }
-
-/* --- ESTILO PARA O SELECT COLORIDO (SEGMENTO) --- */
 .select-colorido {
   transition:
     background-color 0.3s,
     color 0.3s;
   font-weight: 600;
 }
-
-/* Garante que as opções dentro do select tenham fundo padrão para leitura */
 .select-colorido option {
   background-color: #fff;
   color: #333;
 }
 
-/* Ajuste para Dark Mode no Select */
+/**************************** DARK MODE *********************/
 body.dark-mode .select-colorido option {
-  background-color: var(--dark-card);
+  background-color: var(--dark-bg-grid);
   color: var(--dark-text);
 }
 
-/* --- TEMA DARK --- */
 body.dark-mode {
   background-color: var(--dark-bg) !important;
   color: var(--dark-text) !important;
@@ -47,7 +52,7 @@ body.dark-mode {
 
 body.dark-mode .card,
 body.dark-mode .modal-content {
-  background-color: var(--dark-card) !important;
+  background-color: var(--dark-bg-grid) !important;
   color: var(--dark-text) !important;
   border: 1px solid #333;
 }
@@ -59,7 +64,7 @@ body.dark-mode .table {
 
 body.dark-mode .table th,
 body.dark-mode .table td {
-  background-color: var(--dark-card) !important; /* Força o fundo da célula */
+  background-color: var(--dark-bg-grid) !important; /* Força o fundo da célula */
   color: var(--dark-text) !important;
   border-color: #444 !important;
 }
@@ -69,7 +74,6 @@ body.dark-mode .table thead th {
   color: #0dcaf0 !important;
 }
 
-/* Ajuste nos inputs e selects de busca */
 body.dark-mode .form-control,
 body.dark-mode .select-tpEmp,
 body.dark-mode .select-status,
@@ -78,8 +82,6 @@ body.dark-mode .input-group-text {
   border-color: #555 !important;
   color: #fff !important;
 }
-
-/* Estilo padrão do Scroll */
 body.dark-mode ::-webkit-scrollbar {
   width: 8px;
 }
@@ -90,30 +92,36 @@ body.dark-mode ::-webkit-scrollbar-thumb {
   background: #444;
   border-radius: 4px;
 }
-/* --- AJUSTE BOTÃO FILTRO  --- */
-/* Garante que o select de busca e o input fiquem visíveis no Dark Mode */
 body.dark-mode select#tipo-busca,
 body.dark-mode input#busca-empresa {
   background-color: #333;
   color: #fff;
   border: 1px solid #555;
 }
-
-/* --- AJUSTE DARK MODE PARA O BLOCO DE ENDEREÇO --- */
 body.dark-mode .endereco-container {
   background-color: var(--dark-input) !important;
   border-color: #444 !important;
   color: var(--dark-text) !important;
 }
 
-/* Garante que os labels dentro dessa div fiquem claros */
 body.dark-mode .endereco-container .form-label {
   color: var(--dark-text) !important;
 }
+
+body.dark-mode .form-select#segmento {
+  background-color: var(--seg-bg);
+  color: var(--seg-text);
+  border-color: var(--seg-border);
+}
+
+#segmento {
+  transition: all 0.3s ease;
+}
+
 /* --- COMPONENTES GERAIS --- */
 .navbar {
-  background-color: var(--sc-blue) !important;
-  border-bottom: 4px solid var(--sc-green);
+  background-color: var(--sc-header) !important;
+  border-bottom: 4px solid var(--sc-header2);
 }
 
 .table-zebra tbody tr:nth-of-type(odd) {
@@ -130,34 +138,29 @@ body.dark-mode .endereco-container .form-label {
 .btn-action:hover {
   transform: scale(1.1);
 }
-
-/* Ajusta o subtítulo abaixo de "Cadastros de Empreendimentos" */
 body.dark-mode .text-muted {
-  color: #bbb !important; /* Cinza claro para leitura no escuro */
+  color: #bbb !important;
 }
-
-/* Garante que o texto dentro do input de pesquisa e select seja branco */
 body.dark-mode .form-control,
 body.dark-mode .form-select {
   color: #fff !important;
 }
 
-/* Ajusta a cor do texto dentro da coluna Registro (que está escura na foto) */
 body.dark-mode .table td code,
 body.dark-mode .table td {
   color: var(--dark-text) !important;
 }
 
-body.dark-mode input::placeholder , textarea::placeholder   {
+body.dark-mode input::placeholder,
+textarea::placeholder {
   color: #888 !important;
 }
-
 
 /***************************************/
 
 .navbar {
-  background-color: var(--sc-blue) !important;
-  border-bottom: 4px solid var(--sc-green);
+  background-color: var(--sc-header) !important;
+  border-bottom: 4px solid var(--sc-header2);
 }
 
 .card {
@@ -167,43 +170,24 @@ body.dark-mode input::placeholder , textarea::placeholder   {
 
 .card-header {
   font-weight: bold;
-  color: var(--sc-blue);
+  color: var(--sc-header);
   border-bottom: 2px solid #f0f0f0;
 }
 
-/* Estilo para a tabela de empreendimentos */
 .table thead {
   background-color: #f8f9fa;
-  color: var(--sc-blue);
+  color: var(--sc-header);
 }
 
-.badge-ativo {
-  background-color: var(--sc-green);
-}
-.badge-inativo {
-  background-color: var(--sc-red);
-}
-
-/* Efeito de hover nas linhas da tabela */
 .table-hover tbody tr:hover {
   background-color: #f1f7ff;
   transition: 0.3s;
 }
 
-/* Customização dos botões para parecerem mais modernos */
 .btn-success {
-  background-color: var(--sc-green);
+  background-color: var(--sc-btn);
   border: none;
 }
 .btn-success:hover {
-  background-color: #008f4c;
-}
-
-/* Responsividade para o vídeo pitch no futuro */
-.video-container {
-  margin-top: 20px;
-  padding: 15px;
-  background: #e9ecef;
-  border-radius: 8px;
-  text-align: center;
+  background-color: var(--sc-btn-hover);
 }
