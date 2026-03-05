@@ -26,7 +26,9 @@
             id="dark-mode-switch"
             style="cursor: pointer"
           />
-          <label class="form-check-label" for="dark-mode-switch">Modo Escuro</label>
+          <label class="form-check-label" for="dark-mode-switch"
+            >Modo Escuro</label
+          >
         </div>
       </div>
     </nav>
@@ -36,7 +38,11 @@
         <div class="card-body bg-white rounded p-3">
           <div class="row g-2 align-items-center">
             <div class="col-auto">
-              <select id="tipo-busca" class="form-select border-2" style="width: 160px;">
+              <select
+                id="tipo-busca"
+                class="form-select border-2"
+                style="width: 160px"
+              >
                 <option value="todos">Todos</option>
                 <option value="nome">Nome/Razão</option>
                 <option value="registro">CPF/CNPJ</option>
@@ -58,10 +64,13 @@
                 class="btn btn-outline-secondary"
                 title="Exportar CSV"
               >
-                📤
+                📤 Exportar
               </button>
-              <label class="btn btn-outline-secondary mb-0" title="Importar CSV">
-                📥
+              <label
+                class="btn btn-outline-secondary mb-0"
+                title="Importar CSV"
+              >
+                📥 Importar
                 <input
                   type="file"
                   hidden
@@ -95,17 +104,20 @@
                 <th class="text-center">Ações</th>
               </tr>
             </thead>
-            <tbody id="lista-corpo">
-              </tbody>
+            <tbody id="lista-corpo"></tbody>
           </table>
         </div>
       </div>
-      
-      <div class="mt-3 text-end">
-          <button onclick="Utils.baixarModeloCSV()" class="btn btn-link btn-sm text-decoration-none text-muted">
-              📥 Baixar Modelo de Planilha (CSV)
+      <footer id="footer-screen">
+        <div class="mt-3 text-end">
+          <button
+            onclick="Utils.baixarModeloCSV()"
+            class="btn btn-link btn-sm text-decoration-none btn-dwnld-csv"
+          >
+            📥 Baixar Modelo de Planilha (CSV)
           </button>
-      </div>
+        </div>
+      </footer>
     </main>
 
     <div
@@ -116,7 +128,7 @@
     >
       <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
-          <div class="modal-header bg-primary text-white">
+          <div class="modal-header text-white">
             <h5 class="modal-title" id="titulo-modal-form">Empreendimento</h5>
             <button
               type="button"
@@ -134,18 +146,32 @@
                   <input type="text" id="nome" class="form-control" required />
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label fw-bold" id="label-registro">CNPJ</label>
+                  <label class="form-label fw-bold" id="label-registro"
+                    >CNPJ</label
+                  >
                   <div class="input-group">
-                    <select id="tipo-pessoa" class="form-select" style="max-width: 70px; font-size: 0.8rem;">
+                    <select
+                      id="tipo-pessoa"
+                      class="form-select"
+                      style="max-width: 70px; font-size: 0.8rem"
+                    >
                       <option value="PJ">PJ</option>
                       <option value="PF">PF</option>
                     </select>
-                    <input type="text" id="registro" class="form-control" placeholder="00.000.000/0000-00" required />
+                    <input
+                      type="text"
+                      id="registro"
+                      class="form-control"
+                      placeholder="00.000.000/0000-00"
+                      required
+                    />
                   </div>
                 </div>
 
                 <div class="col-md-6">
-                  <label class="form-label fw-bold">Responsável / Contato</label>
+                  <label class="form-label fw-bold"
+                    >Responsável / Contato</label
+                  >
                   <input type="text" id="responsavel" class="form-control" />
                 </div>
                 <div class="col-md-6">
@@ -155,20 +181,39 @@
 
                 <div class="col-md-3">
                   <label class="form-label fw-bold">CEP</label>
-                  <input type="text" id="cep" class="form-control" maxlength="9" />
+                  <input
+                    type="text"
+                    id="cep"
+                    class="form-control"
+                    maxlength="9"
+                  />
                 </div>
                 <div class="col-md-5">
                   <label class="form-label fw-bold">Endereço Completo</label>
-                  <input type="text" id="endereco" class="form-control" required />
+                  <input
+                    type="text"
+                    id="endereco"
+                    class="form-control"
+                    required
+                  />
                 </div>
                 <div class="col-md-4">
                   <label class="form-label fw-bold">Município (SC)</label>
-                  <input type="text" id="municipio" class="form-control" required />
+                  <input
+                    type="text"
+                    id="municipio"
+                    class="form-control"
+                    required
+                  />
                 </div>
 
                 <div class="col-md-6">
                   <label class="form-label fw-bold">Segmento de Atuação</label>
-                  <select id="segmento" class="form-select select-colorido" required>
+                  <select
+                    id="segmento"
+                    class="form-select select-colorido"
+                    required
+                  >
                     <option value="Tecnologia">Tecnologia</option>
                     <option value="Indústria">Indústria</option>
                     <option value="Logística">Logística</option>
@@ -189,16 +234,33 @@
 
                 <div class="col-12">
                   <label class="form-label fw-bold">Observações Internas</label>
-                  <textarea id="observacoes" class="form-control" rows="3"></textarea>
+                  <textarea
+                    id="observacoes"
+                    class="form-control"
+                    rows="3"
+                  ></textarea>
                 </div>
               </div>
             </form>
           </div>
-          <div class="modal-footer bg-light d-flex justify-content-between">
-            <div id="auditoria-info" class="small text-muted"></div>
+          <div class="modal-footer d-flex justify-content-between">
+            <div id="auditoria-info" class="small "></div>
             <div>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                <button type="submit" form="form-empreendimento" id="btn-salvar" class="btn btn-success px-4">Salvar Registro</button>
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+              >
+                Fechar
+              </button>
+              <button
+                type="submit"
+                form="form-empreendimento"
+                id="btn-salvar"
+                class="btn btn-success px-4"
+              >
+                Salvar Registro
+              </button>
             </div>
           </div>
         </div>

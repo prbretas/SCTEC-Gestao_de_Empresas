@@ -9,7 +9,7 @@ const ApiService = {
 
     try {
         const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
-        // Correção: Validar se a resposta do servidor foi 200 OK
+        //Valida se a resposta do servidor foi 200 OK
         if (!response.ok) throw new Error("Falha na rede");
         
         const data = await response.json();

@@ -1,5 +1,5 @@
 /**
- * forms.js - Controller de Formulários (Versão com Visualização Integrada)
+ * forms.js - Controller de Formulários (Versão com Travas de Integridade)
  */
 const FormController = {
   form: document.querySelector("#form-empreendimento"),
@@ -18,6 +18,9 @@ const FormController = {
     const labelReg = document.querySelector("#label-registro");
 
     inputCep?.addEventListener("blur", async () => {
+      // Se o campo estiver desabilitado (modo visualização ou trava), não busca
+      if (inputCep.disabled) return;
+
       const cep = inputCep.value.replace(/\D/g, "");
       if (cep.length === 8) {
         const dados = await ApiService.buscarCep(cep);
@@ -51,12 +54,36 @@ const FormController = {
     selectSeg?.addEventListener("change", () => this.atualizarEstiloSegmento());
   },
 
+  /**
+   * Define o estado de todos os campos do formulário
+   * @param {boolean} status - true para desabilitar tudo, false para habilitar tudo
+   */
   setReadOnly(status) {
     const inputs = this.form.querySelectorAll("input, select, textarea");
     const btnSalvar = document.querySelector("#btn-salvar");
 
     inputs.forEach((el) => (el.disabled = status));
     if (btnSalvar) btnSalvar.style.display = status ? "none" : "inline-block";
+  },
+
+  /**
+   * Trava apenas os campos que não podem ser alterados após a criação
+   */
+  travarCamposIntegridade() {
+    // Campos que não podem ser alterados após o primeiro salvamento:
+    const camposImutaveis = ["#nome", "#tipo-pessoa", "#registro", "#segmento"];
+
+    camposImutaveis.forEach((selector) => {
+      const el = document.querySelector(selector);
+      if (el) {
+        el.disabled = true;
+        // Adiciona um feedback visual de campo travado
+        el.style.backgroundColor = "var(--dark-bg-grid)";
+        el.style.cursor = "not-allowed";
+        el.title =
+          "Este campo não pode ser alterado para manter a integridade dos dados.";
+      }
+    });
   },
 
   atualizarEstiloSegmento() {
@@ -74,6 +101,9 @@ const FormController = {
   handleSave(e) {
     e.preventDefault();
     const id = document.querySelector("#emp-id").value;
+
+    // Capturamos os dados. Nota: Campos 'disabled' não vêm no FormData padrão,
+    // então pegamos via querySelector diretamente para garantir que o objeto de salvamento esteja completo.
     const dados = {
       nome: document.querySelector("#nome").value.trim(),
       tipoPessoa: document.querySelector("#tipo-pessoa").value,
@@ -112,11 +142,10 @@ const FormController = {
     if (!emp) return;
 
     this.carregarDadosNoForm(emp);
-    this.setReadOnly(true);
+    this.setReadOnly(true); // Bloqueia TUDO
     document.querySelector("#titulo-modal-form").textContent =
-      `Visualizar: ${emp.nome}`;
+      `🔍 Visualizando: ${emp.nome}`;
 
-    // Auditoria
     const infoAudit = document.querySelector("#auditoria-info");
     const dataAlt = emp.dataAtualizacao || emp.dataCadastro;
     infoAudit.innerHTML = `Criado em: ${Utils.formatarDataHora(emp.dataCadastro)}<br>Última alteração: ${Utils.formatarDataHora(dataAlt)}`;
@@ -131,9 +160,13 @@ const FormController = {
     if (!emp) return;
 
     this.carregarDadosNoForm(emp);
-    this.setReadOnly(false);
+    this.setReadOnly(false); // Libera o formulário primeiro
+
+    // REGRA DE NEGÓCIO: Trava campos de integridade após a criação
+    this.travarCamposIntegridade();
+
     document.querySelector("#titulo-modal-form").textContent =
-      `Editar: ${emp.nome}`;
+      `✏️ Editando: ${emp.nome}`;
     document.querySelector("#auditoria-info").innerHTML = "";
 
     UIController.modalForm.show();
@@ -157,16 +190,31 @@ const FormController = {
     const labelReg = document.querySelector("#label-registro");
     if (labelReg)
       labelReg.textContent = emp.tipoPessoa === "PF" ? "CPF" : "CNPJ";
+
+    // Resetar estilos de travamento que podem ter vindo de edições anteriores
+    const inputs = this.form.querySelectorAll("input, select");
+    inputs.forEach((el) => {
+      el.style.backgroundColor = "";
+      el.style.cursor = "";
+    });
   },
 };
 
 window.abrirModalCadastro = () => {
   FormController.form.reset();
-  FormController.setReadOnly(false);
+  FormController.setReadOnly(false); // Tudo liberado para novos registros
   document.querySelector("#emp-id").value = "";
   document.querySelector("#titulo-modal-form").textContent =
     "Novo Empreendimento";
   document.querySelector("#auditoria-info").innerHTML = "";
+
+  // Limpa estilos de travamento
+  const inputs = FormController.form.querySelectorAll("input, select");
+  inputs.forEach((el) => {
+    el.style.backgroundColor = "";
+    el.style.cursor = "";
+  });
+
   FormController.atualizarEstiloSegmento();
   UIController.modalForm.show();
 };
