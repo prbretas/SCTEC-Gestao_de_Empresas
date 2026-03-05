@@ -191,3 +191,11 @@ background-color: var(--dark-bg-grid);
 body.darkmode .btn-dwnld-csv{
   color: rgb(105, 213, 255) !important;
 }
+
+
+.campo-bloqueado {
+  background-color: var(--readonly-bg) !important;
+  border-color: var(--readonly-border) !important;
+  cursor: not-allowed !important;
+  opacity: 0.8;
+}

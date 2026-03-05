@@ -2,26 +2,52 @@
  * api.js - Serviço de integração com APIs externas
  */
 const ApiService = {
-    // Busca CEP na API do ViaCEP
- async buscarCep(cep) {
-    const cleanCep = cep.replace(/\D/g, '');
-    if (cleanCep.length !== 8) return null;
+  // Busca CEP na API do ViaCEP
+  async buscarCep(cep) {
+    // 1. Sanitização rigorosa
+    const cleanCep = cep.replace(/\D/g, "");
+
+    // 2. Validação de integridade antes da requisição
+    if (cleanCep.length !== 8) {
+      console.warn("CEP Inválido: Formato incorreto.");
+      return null;
+    }
 
     try {
-        const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
-        //Valida se a resposta do servidor foi 200 OK
-        if (!response.ok) throw new Error("Falha na rede");
-        
-        const data = await response.json();
-        if (data.erro) return null;
-        return data;
+      // 3. Timeout para evitar que a UI trave em caso de lentidão da API
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos
+
+      const response = await fetch(
+        `https://viacep.com.br/ws/${cleanCep}/json/`,
+        {
+          signal: controller.signal,
+        },
+      );
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+
+      const data = await response.json();
+
+      // A API do ViaCEP retorna erro: true se o CEP não existir
+      if (data.erro) {
+        console.warn("CEP não encontrado na base de dados.");
+        return null;
+      }
+
+      return data;
     } catch (error) {
+      if (error.name === "AbortError") {
+        console.error("Erro: A requisição ao ViaCEP excedeu o tempo limite.");
+      } else {
         console.error("Erro na API ViaCEP:", error);
-        return null; // Retorno silencioso para não travar o formulário
+      }
+      return null;
     }
-}
+  },
 };
 
-// Se você não estiver usando módulos (type="module"), 
-// pode remover o 'export default' e apenas usar a constante global.
+// Garante que o serviço esteja disponível globalmente para o forms.js
 window.ApiService = ApiService;

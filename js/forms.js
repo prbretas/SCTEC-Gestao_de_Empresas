@@ -18,16 +18,20 @@ const FormController = {
     const labelReg = document.querySelector("#label-registro");
 
     inputCep?.addEventListener("blur", async () => {
-      // Se o campo estiver desabilitado (modo visualização ou trava), não busca
       if (inputCep.disabled) return;
 
       const cep = inputCep.value.replace(/\D/g, "");
       if (cep.length === 8) {
+        console.log("Iniciando busca para o CEP:", cep); // Debug
         const dados = await ApiService.buscarCep(cep);
-        if (dados && !dados.erro) {
+
+        if (dados) {
           document.querySelector("#endereco").value =
             `${dados.logradouro}${dados.bairro ? ", " + dados.bairro : ""}`;
           document.querySelector("#municipio").value = dados.localidade;
+          console.log("Campos preenchidos com sucesso.");
+        } else {
+          alert("CEP não encontrado ou erro na rede.");
         }
       }
     });
@@ -58,30 +62,38 @@ const FormController = {
    * Define o estado de todos os campos do formulário
    * @param {boolean} status - true para desabilitar tudo, false para habilitar tudo
    */
+
   setReadOnly(status) {
     const inputs = this.form.querySelectorAll("input, select, textarea");
     const btnSalvar = document.querySelector("#btn-salvar");
 
-    inputs.forEach((el) => (el.disabled = status));
+    inputs.forEach((el) => {
+      if (status) {
+        el.classList.add("campo-bloqueado");
+        if (el.tagName === "SELECT") el.style.pointerEvents = "none";
+        else el.readOnly = true;
+      } else {
+        el.classList.remove("campo-bloqueado");
+        el.style.pointerEvents = "auto";
+        el.readOnly = false;
+      }
+    });
+
     if (btnSalvar) btnSalvar.style.display = status ? "none" : "inline-block";
+    this.atualizarEstiloSegmento();
   },
 
   /**
    * Trava apenas os campos que não podem ser alterados após a criação
    */
   travarCamposIntegridade() {
-    // Campos que não podem ser alterados após o primeiro salvamento:
-    const camposImutaveis = ["#nome", "#tipo-pessoa", "#registro", "#segmento"];
-
-    camposImutaveis.forEach((selector) => {
-      const el = document.querySelector(selector);
+    const seletores = ["#nome", "#registro", "#tipo-pessoa", "#segmento"];
+    seletores.forEach((s) => {
+      const el = document.querySelector(s);
       if (el) {
-        el.disabled = true;
-        // Adiciona um feedback visual de campo travado
-        el.style.backgroundColor = "var(--dark-bg-grid)";
-        el.style.cursor = "not-allowed";
-        el.title =
-          "Este campo não pode ser alterado para manter a integridade dos dados.";
+        el.classList.add("campo-bloqueado");
+        if (el.tagName === "SELECT") el.style.pointerEvents = "none";
+        else el.readOnly = true;
       }
     });
   },
@@ -101,32 +113,19 @@ const FormController = {
   handleSave(e) {
     e.preventDefault();
     const id = document.querySelector("#emp-id").value;
-
-    // Capturamos os dados. Nota: Campos 'disabled' não vêm no FormData padrão,
-    // então pegamos via querySelector diretamente para garantir que o objeto de salvamento esteja completo.
     const dados = {
-      nome: document.querySelector("#nome").value.trim(),
+      nome: document.querySelector("#nome").value,
       tipoPessoa: document.querySelector("#tipo-pessoa").value,
-      registro: document.querySelector("#registro").value.trim(),
-      responsavel: document.querySelector("#responsavel").value.trim(),
-      contato: document.querySelector("#contato").value.trim(),
-      cep: document.querySelector("#cep").value.trim(),
-      endereco: document.querySelector("#endereco").value.trim(),
-      municipio: document.querySelector("#municipio").value.trim(),
+      registro: document.querySelector("#registro").value,
+      responsavel: document.querySelector("#responsavel").value,
+      contato: document.querySelector("#contato").value,
+      cep: document.querySelector("#cep").value,
+      endereco: document.querySelector("#endereco").value,
+      municipio: document.querySelector("#municipio").value,
       segmento: document.querySelector("#segmento").value,
       status: document.querySelector("#status").value,
-      observacoes: document.querySelector("#observacoes").value.trim(),
+      observacoes: document.querySelector("#observacoes").value,
     };
-
-    const duplicado = EmpreendimentoStorage.buscarTodos().find(
-      (emp) => emp.registro === dados.registro && emp.id !== Number(id),
-    );
-
-    if (duplicado) {
-      return alert(
-        `ERRO: O registro ${dados.registro} já pertence a "${duplicado.nome}".`,
-      );
-    }
 
     id
       ? EmpreendimentoStorage.atualizar(id, dados)
@@ -152,51 +151,32 @@ const FormController = {
 
     UIController.modalForm.show();
   },
-
   prepararEdicao(id) {
     const emp = EmpreendimentoStorage.buscarTodos().find(
-      (item) => item.id === Number(id),
+      (i) => i.id === Number(id),
     );
     if (!emp) return;
-
     this.carregarDadosNoForm(emp);
-    this.setReadOnly(false); // Libera o formulário primeiro
-
-    // REGRA DE NEGÓCIO: Trava campos de integridade após a criação
-    this.travarCamposIntegridade();
-
+    this.setReadOnly(false); // Libera o form
+    this.travarCamposIntegridade(); // Mas trava os campos de regra de negócio
     document.querySelector("#titulo-modal-form").textContent =
       `✏️ Editando: ${emp.nome}`;
-    document.querySelector("#auditoria-info").innerHTML = "";
-
     UIController.modalForm.show();
   },
-
   carregarDadosNoForm(emp) {
     document.querySelector("#emp-id").value = emp.id;
     document.querySelector("#nome").value = emp.nome;
-    document.querySelector("#tipo-pessoa").value = emp.tipoPessoa || "PJ";
+    document.querySelector("#tipo-pessoa").value = emp.tipoPessoa;
     document.querySelector("#registro").value = emp.registro;
-    document.querySelector("#responsavel").value = emp.responsavel || "";
-    document.querySelector("#contato").value = emp.contato || "";
-    document.querySelector("#cep").value = emp.cep || "";
+    document.querySelector("#responsavel").value = emp.responsavel;
+    document.querySelector("#contato").value = emp.contato;
+    document.querySelector("#cep").value = emp.cep;
     document.querySelector("#endereco").value = emp.endereco;
     document.querySelector("#municipio").value = emp.municipio;
     document.querySelector("#segmento").value = emp.segmento;
     document.querySelector("#status").value = emp.status;
-    document.querySelector("#observacoes").value = emp.observacoes || "";
-
+    document.querySelector("#observacoes").value = emp.observacoes;
     this.atualizarEstiloSegmento();
-    const labelReg = document.querySelector("#label-registro");
-    if (labelReg)
-      labelReg.textContent = emp.tipoPessoa === "PF" ? "CPF" : "CNPJ";
-
-    // Resetar estilos de travamento que podem ter vindo de edições anteriores
-    const inputs = this.form.querySelectorAll("input, select");
-    inputs.forEach((el) => {
-      el.style.backgroundColor = "";
-      el.style.cursor = "";
-    });
   },
 };
 
