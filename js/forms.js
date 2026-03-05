@@ -1,5 +1,5 @@
 /**
- * forms.js - Controller de Formulários (Versão Corrigida)
+ * forms.js - Controller de Formulários (Versão com Visualização Integrada)
  */
 const FormController = {
   form: document.querySelector("#form-empreendimento"),
@@ -17,7 +17,6 @@ const FormController = {
     const selectSeg = document.querySelector("#segmento");
     const labelReg = document.querySelector("#label-registro");
 
-    // --- Lógica de CEP ---
     inputCep?.addEventListener("blur", async () => {
       const cep = inputCep.value.replace(/\D/g, "");
       if (cep.length === 8) {
@@ -30,9 +29,7 @@ const FormController = {
       }
     });
 
-    // --- Lógica de Máscara de CPF/CNPJ (CORRIGIDA) ---
     const aplicarMascara = () => {
-      // Passamos o valor atual e o tipo selecionado para o Utils
       inputReg.value = Utils.aplicarMascaraDocumento(
         inputReg.value,
         selectTipo.value,
@@ -44,32 +41,31 @@ const FormController = {
     selectTipo?.addEventListener("change", () => {
       inputReg.value = "";
       const tipo = selectTipo.value;
-      labelReg.textContent = tipo === "PF" ? "CPF" : "CNPJ";
+      if (labelReg) labelReg.textContent = tipo === "PF" ? "CPF" : "CNPJ";
       inputReg.placeholder =
         tipo === "PF" ? "000.000.000-00" : "00.000.000/0000-00";
       inputReg.setAttribute("maxlength", tipo === "PF" ? "14" : "18");
-
-      aplicarMascara();
       inputReg.focus();
     });
 
-    // --- Estilização do Segmento ---
     selectSeg?.addEventListener("change", () => this.atualizarEstiloSegmento());
+  },
+
+  setReadOnly(status) {
+    const inputs = this.form.querySelectorAll("input, select, textarea");
+    const btnSalvar = document.querySelector("#btn-salvar");
+
+    inputs.forEach((el) => (el.disabled = status));
+    if (btnSalvar) btnSalvar.style.display = status ? "none" : "inline-block";
   },
 
   atualizarEstiloSegmento() {
     const select = document.querySelector("#segmento");
     if (!select) return;
-
     const config = Utils.obterConfigSegmento(select.value);
-
-    // Injetamos as variáveis CSS diretamente no elemento.
-    // Isso vence qualquer regra do Dark Mode sem precisar de !important no JS.
     select.style.setProperty("--seg-bg", config.bg);
     select.style.setProperty("--seg-text", config.text);
     select.style.setProperty("--seg-border", config.border);
-
-    // Forçamos o uso das variáveis
     select.style.backgroundColor = "var(--seg-bg)";
     select.style.color = "var(--seg-text)";
     select.style.borderColor = "var(--seg-border)";
@@ -84,31 +80,48 @@ const FormController = {
       registro: document.querySelector("#registro").value.trim(),
       responsavel: document.querySelector("#responsavel").value.trim(),
       contato: document.querySelector("#contato").value.trim(),
+      cep: document.querySelector("#cep").value.trim(),
       endereco: document.querySelector("#endereco").value.trim(),
       municipio: document.querySelector("#municipio").value.trim(),
       segmento: document.querySelector("#segmento").value,
       status: document.querySelector("#status").value,
       observacoes: document.querySelector("#observacoes").value.trim(),
-      dataAtualizacao: new Date().toISOString(),
     };
 
-    // Validação de Duplicidade
     const duplicado = EmpreendimentoStorage.buscarTodos().find(
       (emp) => emp.registro === dados.registro && emp.id !== Number(id),
     );
 
     if (duplicado) {
       return alert(
-        `ERRO DE NEGÓCIO: O registro ${dados.registro} já está vinculado a "${duplicado.nome}".`,
+        `ERRO: O registro ${dados.registro} já pertence a "${duplicado.nome}".`,
       );
     }
 
     id
       ? EmpreendimentoStorage.atualizar(id, dados)
       : EmpreendimentoStorage.adicionar(dados);
-
     UIController.modalForm.hide();
     UIController.renderizarLista();
+  },
+
+  prepararVisualizacao(id) {
+    const emp = EmpreendimentoStorage.buscarTodos().find(
+      (item) => item.id === Number(id),
+    );
+    if (!emp) return;
+
+    this.carregarDadosNoForm(emp);
+    this.setReadOnly(true);
+    document.querySelector("#titulo-modal-form").textContent =
+      `Visualizar: ${emp.nome}`;
+
+    // Auditoria
+    const infoAudit = document.querySelector("#auditoria-info");
+    const dataAlt = emp.dataAtualizacao || emp.dataCadastro;
+    infoAudit.innerHTML = `Criado em: ${Utils.formatarDataHora(emp.dataCadastro)}<br>Última alteração: ${Utils.formatarDataHora(dataAlt)}`;
+
+    UIController.modalForm.show();
   },
 
   prepararEdicao(id) {
@@ -117,38 +130,43 @@ const FormController = {
     );
     if (!emp) return;
 
+    this.carregarDadosNoForm(emp);
+    this.setReadOnly(false);
+    document.querySelector("#titulo-modal-form").textContent =
+      `Editar: ${emp.nome}`;
+    document.querySelector("#auditoria-info").innerHTML = "";
+
+    UIController.modalForm.show();
+  },
+
+  carregarDadosNoForm(emp) {
     document.querySelector("#emp-id").value = emp.id;
     document.querySelector("#nome").value = emp.nome;
     document.querySelector("#tipo-pessoa").value = emp.tipoPessoa || "PJ";
     document.querySelector("#registro").value = emp.registro;
     document.querySelector("#responsavel").value = emp.responsavel || "";
     document.querySelector("#contato").value = emp.contato || "";
+    document.querySelector("#cep").value = emp.cep || "";
     document.querySelector("#endereco").value = emp.endereco;
     document.querySelector("#municipio").value = emp.municipio;
     document.querySelector("#segmento").value = emp.segmento;
     document.querySelector("#status").value = emp.status;
     document.querySelector("#observacoes").value = emp.observacoes || "";
 
-    document.querySelector("#titulo-modal-form").textContent =
-      `Edição: ${emp.nome}`;
-
-    // Dispara atualização visual
     this.atualizarEstiloSegmento();
-
-    // Ajusta o label do registro conforme o que foi carregado
     const labelReg = document.querySelector("#label-registro");
     if (labelReg)
       labelReg.textContent = emp.tipoPessoa === "PF" ? "CPF" : "CNPJ";
-
-    UIController.modalForm.show();
   },
 };
 
 window.abrirModalCadastro = () => {
   FormController.form.reset();
+  FormController.setReadOnly(false);
   document.querySelector("#emp-id").value = "";
   document.querySelector("#titulo-modal-form").textContent =
     "Novo Empreendimento";
+  document.querySelector("#auditoria-info").innerHTML = "";
   FormController.atualizarEstiloSegmento();
   UIController.modalForm.show();
 };

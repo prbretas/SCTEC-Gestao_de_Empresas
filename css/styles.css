@@ -1,39 +1,143 @@
-:root {
-  /* Default Colors */
-  --sc-header:     #333a60;
-  --sc-header2:     #53ff4d;
-  
-  --sc-btn:         #006ebc;
-  --sc-btn-hover:   #005490;
+/* ==========================================================================
+   styles.css - Arquivo de Estilização SCTEC
+   Foco: Correção de Cores Dark/White Mode e Especificidade
+   ========================================================================== */
 
-  /*Dark Mode Colors - Custom*/
-  --dark-bg:        #141414;
-  --dark-bg-grid:   #2b2b2b;
-  --dark-input:     #2c2c2c;
-  --dark-text:      #e0e0e0;
+:root {
+  /* --- Default Colors (Light Mode) --- */
+  --sc-header: #333a60;
+  --sc-header2: #67ff61; /* Cor da borda inferior */
+
+  /* Cores dos Botões Customizados */
+  --sc-btn: #006ebc;
+  --sc-btn-hover: #005490;
+  --sc-btn-active: #003c67;
+
+  /* Estilo da Tabela (Light) */
+  --tab-head-bg: #7a7d91;
+  --tab-head-text: white;
+
+  /* Variáveis de Segmento (Dinâmicas via JS) */
+  --seg-bg: #f8f9fa;
+  --seg-text: #212529;
+  --seg-border: #dee2e6;
   
-  
-  --seg-bg:         #f8f9fa;
-  --seg-text:       #212529;
-  --seg-border:     #dee2e6;
+  /* Cores de Fundo Padrão (Light) */
+  --bg-body: #f8f9fa; /* bg-light do bootstrap */
+  --bg-card: #ffffff;
+  --text-main: #212529;
 }
 
-
-
+/* --- Base --- */
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  transition:
-    background-color 0.3s,
-    color 0.3s;
+  background-color: var(--bg-body) !important; /* Força o fundo da página */
+  color: var(--text-main) !important;
+  transition: background-color 0.3s, color 0.3s;
 }
 
-.select-filter {
-  max-width: 250px;
+/* ==========================================================================
+   ESTILOS GERAIS & COMPONENTES (LIGHT MODE)
+   ========================================================================== */
+
+/* --- Navbar --- */
+.navbar {
+  background-color: var(--sc-header) !important;
+  border-bottom: 4px solid var(--sc-header2);
+  padding: 0.5rem 0;
 }
+
+/* --- Cards --- */
+.card {
+  border: none;
+  border-radius: 8px;
+  background-color: var(--bg-card) !important;
+}
+
+/* Força o fundo branco no card de pesquisa (CORREÇÃO) */
+.card-body.bg-white {
+  background-color: var(--bg-card) !important;
+  border-radius: 8px !important;
+  border: 1px solid #eee; /* Leve borda para destacar no fundo light */
+}
+
+/* --- Tabelas --- */
+#lista-corpo tr {
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+/* Zebra striping no modo light */
+.table-zebra tbody tr:nth-of-type(odd) {
+  background-color: rgba(0, 0, 0, 0.02) !important;
+}
+
+/* Hover na linha da tabela (Light) */
+.table-hover tbody tr:hover {
+  background-color: rgba(0, 110, 188, 0.05) !important;
+}
+
+/* Cabeçalho da Tabela (Light) */
+body .table thead th {
+  background-color: var(--tab-head-bg) !important;
+  color: var(--tab-head-text) !important;
+  border-color: rgba(0,0,0,0.1) !important;
+}
+
+/* --- Botões Customizados --- */
+/* Estilo base para botões de ação (exportar/importar) */
+.btn-outline-secondary {
+  color: #6c757d;
+  border-color: #ced4da;
+  background-color: #fff;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #e2e6ea;
+  color: #495057;
+  border-color: #adb5bd;
+}
+
+/* CORREÇÃO DOS BOTÕES NO MODO LIGHT (Não ficarem pretos) */
+/* Reinicia estilos que estavam forçando preto via regras soltas */
+body #tipo-pessoa, 
+body #status,
+body .endereco-container {
+  background-color: #fff !important;
+  color: #000 !important;
+  border: 1px solid #ced4da !important;
+}
+
+/* Botão Success Customizado (Usado no "Novo Registro" e "Salvar") */
+.btn-success {
+  background-color: var(--sc-btn) !important; /* Usando o azul customizado */
+  border: none !important;
+  color: white !important;
+  transition: all 0.2s ease;
+}
+
+.btn-success:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  background-color: var(--sc-btn-hover) !important;
+}
+
+.btn-success:active {
+  transform: translateY(1px);
+  background-color: var(--sc-btn-active) !important;
+}
+
+/* --- Inputs & Selects Gerais (Light) --- */
+.form-control, 
+.form-select {
+  background-color: #fff;
+  border: 1px solid #ced4da;
+  color: #212529;
+}
+
 .select-colorido {
-  transition:
-    background-color 0.3s,
-    color 0.3s;
+  transition: background-color 0.3s, color 0.3s;
   font-weight: 600;
 }
 .select-colorido option {
@@ -41,24 +145,53 @@ body {
   color: #333;
 }
 
-/**************************** DARK MODE *********************/
-body.dark-mode .select-colorido option {
-  background-color: var(--dark-bg-grid);
-  color: var(--dark-text);
+/* --- Modal --- */
+.modal-header {
+  background-color: var(--sc-header) !important;
 }
+
+/* --- Utilitários --- */
+#auditoria-info {
+  line-height: 1.1;
+  font-size: 0.7rem;
+}
+
+/* ==========================================================================
+   DARK MODE COLORS (Custom)
+   ========================================================================== */
+:root {
+  --dark-bg:      #121212; /* Fundo principal mais escuro */
+  --dark-bg-grid: #1e1e1e; /* Fundo de cards e modais */
+  --dark-input:   #2c2c2c; /* Fundo de inputs */
+  --dark-text:    #e0e0e0; /* Texto principal */
+  --dark-border:  #333333; /* Bordas gerais */
+}
+
+/* ==========================================================================
+   APLICAÇÃO DO DARK MODE (Precedência sobre Light)
+   ========================================================================== */
 
 body.dark-mode {
   background-color: var(--dark-bg) !important;
   color: var(--dark-text) !important;
 }
 
+/* --- Cards & Modais (Dark) --- */
 body.dark-mode .card,
 body.dark-mode .modal-content {
   background-color: var(--dark-bg-grid) !important;
   color: var(--dark-text) !important;
-  border: 1px solid #333;
+  border: 1px solid var(--dark-border) !important;
 }
 
+/* CORREÇÃO DO GRID DE PESQUISA (Não ficar branco no Dark) */
+body.dark-mode .card-body.bg-white {
+  background-color: var(--dark-bg-grid) !important;
+  color: var(--dark-text) !important;
+  border: 1px solid var(--dark-border) !important;
+}
+
+/* --- Tabelas (Dark) --- */
 body.dark-mode .table {
   color: var(--dark-text) !important;
   background-color: transparent !important;
@@ -68,22 +201,94 @@ body.dark-mode .table th,
 body.dark-mode .table td {
   background-color: var(--dark-bg-grid) !important; /* Força o fundo da célula */
   color: var(--dark-text) !important;
+  border-color: #444 !important; /* Borda mais visível nas linhas */
+}
+
+/* Zebra striping no modo dark */
+body.dark-mode .table-zebra tbody tr:nth-of-type(odd) {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+}
+
+/* Hover na linha da tabela (Dark) */
+body.dark-mode .table-hover tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Cabeçalho da Tabela (Dark) */
+body.dark-mode .table thead th {
+  background-color: #2c2c2c !important; /* Fundo escuro pro header */
+  color: #0dcaf0 !important; /* Destaque ciano nos títulos */
   border-color: #444 !important;
 }
 
-body.dark-mode .table thead th {
-  background-color: #2c2c2c !important;
-  color: #0dcaf0 !important;
-}
-
+/* --- Inputs, Selects & Agrupadores (Dark) --- */
 body.dark-mode .form-control,
-body.dark-mode .select-tpEmp,
-body.dark-mode .select-status,
-body.dark-mode .input-group-text {
+body.dark-mode .form-select,
+body.dark-mode .input-group-text,
+body.dark-mode #tipo-pessoa, 
+body.dark-mode #status,
+body.dark-mode .endereco-container {
   background-color: var(--dark-input) !important;
   border-color: #555 !important;
   color: #fff !important;
 }
+
+/* Placeholder nos inputs (Dark) */
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder {
+  color: #888 !important;
+}
+
+/* Label dentro de containers customizados (Dark) */
+body.dark-mode .endereco-container .form-label {
+  color: var(--dark-text) !important;
+}
+
+/* Select Colorido dentro do DarkMode */
+body.dark-mode .select-colorido option {
+  background-color: var(--dark-bg-grid);
+  color: var(--dark-text);
+}
+
+/* Mantém o segmento colorido mesmo no dark mode (Regra Dinâmica do JS prevalece) */
+body.dark-mode .form-select#segmento {
+  /* Estas variáveis são controladas pelo JS em forms.js atualizarEstiloSegmento() */
+  background-color: var(--seg-bg);
+  color: var(--seg-text);
+  border-color: var(--seg-border);
+}
+
+/* --- Botões no Dark Mode --- */
+/* Botões outline (exportar/importar) ficam mais claros */
+body.dark-mode .btn-outline-secondary {
+  color: #bbb;
+  border-color: #555;
+  background-color: transparent;
+}
+
+body.dark-mode .btn-outline-secondary:hover {
+  background-color: #333;
+  color: #fff;
+  border-color: #666;
+}
+
+/* --- Modal Footer (Dark) --- */
+body.dark-mode .modal-footer {
+  background-color: var(--dark-bg-grid) !important;
+  color: var(--dark-text) !important;
+  border-top: 1px solid var(--dark-border) !important;
+}
+
+/* --- Utilitários (Dark) --- */
+body.dark-mode .text-muted {
+  color: #bbb !important;
+}
+
+body.dark-mode .table td code {
+  color: #ffc107 !important; /* Destaque amarelo para códigos no dark */
+}
+
+/* --- Scrollbar Customizado (Dark) --- */
 body.dark-mode ::-webkit-scrollbar {
   width: 8px;
 }
@@ -93,112 +298,4 @@ body.dark-mode ::-webkit-scrollbar-track {
 body.dark-mode ::-webkit-scrollbar-thumb {
   background: #444;
   border-radius: 4px;
-}
-body.dark-mode select#tipo-busca,
-body.dark-mode input#busca-empresa {
-  background-color: #333;
-  color: #fff;
-  border: 1px solid #555;
-}
-body.dark-mode .endereco-container {
-  background-color: var(--dark-input) !important;
-  border-color: #444 !important;
-  color: var(--dark-text) !important;
-}
-
-body.dark-mode .endereco-container .form-label {
-  color: var(--dark-text) !important;
-}
-
-body.dark-mode .form-select#segmento {
-  background-color: var(--seg-bg);
-  color: var(--seg-text);
-  border-color: var(--seg-border);
-}
-
-body.dark-mode .modal-footer{
-  background-color: var(--dark-bg-grid) !important;
-  color: var(--dark-text)!important;
-}
-
-.modal-header {
-background-color: var(--sc-header) !important;
-}
-
-#segmento {
-  transition: all 0.3s ease;
-}
-
-/* --- COMPONENTES GERAIS --- */
-.navbar {
-  background-color: var(--sc-header) !important;
-  border-bottom: 4px solid var(--sc-header2);
-}
-
-.table-zebra tbody tr:nth-of-type(odd) {
-  background-color: rgba(0, 0, 0, 0.02);
-}
-
-.btn-action {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
-  border-radius: 6px;
-  transition: transform 0.1s;
-}
-
-.btn-action:hover {
-  transform: scale(1.1);
-}
-body.dark-mode .text-muted {
-  color: #bbb !important;
-}
-body.dark-mode .form-control,
-body.dark-mode .form-select {
-  color: #fff !important;
-}
-
-body.dark-mode .table td code,
-body.dark-mode .table td {
-  color: var(--dark-text) !important;
-}
-
-body.dark-mode input::placeholder,
-textarea::placeholder {
-  color: #888 !important;
-}
-
-/***************************************/
-
-.navbar {
-  background-color: var(--sc-header) !important;
-  border-bottom: 4px solid var(--sc-header2);
-}
-
-.card {
-  border: none;
-  border-radius: 8px;
-}
-
-.card-header {
-  font-weight: bold;
-  color: var(--sc-header);
-  border-bottom: 2px solid #f0f0f0;
-}
-
-.table thead {
-  background-color: #f8f9fa;
-  color: var(--sc-header);
-}
-
-.table-hover tbody tr:hover {
-  background-color: #f1f7ff;
-  transition: 0.3s;
-}
-
-.btn-success {
-  background-color: var(--sc-btn);
-  border: none;
-}
-.btn-success:hover {
-  background-color: var(--sc-btn-hover);
 }
