@@ -15,10 +15,11 @@ const EmpreendimentoStorage = {
   },
 
   obterProximoId() {
-    let ultimoId = localStorage.getItem(ID_KEY);
-    let proximoId = ultimoId ? parseInt(ultimoId) + 1 : 1;
-    localStorage.setItem(ID_KEY, proximoId);
-    return proximoId;
+    const lista = this.buscarTodos();
+    if (lista.length === 0) return 1;
+    // Garante que o ID nunca se repita, mesmo se o cache de ID_KEY sumir
+    const maxId = Math.max(...lista.map((item) => item.id));
+    return maxId + 1;
   },
 
   adicionar(objeto) {

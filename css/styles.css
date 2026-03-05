@@ -18,6 +18,8 @@
   --seg-border:     #dee2e6;
 }
 
+
+
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   transition:
@@ -112,6 +114,15 @@ body.dark-mode .form-select#segmento {
   background-color: var(--seg-bg);
   color: var(--seg-text);
   border-color: var(--seg-border);
+}
+
+body.dark-mode .modal-footer{
+  background-color: var(--dark-bg-grid) !important;
+  color: var(--dark-text)!important;
+}
+
+.modal-header {
+background-color: var(--sc-header) !important;
 }
 
 #segmento {

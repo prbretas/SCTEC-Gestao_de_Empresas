@@ -42,16 +42,14 @@ const FormController = {
     inputReg?.addEventListener("input", aplicarMascara);
 
     selectTipo?.addEventListener("change", () => {
-      inputReg.value = ""; // Limpa para evitar resíduos de máscara anterior
+      inputReg.value = "";
       const tipo = selectTipo.value;
-
-      // Ajusta Label e Placeholder
-      if (labelReg) labelReg.textContent = tipo === "PF" ? "CPF" : "CNPJ";
+      labelReg.textContent = tipo === "PF" ? "CPF" : "CNPJ";
       inputReg.placeholder =
         tipo === "PF" ? "000.000.000-00" : "00.000.000/0000-00";
-
-      // Define limite físico de caracteres para evitar erros de input
       inputReg.setAttribute("maxlength", tipo === "PF" ? "14" : "18");
+
+      aplicarMascara();
       inputReg.focus();
     });
 
