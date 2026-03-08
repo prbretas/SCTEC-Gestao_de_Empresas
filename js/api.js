@@ -4,50 +4,36 @@
 const ApiService = {
   // Busca CEP na API do ViaCEP
   async buscarCep(cep) {
-    // 1. Sanitização rigorosa
     const cleanCep = cep.replace(/\D/g, "");
-
-    // 2. Validação de integridade antes da requisição
-    if (cleanCep.length !== 8) {
-      console.warn("CEP Inválido: Formato incorreto.");
-      return null;
-    }
+    if (cleanCep.length !== 8) return null;
 
     try {
-      // 3. Timeout para evitar que a UI trave em caso de lentidão da API
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos
-
-      const response = await fetch(
-        `https://viacep.com.br/ws/${cleanCep}/json/`,
-        {
-          signal: controller.signal,
-        },
-      );
-
-      clearTimeout(timeoutId);
-
+      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
       if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-
       const data = await response.json();
-
-      // A API do ViaCEP retorna erro: true se o CEP não existir
-      if (data.erro) {
-        console.warn("CEP não encontrado na base de dados.");
-        return null;
-      }
-
-      return data;
+      return data.erro ? null : data;
     } catch (error) {
-      if (error.name === "AbortError") {
-        console.error("Erro: A requisição ao ViaCEP excedeu o tempo limite.");
-      } else {
-        console.error("Erro na API ViaCEP:", error);
-      }
+      console.error("Erro na API ViaCEP:", error);
       return null;
     }
   },
+
+  // ---Busca CNPJ na BrasilAPI ---
+  async buscarCnpj(cnpj) {
+    const cleanCnpj = cnpj.replace(/\D/g, "");
+    if (cleanCnpj.length !== 14) return null;
+
+    try {
+      const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanCnpj}`);
+      if (!response.ok) throw new Error("CNPJ não encontrado");
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Erro ao buscar CNPJ:", error);
+      return null;
+    }
+  }
 };
 
-// Garante que o serviço esteja disponível globalmente para o forms.js
 window.ApiService = ApiService;

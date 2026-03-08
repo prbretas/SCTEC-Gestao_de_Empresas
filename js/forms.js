@@ -43,19 +43,36 @@ const FormController = {
       );
     };
 
-    inputReg?.addEventListener("input", aplicarMascara);
+    inputReg?.addEventListener("blur", async () => {
+      if (selectTipo.value !== "PJ" || inputReg.readOnly) return;
 
-    selectTipo?.addEventListener("change", () => {
-      inputReg.value = "";
-      const tipo = selectTipo.value;
-      if (labelReg) labelReg.textContent = tipo === "PF" ? "CPF" : "CNPJ";
-      inputReg.placeholder =
-        tipo === "PF" ? "000.000.000-00" : "00.000.000/0000-00";
-      inputReg.setAttribute("maxlength", tipo === "PF" ? "14" : "18");
-      inputReg.focus();
+      const cnpj = inputReg.value.replace(/\D/g, "");
+      if (cnpj.length === 14) {
+        const dados = await ApiService.buscarCnpj(cnpj);
+
+        if (dados) {
+          document.querySelector("#nome").value = dados.razao_social;
+          document.querySelector("#cep").value = dados.cep;
+          document.querySelector("#municipio").value = dados.municipio;
+
+          const end = `${dados.logradouro}, ${dados.numero}${dados.bairro ? " - " + dados.bairro : ""}`;
+          document.querySelector("#endereco").value = end;
+
+          // Injeção de dados técnicos nas Observações
+          const obsExtra = `--- DADOS RECEITA FEDERAL ---\n` +
+            `Nome Fantasia: ${dados.nome_fantasia || "N/A"}\n` +
+            `Abertura: ${dados.data_inicio_atividade}\n` +
+            `Atividade: ${dados.cnae_fiscal_descricao}\n` +
+            `Situacao: ${dados.descricao_situacao_cadastral}`;
+
+          const campoObs = document.querySelector("#observacoes");
+          campoObs.value = campoObs.value ? campoObs.value + "\n\n" + obsExtra : obsExtra;
+
+          // Trigger para ajustar o tamanho do textarea
+          campoObs.dispatchEvent(new Event('input'));
+        }
+      }
     });
-
-    selectSeg?.addEventListener("change", () => this.atualizarEstiloSegmento());
   },
 
   /**
