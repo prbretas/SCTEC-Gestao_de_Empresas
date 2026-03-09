@@ -96,29 +96,70 @@ const FormController = {
     document.querySelector("#status").value = emp.status;
     document.querySelector("#observacoes").value = emp.observacoes || "";
   },
-
   async handleSave(e) {
     e.preventDefault();
-    const id = document.querySelector("#emp-id").value;
-    const dados = {
-      nome: document.querySelector("#nome").value,
-      tipoPessoa: document.querySelector("#tipo-pessoa").value,
-      registro: document.querySelector("#registro").value,
-      responsavel: document.querySelector("#responsavel").value,
-      cep: document.querySelector("#cep").value,
-      endereco: document.querySelector("#endereco").value,
-      municipio: document.querySelector("#municipio").value,
-      segmento: document.querySelector("#segmento").value,
-      status: document.querySelector("#status").value,
-      observacoes: document.querySelector("#observacoes").value,
-    };
 
-    if (id) EmpreendimentoStorage.atualizar(id, dados);
-    else EmpreendimentoStorage.adicionar(dados);
+    const formData = new FormData(this.form);
+    const dados = Object.fromEntries(formData.entries());
 
-    UIController.modalForm.hide();
-    UIController.renderizarLista();
-  }
+    // Captura o ID do campo oculto para saber se é Edição ou Novo
+    const idExistente = document.querySelector("#emp-id").value;
+
+    // --- VALIDAÇÃO DE DUPLICIDADE INTELIGENTE ---
+    const baseAtual = EmpreendimentoStorage.buscarTodos();
+
+    const registroDuplicado = baseAtual.find(emp =>
+      emp.registro === dados.registro &&
+      emp.nome.toLowerCase() === dados.nome.toLowerCase() &&
+      emp.segmento === dados.segmento &&
+      Number(emp.id) !== Number(idExistente) // AQUI ESTÁ A CHAVE: Permite salvar se for o próprio ID
+    );
+
+    if (registroDuplicado) {
+      alert(`⚠️ Bloqueio de Integridade:\nJá existe um cadastro para este Registro/CNPJ com o mesmo nome e segmento.`);
+      return;
+    }
+
+    // --- EXECUÇÃO DO CRUD ---
+    try {
+      if (idExistente) {
+        // UPDATE: Passa o ID e os novos dados
+        EmpreendimentoStorage.atualizar(idExistente, dados);
+        console.log("Registro atualizado com sucesso!");
+      } else {
+        // CREATE: Adiciona novo
+        EmpreendimentoStorage.adicionar(dados);
+        console.log("Novo registro criado com sucesso!");
+      }
+
+      // Finalização padrão
+      this.form.reset();
+      UIController.modalForm.hide();
+      UIController.renderizarLista();
+
+    } catch (error) {
+      console.error("Erro ao processar CRUD:", error);
+      alert("Erro ao salvar os dados. Verifique o console.");
+    }
+  },
+carregarDadosNoForm(emp) {
+    document.querySelector("#emp-id").value = emp.id || "";
+    document.querySelector("#nome").value = emp.nome || "";
+    document.querySelector("#registro").value = emp.registro || "";
+    document.querySelector("#responsavel").value = emp.responsavel || "";
+    document.querySelector("#email").value = emp.email || ""; 
+    document.querySelector("#telefone").value = emp.telefone || "";
+    document.querySelector("#cep").value = emp.cep || "";
+    document.querySelector("#endereco").value = emp.endereco || "";
+    document.querySelector("#municipio").value = emp.municipio || "";
+    document.querySelector("#segmento").value = emp.segmento || "Outros";
+    document.querySelector("#status").value = emp.status || "Ativo";
+    document.querySelector("#observacoes").value = emp.observacoes || "";
+    
+    this.setReadOnly(false); // Garante que campos não fiquem bloqueados na edição
+  },
+
+  
 };
 
 window.abrirModalCadastro = () => {

@@ -36,19 +36,22 @@ const EmpreendimentoStorage = {
     this.salvarTodos(lista);
     return novoRegistro;
   },
-
   atualizar(id, objetoAtualizado) {
     const lista = this.buscarTodos();
     const index = lista.findIndex(e => e.id === Number(id));
-    if (index === -1) return false;
 
-    lista[index] = {
-      ...lista[index],
-      ...objetoAtualizado,
-      dataAtualizacao: new Date().toISOString()
-    };
-    this.salvarTodos(lista);
-    return true;
+    if (index !== -1) {
+      // Mantém os dados antigos (como data de cadastro) e sobrepõe com os novos
+      lista[index] = {
+        ...lista[index],
+        ...objetoAtualizado,
+        id: Number(id), // Garante que o ID permaneça o mesmo
+        dataAtualizacao: new Date().toISOString()
+      };
+      this.salvarTodos(lista);
+      return true;
+    }
+    return false;
   },
 
   excluir(id) {

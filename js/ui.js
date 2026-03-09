@@ -43,24 +43,21 @@ const UIController = {
 
         <td>
           <div class="fw-bold">${emp.responsavel || "N/D"}</div>
-          <div class="small text-muted" style="font-size: 0.8rem;">${emp.email || ""}</div>
-          <div class="small text-muted" style="font-size: 0.8rem;">${emp.telefone || ""}</div>
+          <div class="text-muted" style="font-size: 0.8rem; line-height: 1.2;">
+            ${emp.email ? `<div>${emp.email}</div>` : ""}
+            ${emp.telefone ? `<div>${emp.telefone}</div>` : ""}
+          </div>
         </td>
-
         <td class="small text-wrap" style="max-width: 200px;">${emp.endereco || ""}</td>
-
         <td class="small">${emp.municipio || ""}</td>
-
         <td>
           <span class="badge" style="background-color: ${config.bg}; color: ${config.text}; border: 1px solid ${config.border}">
             ${emp.segmento}
           </span>
         </td>
-
         <td>
           <span class="badge ${emp.status === "Ativo" ? "bg-success" : "bg-danger"}">${emp.status}</span>
         </td>
-
         <td class="text-center">
           <button class="btn btn-sm btn-outline-warning" 
             onclick="event.stopPropagation(); FormController.prepararEdicao(${emp.id})">✏️</button>
@@ -77,8 +74,8 @@ const UIController = {
       EmpreendimentoStorage.excluir(id);
       this.renderizarLista();
     }
-  }, 
-  
+  },
+
   initDarkMode() {
     const switchBtn = document.querySelector("#dark-mode-switch");
     const aplicar = (dark) => {
