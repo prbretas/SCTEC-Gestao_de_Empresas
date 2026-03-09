@@ -114,7 +114,6 @@ const FormController = {
     this.carregarDadosNoForm(emp);
     this.setReadOnly(false);
 
-    // TRAVA: Na edição, não permite alterar Nome e Registro (CNPJ/CPF)
     const inputNome = document.querySelector("#nome");
     const inputReg = document.querySelector("#registro");
 
@@ -153,7 +152,7 @@ async handleSave(e) {
   if (!dados.status) dados.status = "Ativo";
 
   // 2. Validação visual de campos obrigatórios
-  const obrigatorios = ['nome', 'registro', 'responsavel', 'segmento'];
+  const obrigatorios = ['nome', 'registro'];
   let formValido = true;
 
   obrigatorios.forEach(campo => {
@@ -212,7 +211,7 @@ async handleSave(e) {
 
   validarFormulario(dados) {
     let valido = true;
-    const camposObrigatorios = ['nome', 'registro', 'segmento'];
+    const camposObrigatorios = ['nome', 'registro'];
 
     camposObrigatorios.forEach(campo => {
       const el = document.querySelector(`#${campo}`);

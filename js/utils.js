@@ -195,33 +195,33 @@ const Utils = {
     leitor.onerror = () => alert("Erro ao ler o arquivo.");
     leitor.readAsText(arquivo, "UTF-8");
   },
+baixarModeloCSV() {
+  // 1. Definição do cabeçalho com EXATAMENTE 11 colunas
+  const cabecalho = "Nome;TipoPessoa;Registro;Responsavel;Email;Telefone;Endereco;Municipio;Segmento;Status;Observacoes";
+  
+  // 2. Linha de exemplo seguindo a mesma ordem (Índices 0 a 10)
+  const exemplo = "Exemplo Empresa SC;PJ;00.000.000/0000-00;Philippe PH;contato@exemplo.com.br;(47) 99999-8888;Rua das Indústrias, 100;Joinville;Tecnologia;Ativo;Registro de teste para importação";
 
-  baixarModeloCSV() {
-    // Definição do cabeçalho esperado pelo sistema de importação
-    const cabecalho =
-      "Nome;TipoPessoa;Registro;Responsavel;Email;Telefone;Endereco;Municipio;Segmento;Status;Observacoes";
-    // Linha de exemplo para orientar o usuário
-    const exemplo =
-      "Empresa Exemplo LTDA;PJ;00.000.000/0000-00;João Silva;admin@exemplo.com;(47) 99999-9999;Rua das Flores, 123;Joinville;Logística;Ativo;Exemplo de observação";
+  const conteudo = [cabecalho, exemplo].join("\n");
 
-    const conteudo = [cabecalho, exemplo].join("\n");
+  // 3. Gerar o arquivo com BOM (Byte Order Mark) para o Excel abrir com acentos corretos
+  const blob = new Blob(["\ufeff" + conteudo], {
+    type: "text/csv;charset=utf-8;",
+  });
 
-    // \ufeff é o BOM (Byte Order Mark) para o Excel reconhecer acentos e caracteres especiais
-    const blob = new Blob(["\ufeff" + conteudo], {
-      type: "text/csv;charset=utf-8;",
-    });
-    const url = URL.createObjectURL(blob);
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  
+  link.setAttribute("href", url);
+  link.setAttribute("download", "SCTEC_Modelo_Importacao.csv");
+  link.style.visibility = "hidden";
+  
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  console.log("Modelo CSV gerado com sucesso.");
+},
 
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", "modelo_importacao_SCTEC.csv");
-    link.style.visibility = "hidden";
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    console.log("Modelo de planilha gerado com sucesso.");
-  },
 };
 

@@ -29,8 +29,37 @@
 }
 
 #telefone {
-  color: var(--readonly-text);
+  color: var(--dark-bg);
+  
 }
+
+#telefone:disabled {
+  color: var(--readonly-text) !important;
+  
+}
+
+
+
+#segmento:disabled {
+  background-color: #e9ecef !important;
+  /* Cinza claro */
+  color: #6c757d !important;
+  /* Texto cinza */
+  cursor: not-allowed;
+  /* Cursor de bloqueio */
+  border-color: #dee2e6;
+}
+
+body.dark-mode #segmento:disabled {
+  background-color: #e9ecef !important;
+  /* Cinza claro */
+  color: #6c757d !important;
+  /* Texto cinza */
+  cursor: not-allowed;
+  /* Cursor de bloqueio */
+  border-color: #dee2e6;
+}
+
 
 /* --- Base --- */
 body {
@@ -87,9 +116,9 @@ body.dark-mode #rotinaTitle {
 .form-control,
 .form-select,
 .input-group-text {
-  background-color: #ffffff !important;
-  color: #212529 !important;
-  border: 1px solid #ced4da !important;
+  background-color: #ffffff;
+  color: #212529 ;
+  border: 1px solid #ced4da;
 }
 
 /* Botão Success (Azul Customizado) */
@@ -189,7 +218,7 @@ body.dark-mode #lista-corpo tr:hover {
 /* --- Utilitários --- */
 #auditoria-info {
   font-size: 0.75rem;
-  color:var(--dark-border);
+  color: var(--dark-border);
   width: 100%;
 }
 
@@ -220,11 +249,26 @@ body.dark-mode .btn-dwnld-csv {
   color: rgb(105, 213, 255) !important;
 }
 
-.dark-mode .form-control:read-only,
-.dark-mode .form-select:disabled {
-  background-color: #333 !important;
-  color: #aaa !important;
-  border-color: #444 !important;
+
+.form-control:read-only,
+.form-control:disabled,
+.form-select:disabled {
+  background-color: #e9ecef !important;
+  /* Cinza claro */
+  color: #6c757d !important;
+  /* Texto cinza */
+  cursor: not-allowed;
+  /* Cursor de bloqueio */
+  border-color: #dee2e6;
+}
+
+
+body.dark-mode .form-control:read-only,
+body.dark-mode .form-control:disabled,
+body.dark-mode .form-select:disabled {
+  background-color: #2b3035 !important;
+  color: #adb5bd !important;
+  border-color: #495057;
 }
 
 
