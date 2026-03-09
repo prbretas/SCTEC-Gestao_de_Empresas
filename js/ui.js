@@ -38,12 +38,12 @@ const UIController = {
     <td>${emp.id}</td>
     <td>
       <div class="fw-bold text-primary">${emp.nome}</div>
-      <div class="small text-muted">${emp.registro}</div>
+      <div class="small">${emp.registro}</div>
     </td>
     <td>
       <div class="fw-bold">${emp.responsavel || "N/D"}</div>
-      <div class="small text-muted">${emp.email || ""}</div>
-      <div class="small text-muted">${emp.telefone || ""}</div>
+      <div class="small">${emp.email || ""}</div>
+      <div class="small">${emp.telefone || ""}</div>
     </td>
     <td class="small text-wrap" style="max-width: 200px;">${emp.endereco || ""}</td>
     <td class="small">${emp.municipio || ""}</td>

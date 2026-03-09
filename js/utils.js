@@ -39,8 +39,7 @@ const Utils = {
     return v;
   },
 
-
-  mascaraTelefone(valor) {
+  aplicarMascaraTelefone(valor) {
     if (!valor) return "";
     valor = valor.replace(/\D/g, ""); // Remove tudo que não é número
     valor = valor.replace(/^(\)2)(\d)/g, "($1) $2"); // Coloca parênteses no DDD
@@ -52,7 +51,7 @@ const Utils = {
       // Formato Fixo: (00) 0000-0000
       return valor.replace(/^(\d{2})(\d{4})(\d{4}).*/, "($1) $2-$3");
     }
-  },
+},
   formatarDataHora(isoString) {
     if (!isoString) return "N/A";
     const data = new Date(isoString);

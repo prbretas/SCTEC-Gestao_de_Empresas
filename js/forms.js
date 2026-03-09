@@ -11,6 +11,11 @@ const FormController = {
     const inputCep = document.querySelector("#cep");
     const inputReg = document.querySelector("#registro");
     const selectTipo = document.querySelector("#tipo-pessoa");
+    const inputTel = document.querySelector("#telefone");
+
+    inputTel?.addEventListener("input", (e) => {
+        e.target.value = Utils.aplicarMascaraTelefone(e.target.value);
+    });
 
     // Lógica ViaCEP
     inputCep?.addEventListener("blur", async () => {
@@ -104,12 +109,23 @@ const FormController = {
 
   prepararEdicao(id) {
     const emp = EmpreendimentoStorage.buscarPorId(id);
-    if (emp) {
-      this.preencherForm(emp);
-      this.setReadOnly(false);
-      document.querySelector("#titulo-modal-form").textContent = "Editar Registro";
-      UIController.modalForm.show();
-    }
+    if (!emp) return;
+
+    this.carregarDadosNoForm(emp);
+    this.setReadOnly(false);
+
+    // TRAVA: Na edição, não permite alterar Nome e Registro (CNPJ/CPF)
+    const inputNome = document.querySelector("#nome");
+    const inputReg = document.querySelector("#registro");
+
+    inputNome.readOnly = true;
+    inputNome.style.backgroundColor = "#e9ecef";
+
+    inputReg.readOnly = true;
+    inputReg.style.backgroundColor = "#e9ecef";
+
+    document.querySelector("#titulo-modal-form").textContent = `Editar: ${emp.nome}`;
+    UIController.modalForm.show();
   },
 
   preencherForm(emp) {
@@ -126,80 +142,72 @@ const FormController = {
     document.querySelector("#observacoes").value = emp.observacoes || "";
   },
 
+async handleSave(e) {
+  e.preventDefault();
 
-  async handleSave(e) {
-    e.preventDefault();
+  const formData = new FormData(this.form);
+  const dados = Object.fromEntries(formData.entries());
+  const idExistente = document.querySelector("#emp-id").value;
 
-    const formData = new FormData(this.form);
-    const dados = Object.fromEntries(formData.entries());
+  // 1. Garante Status padrão se estiver vazio
+  if (!dados.status) dados.status = "Ativo";
 
-    if (!dados.status) dados.status = "Ativo";
+  // 2. Validação visual de campos obrigatórios
+  const obrigatorios = ['nome', 'registro', 'responsavel', 'segmento'];
+  let formValido = true;
 
-    if (!this.validarFormulario(dados)) return;
-    const idExistente = document.querySelector("#emp-id").value;
+  obrigatorios.forEach(campo => {
+    const input = this.form.querySelector(`[name="${campo}"]`);
+    if (!dados[campo] || dados[campo].trim() === "") {
+      input.classList.add("is-invalid");
+      formValido = false;
+    } else {
+      input.classList.remove("is-invalid");
+    }
+  });
 
-    const obrigatorios = ['nome', 'registro', 'responsavel', 'segmento'];
-    let formValido = true;
+  if (!formValido) {
+    alert("⚠️ PH, preencha os campos obrigatórios em destaque!");
+    return;
+  }
 
+  // 3. VALIDAÇÃO DE CNPJ/CPF DUPLICADO (Limpando pontuação)
+  const baseAtual = EmpreendimentoStorage.buscarTodos();
+  const registroLimpoNovo = dados.registro.replace(/\D/g, "");
 
-    obrigatorios.forEach(campo => {
-      const input = this.form.querySelector(`[name="${campo}"]`);
-      if (!dados[campo] || dados[campo].trim() === "") {
-        input.classList.add("is-invalid");
-        formValido = false;
-      } else {
-        input.classList.remove("is-invalid");
-      }
-    });
+  const registroDuplicado = baseAtual.find(emp => {
+    const registroLimpoBase = emp.registro.replace(/\D/g, "");
+    return registroLimpoBase === registroLimpoNovo && Number(emp.id) !== Number(idExistente);
+  });
 
+  if (registroDuplicado) {
+    alert(`🚨 Bloqueio: O registro ${dados.registro} já pertence a empresa "${registroDuplicado.nome}"!`);
+    return;
+  }
 
-    if (!formValido) {
-        alert("Preencha os campos obrigatórios!");
-        return;
+  // 4. Lógica de Persistência
+  try {
+    if (idExistente) {
+      // MODO EDIÇÃO
+      const confirmar = confirm(`Deseja confirmar as alterações em: ${dados.nome}?`);
+      if (!confirmar) return;
+
+      EmpreendimentoStorage.atualizar(idExistente, dados);
+    } else {
+      // MODO INCLUSÃO
+      EmpreendimentoStorage.adicionar(dados);
     }
 
-    const baseAtual = EmpreendimentoStorage.buscarTodos();
-    const registroDuplicado = baseAtual.find(emp => {
-      if (!emp.nome || !dados.nome) return false;
+    this.form.reset();
+    UIController.modalForm.hide();
+    UIController.renderizarLista();
+    console.log("Sucesso no processamento.");
 
-      return emp.registro === dados.registro &&
-        emp.nome.toLowerCase() === dados.nome.toLowerCase() &&
-        emp.segmento === dados.segmento &&
-        Number(emp.id) !== Number(idExistente);
-    });
-
-    if (registroDuplicado) {
-      alert(`⚠️ Registro já existente na base para o segmento ${dados.segmento}.`);
-      return;
-    }
-
-    // 3. Lógica de Persistência
-    try {
-      if (idExistente) {
-        // --- MODO EDIÇÃO ---
-        const confirmar = confirm(`Deseja confirmar as alterações no registro de ${dados.nome}?`);
-        if (!confirmar) return;
-
-        EmpreendimentoStorage.atualizar(idExistente, dados);
-      } else {
-        // --- MODO INCLUSÃO ---
-        // Salva direto sem perguntar, conforme solicitado
-        EmpreendimentoStorage.adicionar(dados);
-      }
-
-      // 4. Pós-Processamento
-      this.form.reset();
-      UIController.modalForm.hide();
-      UIController.renderizarLista();
-
-      // Alerta de sucesso opcional para feedback
-      console.log("Operação realizada com sucesso!");
-
-    } catch (error) {
-      console.error("Erro ao salvar:", error);
-      alert("Erro técnico ao salvar. Verifique se o LocalStorage está acessível.");
-    }
-  },
+  } catch (error) {
+    console.error("Erro no salvamento:", error);
+    alert("Erro técnico ao salvar no LocalStorage.");
+  }
+},
 
 
   validarFormulario(dados) {
