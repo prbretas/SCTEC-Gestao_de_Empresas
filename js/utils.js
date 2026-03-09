@@ -51,7 +51,7 @@ const Utils = {
       // Formato Fixo: (00) 0000-0000
       return valor.replace(/^(\d{2})(\d{4})(\d{4}).*/, "($1) $2-$3");
     }
-},
+  },
   formatarDataHora(isoString) {
     if (!isoString) return "N/A";
     const data = new Date(isoString);
@@ -67,40 +67,33 @@ const Utils = {
     const dados = EmpreendimentoStorage.buscarTodos();
     if (dados.length === 0) return alert("Não há dados para exportar.");
 
-    // Cabeçalho idêntico ao esperado na importação
-    const cabecalho =
-      "Nome;TipoPessoa;Registro;Responsavel;Email;Telefone;Endereco;Municipio;Segmento;Status;Observacoes";
+    const cabecalho = "Nome;TipoPessoa;Registro;Responsavel;Email;Telefone;Endereco;Municipio;Segmento;Status;Observacoes";
     const csvRows = [cabecalho];
 
     dados.forEach((item) => {
-      //Remove pontos e vírgulas e quebras de linha para não quebrar o CSV
-      const limpar = (texto) =>
-        (texto || "").toString().replace(/;/g, ",").replace(/\n/g, " ");
+      const limpar = (texto) => (texto || "").toString().replace(/;/g, ",").replace(/\n/g, " ").trim();
 
-      csvRows.push(
-        [
-          limpar(item.nome),
-          limpar(item.tipoPessoa),
-          limpar(item.registro),
-          limpar(item.responsavel),
-          limpar(item.email),
-          limpar(item.telefone),
-          limpar(item.endereco),
-          limpar(item.municipio),
-          limpar(item.segmento),
-          limpar(item.status),
-          limpar(item.observacoes),
-        ].join(";"),
-      );
+      const row = [
+        limpar(item.nome),
+        limpar(item.tipoPessoa),
+        limpar(item.registro),
+        limpar(item.responsavel),
+        limpar(item.email),
+        limpar(item.telefone),
+        limpar(item.endereco),
+        limpar(item.municipio),
+        limpar(item.segmento),
+        limpar(item.status),
+        limpar(item.observacoes)
+      ];
+
+      csvRows.push(row.join(";"));
     });
 
-    // \ufeff garante que o Excel entenda como UTF-8
-    const blob = new Blob(["\ufeff" + csvRows.join("\n")], {
-      type: "text/csv;charset=utf-8;",
-    });
+    const blob = new Blob(["\ufeff" + csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `SCTEC_Export_${new Date().toLocaleDateString().replace(/\//g, "-")}.csv`;
+    link.download = `SCTEC_Export_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
   },
 
@@ -110,7 +103,6 @@ const Utils = {
     const leitor = new FileReader();
     leitor.onload = (e) => {
       const conteudo = e.target.result;
-      // Divide por quebra de linha e remove linhas vazias ou apenas com espaços
       const linhas = conteudo.split(/\r?\n/).filter((l) => l.trim() !== "");
 
       if (linhas.length <= 1) {
@@ -120,33 +112,31 @@ const Utils = {
       const registrosNaBase = EmpreendimentoStorage.buscarTodos();
       const novosParaImportar = [];
 
-      let totalNoArquivo = linhas.length - 1; // Desconsidera cabeçalho
+      let totalNoArquivo = linhas.length - 1;
       let duplicadosEncontrados = 0;
       let errosLayout = 0;
 
-      // Itera sobre as linhas de dados
       for (let i = 1; i < linhas.length; i++) {
-        // Limpa aspas e espaços extras
         const colunas = linhas[i]
           .split(";")
           .map((c) => c.replace(/^"|"$/g, "").trim());
 
-        // Validação de layout: Nome, Tipo e Registro são obrigatórios (Colunas 0, 1 e 2)
+        // Validação: Nome e Registro são cruciais
         if (colunas.length < 3 || !colunas[0] || !colunas[2]) {
           errosLayout++;
           continue;
         }
 
         const registroLido = colunas[2];
+        // Normaliza para comparação (remove pontos, traços, etc)
+        const registroLimpo = registroLido.replace(/\D/g, "");
 
-        // Verifica se o CPF/CNPJ já existe na base do LocalStorage
         const jaExisteNaBase = registrosNaBase.some(
-          (r) => r.registro === registroLido,
+          (r) => r.registro.replace(/\D/g, "") === registroLimpo
         );
 
-        // Verifica se já não estamos adicionando ele nesta mesma importação (evita duplicados no próprio CSV)
         const jaEstaNaListaNova = novosParaImportar.some(
-          (r) => r.registro === registroLido,
+          (r) => r.registro.replace(/\D/g, "") === registroLimpo
         );
 
         if (jaExisteNaBase || jaEstaNaListaNova) {
@@ -154,64 +144,49 @@ const Utils = {
           continue;
         }
 
-        // Mapeia o objeto conforme o modelo do sistema
+        // MAPEAMENTO CORRETO DAS COLUNAS (Sincronizado com a Exportação)
         novosParaImportar.push({
           nome: colunas[0],
           tipoPessoa: colunas[1] || "PJ",
           registro: registroLido,
           responsavel: colunas[3] || "",
-          email: colunas[4] || "",
-          telefone: colunas[4] || "",
-          endereco: colunas[5] || "",
-          municipio: colunas[6] || "",
-          segmento: colunas[7] || "Outros",
-          status: colunas[8] || "Ativo",
-          observacoes: colunas[9] || "",
+          email: colunas[4] || "",    // Coluna 4
+          telefone: colunas[5] || "", // Coluna 5 (estava repetido como 4 no seu)
+          endereco: colunas[6] || "",
+          municipio: colunas[7] || "",
+          segmento: colunas[8] || "Outros",
+          status: colunas[9] || "Ativo",
+          observacoes: colunas[10] || "",
         });
       }
 
-      // --- CONSTRUÇÃO DO ALERTA DE CONFIRMAÇÃO ---
       const resumoMensagem =
         `📊 RESUMO DA IMPORTAÇÃO\n` +
         `----------------------------------\n` +
-        `📄 Registros encontrados no arquivo: ${totalNoArquivo}\n` +
-        `⚠️ Registros já existentes na base: ${duplicadosEncontrados} (não serão importados)\n` +
-        `❌ Erros de layout/inválidos: ${errosLayout}\n\n` +
-        `📥 TOTAL A SER IMPORTADO: ${novosParaImportar.length}\n` +
+        `📄 Registros no arquivo: ${totalNoArquivo}\n` +
+        `⚠️ Duplicados (CNPJ/CPF): ${duplicadosEncontrados}\n` +
+        `❌ Erros de layout: ${errosLayout}\n\n` +
+        `📥 TOTAL A IMPORTAR: ${novosParaImportar.length}\n` +
         `----------------------------------\n` +
-        `Deseja confirmar o processamento destes dados?`;
+        `Confirma o processamento?`;
 
       if (novosParaImportar.length > 0) {
-        // O comando 'confirm' do JS já gera os botões "OK" (Aprovar) e "Cancelar"
         if (confirm(resumoMensagem)) {
-          novosParaImportar.forEach((reg) =>
-            EmpreendimentoStorage.adicionar(reg),
-          );
+          novosParaImportar.forEach((reg) => EmpreendimentoStorage.adicionar(reg));
+          alert(`✅ Sucesso! ${novosParaImportar.length} registros importados.`);
 
-          alert(
-            `✅ Sucesso! ${novosParaImportar.length} registros foram importados.`,
-          );
-
-          // Atualiza a tela se o controller estiver disponível
           if (window.UIController) {
             window.UIController.renderizarLista();
           } else {
             location.reload();
           }
-        } else {
-          console.log("Importação cancelada pelo usuário.");
         }
       } else {
-        alert(
-          `Nenhum registro novo para importar!\n\n` +
-          `- Total no arquivo: ${totalNoArquivo}\n` +
-          `- Duplicados: ${duplicadosEncontrados}\n` +
-          `- Erros: ${errosLayout}`,
-        );
+        alert(`Nenhum registro novo. (Total: ${totalNoArquivo} | Duplicados: ${duplicadosEncontrados})`);
       }
     };
 
-    leitor.onerror = () => alert("Erro ao ler o arquivo selecionado.");
+    leitor.onerror = () => alert("Erro ao ler o arquivo.");
     leitor.readAsText(arquivo, "UTF-8");
   },
 
