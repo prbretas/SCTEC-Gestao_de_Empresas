@@ -34,6 +34,7 @@
     </nav>
 
     <main class="container">
+      <h1 id="rotinaTitle">SCTEC - Gestão de Cadastros</h1>
       <div class="card shadow-sm border-0 mb-4">
         <div class="card-body bg-white rounded p-3">
           <div class="row g-2 align-items-center">
@@ -94,12 +95,10 @@
           <table class="table table-hover table-zebra align-middle mb-0">
             <thead class="table-dark">
               <tr>
-                <th>ID</th>
-                <th>Nome/Razão Social</th>
-                <th>Registro</th>
-                <th>Município</th>
+                <th>Empresa / Registro</th>
+                <th>Responsável / Contato</th>
                 <th>Endereço</th>
-                <th>Segmento</th>
+                <th>Município</th>
                 <th>Status</th>
                 <th class="text-center">Ações</th>
               </tr>
@@ -172,11 +171,26 @@
                   <label class="form-label fw-bold"
                     >Responsável / Contato</label
                   >
-                  <input type="text" id="responsavel" class="form-control" />
+                  <input type="text" idf="responsavel" class="form-control" />
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label fw-bold">Telefone / E-mail</label>
-                  <input type="text" id="contato" class="form-control" />
+                  <label class="form-label fw-bold">E-mail de Contato</label>
+                  <input
+                    type="email"
+                    id="contato"
+                    class="form-control"
+                    placeholder="exemplo@email.com"
+                  />
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">Telefone</label>
+                  <input
+                    type="text"
+                    id="telefone"
+                    class="form-control"
+                    placeholder="(00) 00000-0000"
+                  />
                 </div>
 
                 <div class="col-md-3">
@@ -244,7 +258,7 @@
             </form>
           </div>
           <div class="modal-footer d-flex justify-content-between">
-            <div id="auditoria-info" class="small "></div>
+            <div id="auditoria-info" class="small"></div>
             <div>
               <button
                 type="button"

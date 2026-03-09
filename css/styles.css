@@ -8,12 +8,17 @@
   --sc-header2: #67ff61;
   --sc-btn: #006ebc;
   --sc-btn-hover: #005490;
-   --sc-btn-active: #003f6c;
-  
+  --sc-btn-active: #003f6c;
+
   /* Cores do Cabeçalho da Tabela (Light) */
-  --tab-header-bg: #f8f9fa; 
+  --tab-header-bg: #f8f9fa;
   --tab-header-text: #333a60;
   --tab-border: #dee2e6;
+
+  --readonly-bg: #333333;
+  --readonly-border: #aaaaaa;
+  --readonly-text: #f8f9fa;
+  ;
 
   /* --- Cores Dark Mode --- */
   --dark-bg: #121212;
@@ -23,11 +28,16 @@
   --dark-border: #333333;
 }
 
+#telefone {
+  color: var(--readonly-text);
+}
+
 /* --- Base --- */
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   transition: background-color 0.3s, color 0.3s;
-  background-color: #f4f7f6; /* Fundo levemente acinzentado para destacar os cards brancos */
+  background-color: #f4f7f6;
+  /* Fundo levemente acinzentado para destacar os cards brancos */
   color: #212529;
 }
 
@@ -40,6 +50,21 @@ body {
 /* ==========================================================================
    COMPONENTES LIGHT MODE
    ========================================================================== */
+
+
+#rotinaTitle {
+  color: var(--sc-header);
+  font-size: 2rem;
+  padding: 0px;
+  margin: 30px 0;
+  font-weight: bold;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+
+}
+
+body.dark-mode #rotinaTitle {
+  color: var(--dark-text);
+}
 
 /* Card de Pesquisa e Tabela */
 .card {
@@ -59,7 +84,7 @@ body {
 }
 
 /* Força botões e inputs a serem claros no Light Mode */
-.form-control, 
+.form-control,
 .form-select,
 .input-group-text {
   background-color: #ffffff !important;
@@ -84,6 +109,7 @@ body {
   background-color: var(--sc-btn-active) !important;
   transform: translateY(1px);
 }
+
 /* Zebra Striping */
 .table-zebra tbody tr:nth-of-type(odd) {
   background-color: rgba(0, 0, 0, 0.02);
@@ -98,12 +124,12 @@ body.dark-mode {
   color: var(--dark-text) !important;
 }
 
-.modal-header{
-background-color: var(--sc-header);
+.modal-header {
+  background-color: var(--sc-header);
 }
 
 
-#titulo-modal-form{
+#titulo-modal-form {
   background-color: var(--sc-header);
 }
 
@@ -131,7 +157,8 @@ body.dark-mode .table td {
 /* HEADER DO GRID NO DARK MODE */
 body.dark-mode .table thead th {
   background-color: #2c2c2c !important;
-  color: #67ff61 !important; /* Destaque na cor da marca para o título */
+  color: #67ff61 !important;
+  /* Destaque na cor da marca para o título */
   border-bottom: 2px solid #444 !important;
 }
 
@@ -169,33 +196,47 @@ body.dark-mode #auditoria-info {
   color: #bdbdbd;
 }
 
-#footer-screen{
+#footer-screen {
   background-color: var(--bg-body);
   height: 120px;
-  padding: 10px ;
+  padding: 10px;
 }
 
-.modal-footer{
-background-color: var(--tab-header-bg);
+.modal-footer {
+  background-color: var(--tab-header-bg);
 }
 
-body.dark-mode  .modal-footer{
-background-color: var(--dark-bg-grid);
+body.dark-mode .modal-footer {
+  background-color: var(--dark-bg-grid);
 }
 
 
-.btn-dwnld-csv{
+.btn-dwnld-csv {
   color: rgb(34, 115, 147);
 }
 
-body.darkmode .btn-dwnld-csv{
+body.darkmode .btn-dwnld-csv {
   color: rgb(105, 213, 255) !important;
+}
+
+
+
+#observacoes {
+  min-height: 120px;
+  /* Aproximadamente 5 linhas */
+  max-height: 300px;
+  /* Limite antes de ativar o scroll */
+  overflow-y: auto;
+  resize: none;
+  /* Evita que o usuário quebre o layout manualmente */
+  transition: height 0.2s ease;
 }
 
 
 .campo-bloqueado {
   background-color: var(--readonly-bg) !important;
   border-color: var(--readonly-border) !important;
+  color: var(--readonly-text) !important;
   cursor: not-allowed !important;
   opacity: 0.8;
 }

@@ -18,7 +18,6 @@ const UIController = {
       .querySelector("#tipo-busca")
       ?.addEventListener("change", () => this.renderizarLista());
   },
-
   renderizarLista() {
     const inputBusca = document.querySelector("#busca-empresa");
     const selectTipoBusca = document.querySelector("#tipo-busca");
@@ -32,8 +31,6 @@ const UIController = {
       if (!termo) return true;
       if (tipoFiltro === "todos")
         return Object.values(emp).join(" ").toLowerCase().includes(termo);
-      if (tipoFiltro === "localizacao")
-        return (emp.municipio + emp.endereco).toLowerCase().includes(termo);
       return emp[tipoFiltro]?.toLowerCase().includes(termo);
     });
 
@@ -42,21 +39,29 @@ const UIController = {
       const config = Utils.obterConfigSegmento(emp.segmento);
       const tr = document.createElement("tr");
       tr.style.cursor = "pointer";
-      tr.title = "Clique para ver detalhes";
 
-      // Evento de clique na linha para VISUALIZAR
-      tr.addEventListener("click", () =>
-        FormController.prepararVisualizacao(emp.id),
-      );
+      // Evento de clique na LINHA para VISUALIZAR (apenas se não clicar nos botões)
+      tr.addEventListener("click", (e) => {
+        if (!e.target.closest('.btn-action')) {
+          FormController.prepararVisualizacao(emp.id);
+        }
+      });
 
       tr.innerHTML = `
-                <td><strong>#${emp.id}</strong></td>
-                <td>${emp.nome}</td>
-                <td><code class="text-reset">${emp.registro || "N/A"}</code></td>
-                <td>${emp.municipio}</td>
-                <td class="text-truncate" style="max-width: 150px;">${emp.endereco}</td>
-                <td><span class="badge" style="background-color: ${config.bg}; color: ${config.text}; border: 1px solid ${config.border}">${emp.segmento}</span></td>
-                <td><span class="badge ${emp.status === "Ativo" ? "bg-success" : "bg-danger"}">${emp.status}</span></td>
+                <td>
+                    <div class="fw-bold text-primary">${emp.nome}</div>
+                    <small class="text-secondary">${emp.registro || "N/A"}</small>
+                </td>
+                <td>
+                    <div class="small fw-bold">${emp.responsavel || "N/A"}</div>
+                    <div class="small text-muted">${emp.contato || ""}</div>
+                    <div class="small text-muted">${emp.telefone || ""}</div>
+                </td>
+                <td class="small text-wrap" style="max-width: 250px;">${emp.endereco}</td>
+                <td class="small">${emp.municipio}</td>
+                <td>
+                    <span class="badge ${emp.status === "Ativo" ? "bg-success" : "bg-danger"}">${emp.status}</span>
+                </td>
                 <td class="text-center">
                     <button class="btn btn-sm btn-outline-warning btn-action" 
                             onclick="event.stopPropagation(); FormController.prepararEdicao(${emp.id})">✏️</button>
