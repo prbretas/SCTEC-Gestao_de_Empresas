@@ -189,11 +189,12 @@ body.dark-mode #lista-corpo tr:hover {
 /* --- Utilitários --- */
 #auditoria-info {
   font-size: 0.75rem;
-  color: #6c757d;
+  color:var(--dark-border);
+  width: 100%;
 }
 
 body.dark-mode #auditoria-info {
-  color: #bdbdbd;
+  color: var(--dark-text);
 }
 
 #footer-screen {
@@ -219,6 +220,12 @@ body.dark-mode .btn-dwnld-csv {
   color: rgb(105, 213, 255) !important;
 }
 
+.dark-mode .form-control:read-only,
+.dark-mode .form-select:disabled {
+  background-color: #333 !important;
+  color: #aaa !important;
+  border-color: #444 !important;
+}
 
 
 #observacoes {

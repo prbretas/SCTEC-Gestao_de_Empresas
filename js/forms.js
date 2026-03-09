@@ -55,22 +55,51 @@ const FormController = {
   setReadOnly(status) {
     const inputs = this.form.querySelectorAll("input, select, textarea");
     const btnSalvar = document.querySelector("#btn-salvar");
+
     inputs.forEach(el => {
-      el.readOnly = status;
-      if (el.tagName === "SELECT") el.style.pointerEvents = status ? "none" : "auto";
-      el.classList.toggle("bg-light", status);
+      if (status) {
+        // APLICA COLORAÇÃO CINZA (Trava visual que você pediu)
+        el.style.backgroundColor = "#e9ecef";
+        el.style.cursor = "not-allowed";
+        if (el.tagName === "SELECT") el.style.pointerEvents = "none";
+        else el.readOnly = true;
+      } else {
+        // LIBERA OS CAMPOS
+        el.style.backgroundColor = "";
+        el.style.cursor = "default";
+        el.style.pointerEvents = "auto";
+        el.readOnly = false;
+      }
     });
-    if (btnSalvar) btnSalvar.style.display = status ? "none" : "block";
+
+    if (btnSalvar) {
+      btnSalvar.style.display = status ? "none" : "inline-block";
+    }
   },
 
   prepararVisualizacao(id) {
     const emp = EmpreendimentoStorage.buscarPorId(id);
-    if (emp) {
-      this.preencherForm(emp);
-      this.setReadOnly(true);
-      document.querySelector("#titulo-modal-form").textContent = "Visualizar Registro";
-      UIController.modalForm.show();
+    if (!emp) return;
+
+    this.carregarDadosNoForm(emp);
+    this.setReadOnly(true); // TRAVA OS INPUTS
+
+    document.querySelector("#titulo-modal-form").textContent = `📄 Visualizar: ${emp.nome}`;
+
+    const auditoriaDiv = document.querySelector("#auditoria-info");
+    if (auditoriaDiv) {
+      const dataCriacao = emp.dataCadastro ? new Date(emp.dataCadastro).toLocaleString('pt-BR') : "N/D";
+      const dataUpdate = emp.dataAtualizacao ? new Date(emp.dataAtualizacao).toLocaleString('pt-BR') : "Sem alterações";
+
+      auditoriaDiv.innerHTML = `
+            <div id="auditoria-info">
+                <strong>Criado em:</strong> ${dataCriacao} | 
+                <strong>Última Atualização:</strong> ${dataUpdate}
+            </div>
+        `;
     }
+
+    UIController.modalForm.show();
   },
 
   prepararEdicao(id) {
@@ -141,25 +170,26 @@ const FormController = {
       console.error("Erro ao processar CRUD:", error);
       alert("Erro ao salvar os dados. Verifique o console.");
     }
-  },
-carregarDadosNoForm(emp) {
+  }, carregarDadosNoForm(emp) {
+    // Reset do formulário para garantir que nada fique "sujo"
+    this.form.reset();
+
     document.querySelector("#emp-id").value = emp.id || "";
     document.querySelector("#nome").value = emp.nome || "";
     document.querySelector("#registro").value = emp.registro || "";
     document.querySelector("#responsavel").value = emp.responsavel || "";
-    document.querySelector("#email").value = emp.email || ""; 
+    document.querySelector("#email").value = emp.email || "";
     document.querySelector("#telefone").value = emp.telefone || "";
+
     document.querySelector("#cep").value = emp.cep || "";
     document.querySelector("#endereco").value = emp.endereco || "";
     document.querySelector("#municipio").value = emp.municipio || "";
     document.querySelector("#segmento").value = emp.segmento || "Outros";
     document.querySelector("#status").value = emp.status || "Ativo";
     document.querySelector("#observacoes").value = emp.observacoes || "";
-    
-    this.setReadOnly(false); // Garante que campos não fiquem bloqueados na edição
   },
 
-  
+
 };
 
 window.abrirModalCadastro = () => {
