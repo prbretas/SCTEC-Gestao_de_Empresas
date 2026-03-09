@@ -56,7 +56,7 @@ const Utils = {
 
     // Cabeçalho idêntico ao esperado na importação
     const cabecalho =
-      "Nome;TipoPessoa;Registro;Responsavel;Contato;Endereco;Municipio;Segmento;Status;Observacoes";
+      "Nome;TipoPessoa;Registro;Responsavel;Email;Telefone;Endereco;Municipio;Segmento;Status;Observacoes";
     const csvRows = [cabecalho];
 
     dados.forEach((item) => {
@@ -70,7 +70,8 @@ const Utils = {
           limpar(item.tipoPessoa),
           limpar(item.registro),
           limpar(item.responsavel),
-          limpar(item.contato),
+          limpar(item.email),
+          limpar(item.telefone),
           limpar(item.endereco),
           limpar(item.municipio),
           limpar(item.segmento),
@@ -146,7 +147,8 @@ const Utils = {
           tipoPessoa: colunas[1] || "PJ",
           registro: registroLido,
           responsavel: colunas[3] || "",
-          contato: colunas[4] || "",
+          email: colunas[4] || "",
+          telefone: colunas[4] || "",
           endereco: colunas[5] || "",
           municipio: colunas[6] || "",
           segmento: colunas[7] || "Outros",
@@ -203,10 +205,10 @@ const Utils = {
   baixarModeloCSV() {
     // Definição do cabeçalho esperado pelo sistema de importação
     const cabecalho =
-      "Nome;TipoPessoa;Registro;Responsavel;Contato;Endereco;Municipio;Segmento;Status;Observacoes";
+      "Nome;TipoPessoa;Registro;Responsavel;Email;Telefone;Endereco;Municipio;Segmento;Status;Observacoes";
     // Linha de exemplo para orientar o usuário
     const exemplo =
-      "Empresa Exemplo LTDA;PJ;00.000.000/0000-00;João Silva;(47) 99999-9999;Rua das Flores, 123;Joinville;Logística;Ativo;Exemplo de observação";
+      "Empresa Exemplo LTDA;PJ;00.000.000/0000-00;João Silva;admin@exemplo.com;(47) 99999-9999;Rua das Flores, 123;Joinville;Logística;Ativo;Exemplo de observação";
 
     const conteudo = [cabecalho, exemplo].join("\n");
 
@@ -228,3 +230,4 @@ const Utils = {
     console.log("Modelo de planilha gerado com sucesso.");
   },
 };
+

@@ -3,38 +3,41 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <link
       rel="icon"
       type="image/png"
       href="https://images.emojiterra.com/google/noto-emoji/unicode-16.0/color/svg/1f3ed.svg"
     />
+
     <title>SCTEC - Gestão de Empreendimentos SC</title>
+
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./css/styles.css" />
   </head>
+
   <body class="bg-light">
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm mb-4">
       <div class="container">
         <span class="navbar-brand h1 mb-0">🏭 SCTEC - Gestão Empresarial</span>
+
         <div class="form-check form-switch text-light">
           <input
             class="form-check-input"
             type="checkbox"
             id="dark-mode-switch"
-            style="cursor: pointer"
           />
-          <label class="form-check-label" for="dark-mode-switch"
-            >Modo Escuro</label
-          >
+          <label class="form-check-label">Modo Escuro</label>
         </div>
       </div>
     </nav>
 
     <main class="container">
       <h1 id="rotinaTitle">SCTEC - Gestão de Cadastros</h1>
+
       <div class="card shadow-sm border-0 mb-4">
         <div class="card-body bg-white rounded p-3">
           <div class="row g-2 align-items-center">
@@ -47,10 +50,11 @@
                 <option value="todos">Todos</option>
                 <option value="nome">Nome/Razão</option>
                 <option value="registro">CPF/CNPJ</option>
-                <option value="localizacao">Localização</option>
+                <option value="municipio">Município</option>
                 <option value="segmento">Segmento</option>
               </select>
             </div>
+
             <div class="col">
               <input
                 type="text"
@@ -59,18 +63,16 @@
                 placeholder="Pesquisar empreendimentos..."
               />
             </div>
+
             <div class="col-auto d-flex gap-2">
               <button
                 onclick="Utils.exportarCSV()"
                 class="btn btn-outline-secondary"
-                title="Exportar CSV"
               >
                 📤 Exportar
               </button>
-              <label
-                class="btn btn-outline-secondary mb-0"
-                title="Importar CSV"
-              >
+
+              <label class="btn btn-outline-secondary mb-0">
                 📥 Importar
                 <input
                   type="file"
@@ -79,6 +81,7 @@
                   onchange="Utils.importarCSV(this.files[0])"
                 />
               </label>
+
               <button
                 class="btn btn-success fw-bold shadow-sm px-4"
                 onclick="abrirModalCadastro()"
@@ -95,159 +98,138 @@
           <table class="table table-hover table-zebra align-middle mb-0">
             <thead class="table-dark">
               <tr>
-                <th>Empresa / Registro</th>
-                <th>Responsável / Contato</th>
-                <th>Endereço</th>
-                <th>Município</th>
-                <th>Status</th>
-                <th class="text-center">Ações</th>
+                <th>CÓDIGO</th>
+                <th>EMPRESA / CNPJ</th>
+                <th>RESPONSÁVEL / CONTATO</th>
+                <th>ENDEREÇO</th>
+                <th>MUNICÍPIO</th>
+                <th>SEGMENTO</th>
+                <th>STATUS</th>
+                <th class="text-center">AÇÕES</th>
               </tr>
             </thead>
+
             <tbody id="lista-corpo"></tbody>
           </table>
         </div>
       </div>
+
       <footer id="footer-screen">
         <div class="mt-3 text-end">
           <button
             onclick="Utils.baixarModeloCSV()"
             class="btn btn-link btn-sm text-decoration-none btn-dwnld-csv"
           >
-            📥 Baixar Modelo de Planilha (CSV)
+            📥 Baixar Modelo CSV
           </button>
         </div>
       </footer>
     </main>
 
-    <div
-      class="modal fade"
-      id="modalFormulario"
-      tabindex="-1"
-      aria-hidden="true"
-    >
+    <!-- MODAL -->
+
+    <div class="modal fade" id="modalFormulario" tabindex="-1">
       <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg">
           <div class="modal-header text-white">
             <h5 class="modal-title" id="titulo-modal-form">Empreendimento</h5>
+
             <button
               type="button"
               class="btn-close btn-close-white"
               data-bs-dismiss="modal"
-              aria-label="Close"
             ></button>
           </div>
+
           <div class="modal-body p-4">
             <form id="form-empreendimento">
               <input type="hidden" id="emp-id" />
+
               <div class="row g-3">
                 <div class="col-md-8">
                   <label class="form-label fw-bold">Nome / Razão Social</label>
                   <input type="text" id="nome" class="form-control" required />
                 </div>
+
                 <div class="col-md-4">
-                  <label class="form-label fw-bold" id="label-registro"
-                    >CNPJ</label
-                  >
+                  <label class="form-label fw-bold">Documento</label>
+
                   <div class="input-group">
                     <select
                       id="tipo-pessoa"
                       class="form-select"
-                      style="max-width: 70px; font-size: 0.8rem"
+                      style="max-width: 70px"
                     >
                       <option value="PJ">PJ</option>
                       <option value="PF">PF</option>
                     </select>
+
                     <input
                       type="text"
                       id="registro"
                       class="form-control"
-                      placeholder="00.000.000/0000-00"
                       required
                     />
                   </div>
                 </div>
 
                 <div class="col-md-6">
-                  <label class="form-label fw-bold"
-                    >Responsável / Contato</label
-                  >
-                  <input type="text" idf="responsavel" class="form-control" />
+                  <label class="form-label fw-bold">Responsável</label>
+                  <input type="text" id="responsavel" class="form-control" />
                 </div>
+
                 <div class="col-md-6">
-                  <label class="form-label fw-bold">E-mail de Contato</label>
-                  <input
-                    type="email"
-                    id="contato"
-                    class="form-control"
-                    placeholder="exemplo@email.com"
-                  />
+                  <label class="form-label fw-bold">E-mail</label>
+                  <input type="email" id="contato" class="form-control" />
                 </div>
 
                 <div class="col-md-6">
                   <label class="form-label fw-bold">Telefone</label>
-                  <input
-                    type="text"
-                    id="telefone"
-                    class="form-control"
-                    placeholder="(00) 00000-0000"
-                  />
+                  <input type="text" id="telefone" class="form-control" />
                 </div>
 
                 <div class="col-md-3">
                   <label class="form-label fw-bold">CEP</label>
-                  <input
-                    type="text"
-                    id="cep"
-                    class="form-control"
-                    maxlength="9"
-                  />
+                  <input type="text" id="cep" class="form-control" />
                 </div>
+
                 <div class="col-md-5">
-                  <label class="form-label fw-bold">Endereço Completo</label>
-                  <input
-                    type="text"
-                    id="endereco"
-                    class="form-control"
-                    required
-                  />
+                  <label class="form-label fw-bold">Endereço</label>
+                  <input type="text" id="endereco" class="form-control" />
                 </div>
+
                 <div class="col-md-4">
-                  <label class="form-label fw-bold">Município (SC)</label>
-                  <input
-                    type="text"
-                    id="municipio"
-                    class="form-control"
-                    required
-                  />
+                  <label class="form-label fw-bold">Município</label>
+                  <input type="text" id="municipio" class="form-control" />
                 </div>
 
                 <div class="col-md-6">
-                  <label class="form-label fw-bold">Segmento de Atuação</label>
-                  <select
-                    id="segmento"
-                    class="form-select select-colorido"
-                    required
-                  >
-                    <option value="Tecnologia">Tecnologia</option>
-                    <option value="Indústria">Indústria</option>
-                    <option value="Logística">Logística</option>
-                    <option value="Comércio">Comércio</option>
-                    <option value="Serviços">Serviços</option>
-                    <option value="Transportes">Transportes</option>
-                    <option value="Fornecedor">Fornecedor</option>
-                    <option value="Cliente">Cliente</option>
+                  <label class="form-label fw-bold">Segmento</label>
+
+                  <select id="segmento" class="form-select" required>
+                    <option>Tecnologia</option>
+                    <option>Indústria</option>
+                    <option>Logística</option>
+                    <option>Comércio</option>
+                    <option>Serviços</option>
+                    <option>Transportes</option>
+                    <option>Fornecedor</option>
+                    <option>Cliente</option>
                   </select>
                 </div>
+
                 <div class="col-md-6">
-                  <label class="form-label fw-bold">Status Operacional</label>
-                  <select id="status" class="form-select" required>
-                    <option value="Ativo">🟢Ativo</option>
-                    <option value="Inativo">🔴Inativo</option>
+                  <label class="form-label fw-bold">Status</label>
+
+                  <select id="status" class="form-select">
+                    <option value="Ativo">🟢 Ativo</option>
+                    <option value="Inativo">🔴 Inativo</option>
                   </select>
                 </div>
 
                 <div class="col-12">
-                  <label class="form-label fw-bold">Observações Internas</label>
+                  <label class="form-label fw-bold">Observações</label>
+
                   <textarea
                     id="observacoes"
                     class="form-control"
@@ -257,23 +239,22 @@
               </div>
             </form>
           </div>
+
           <div class="modal-footer d-flex justify-content-between">
             <div id="auditoria-info" class="small"></div>
+
             <div>
-              <button
-                type="button"
-                class="btn btn-secondary"
-                data-bs-dismiss="modal"
-              >
+              <button class="btn btn-secondary" data-bs-dismiss="modal">
                 Fechar
               </button>
+
               <button
                 type="submit"
                 form="form-empreendimento"
                 id="btn-salvar"
                 class="btn btn-success px-4"
               >
-                Salvar Registro
+                Salvar
               </button>
             </div>
           </div>
@@ -282,6 +263,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <script src="./js/utils.js"></script>
     <script src="./js/storage.js"></script>
     <script src="./js/api.js"></script>
