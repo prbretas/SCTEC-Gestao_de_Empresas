@@ -125,52 +125,103 @@ const FormController = {
     document.querySelector("#status").value = emp.status;
     document.querySelector("#observacoes").value = emp.observacoes || "";
   },
+
+
   async handleSave(e) {
     e.preventDefault();
 
     const formData = new FormData(this.form);
     const dados = Object.fromEntries(formData.entries());
 
-    // Captura o ID do campo oculto para saber se é Edição ou Novo
+    if (!dados.status) dados.status = "Ativo";
+
+    if (!this.validarFormulario(dados)) return;
     const idExistente = document.querySelector("#emp-id").value;
 
-    // --- VALIDAÇÃO DE DUPLICIDADE INTELIGENTE ---
-    const baseAtual = EmpreendimentoStorage.buscarTodos();
+    const obrigatorios = ['nome', 'registro', 'responsavel', 'segmento'];
+    let formValido = true;
 
-    const registroDuplicado = baseAtual.find(emp =>
-      emp.registro === dados.registro &&
-      emp.nome.toLowerCase() === dados.nome.toLowerCase() &&
-      emp.segmento === dados.segmento &&
-      Number(emp.id) !== Number(idExistente) // AQUI ESTÁ A CHAVE: Permite salvar se for o próprio ID
-    );
+
+    obrigatorios.forEach(campo => {
+      const input = this.form.querySelector(`[name="${campo}"]`);
+      if (!dados[campo] || dados[campo].trim() === "") {
+        input.classList.add("is-invalid");
+        formValido = false;
+      } else {
+        input.classList.remove("is-invalid");
+      }
+    });
+
+
+    if (!formValido) {
+        alert("Preencha os campos obrigatórios!");
+        return;
+    }
+
+    const baseAtual = EmpreendimentoStorage.buscarTodos();
+    const registroDuplicado = baseAtual.find(emp => {
+      if (!emp.nome || !dados.nome) return false;
+
+      return emp.registro === dados.registro &&
+        emp.nome.toLowerCase() === dados.nome.toLowerCase() &&
+        emp.segmento === dados.segmento &&
+        Number(emp.id) !== Number(idExistente);
+    });
 
     if (registroDuplicado) {
-      alert(`⚠️ Bloqueio de Integridade:\nJá existe um cadastro para este Registro/CNPJ com o mesmo nome e segmento.`);
+      alert(`⚠️ Registro já existente na base para o segmento ${dados.segmento}.`);
       return;
     }
 
-    // --- EXECUÇÃO DO CRUD ---
+    // 3. Lógica de Persistência
     try {
       if (idExistente) {
-        // UPDATE: Passa o ID e os novos dados
+        // --- MODO EDIÇÃO ---
+        const confirmar = confirm(`Deseja confirmar as alterações no registro de ${dados.nome}?`);
+        if (!confirmar) return;
+
         EmpreendimentoStorage.atualizar(idExistente, dados);
-        console.log("Registro atualizado com sucesso!");
       } else {
-        // CREATE: Adiciona novo
+        // --- MODO INCLUSÃO ---
+        // Salva direto sem perguntar, conforme solicitado
         EmpreendimentoStorage.adicionar(dados);
-        console.log("Novo registro criado com sucesso!");
       }
 
-      // Finalização padrão
+      // 4. Pós-Processamento
       this.form.reset();
       UIController.modalForm.hide();
       UIController.renderizarLista();
 
+      // Alerta de sucesso opcional para feedback
+      console.log("Operação realizada com sucesso!");
+
     } catch (error) {
-      console.error("Erro ao processar CRUD:", error);
-      alert("Erro ao salvar os dados. Verifique o console.");
+      console.error("Erro ao salvar:", error);
+      alert("Erro técnico ao salvar. Verifique se o LocalStorage está acessível.");
     }
-  }, carregarDadosNoForm(emp) {
+  },
+
+
+  validarFormulario(dados) {
+    let valido = true;
+    const camposObrigatorios = ['nome', 'registro', 'segmento'];
+
+    camposObrigatorios.forEach(campo => {
+      const el = document.querySelector(`#${campo}`);
+      if (!dados[campo] || dados[campo].trim() === "") {
+        el.classList.add("is-invalid"); // Borda vermelha do Bootstrap
+        valido = false;
+      } else {
+        el.classList.remove("is-invalid");
+      }
+    });
+
+    if (!valido) {
+      alert("PH, preencha todos os campos obrigatórios em destaque!");
+    }
+    return valido;
+  },
+  carregarDadosNoForm(emp) {
     // Reset do formulário para garantir que nada fique "sujo"
     this.form.reset();
 
@@ -188,7 +239,6 @@ const FormController = {
     document.querySelector("#status").value = emp.status || "Ativo";
     document.querySelector("#observacoes").value = emp.observacoes || "";
   },
-
 
 };
 

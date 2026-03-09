@@ -60,6 +60,7 @@
                 type="text"
                 id="busca-empresa"
                 class="form-control border-2"
+                name="inputPesquisa"
                 placeholder="Pesquisar empreendimentos..."
               />
             </div>
@@ -142,13 +143,19 @@
           </div>
 
           <div class="modal-body p-4">
-            <form id="form-empreendimento">              
-              <input type="hidden" id="emp-id">
+            <form id="form-empreendimento">
+              <input type="hidden" id="emp-id" name="id">
 
               <div class="row g-3">
                 <div class="col-md-8">
                   <label class="form-label fw-bold">Nome / Razão Social</label>
-                  <input type="text" id="nome" class="form-control" required />
+                  <input
+                    type="text"
+                    id="nome"
+                    name="nome"
+                    class="form-control"
+                    required
+                  />
                 </div>
 
                 <div class="col-md-4">
@@ -167,6 +174,7 @@
                     <input
                       type="text"
                       id="registro"
+                      name="registro"
                       class="form-control"
                       required
                     />
@@ -175,7 +183,13 @@
 
                 <div class="col-md-6">
                   <label class="form-label fw-bold">Responsável</label>
-                  <input type="text" id="responsavel" class="form-control" />
+                  <input
+                    type="text"
+                    id="responsavel"
+                    name="responsavel"
+                    class="form-control"
+                    required
+                  />
                 </div>
 
                 <div class="col-md-6">
@@ -201,23 +215,28 @@
 
                 <div class="col-md-3">
                   <label class="form-label fw-bold">CEP</label>
-                  <input type="text" id="cep" class="form-control" />
+                  <input type="text" name="cep" id="cep" class="form-control" />
                 </div>
 
                 <div class="col-md-5">
                   <label class="form-label fw-bold">Endereço</label>
-                  <input type="text" id="endereco" class="form-control" />
+                  <input type="text" name="endereco" id="endereco" class="form-control" />
                 </div>
 
                 <div class="col-md-4">
                   <label class="form-label fw-bold">Município</label>
-                  <input type="text" id="municipio" class="form-control" />
+                  <input type="text" name="municipio" id="municipio" class="form-control" />
                 </div>
 
                 <div class="col-md-6">
                   <label class="form-label fw-bold">Segmento</label>
 
-                  <select id="segmento" class="form-select" required>
+                  <select
+                    id="segmento"
+                    name="segmento"
+                    class="form-select"
+                    required
+                  >
                     <option>Tecnologia</option>
                     <option>Indústria</option>
                     <option>Logística</option>
@@ -232,7 +251,7 @@
                 <div class="col-md-6">
                   <label class="form-label fw-bold">Status</label>
 
-                  <select id="status" class="form-select">
+                  <select id="status" name="status" class="form-select">
                     <option value="Ativo">🟢 Ativo</option>
                     <option value="Inativo">🔴 Inativo</option>
                   </select>
@@ -242,6 +261,7 @@
                   <label class="form-label fw-bold">Observações</label>
 
                   <textarea
+                    name="observacoes"
                     id="observacoes"
                     class="form-control"
                     rows="3"
