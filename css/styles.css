@@ -116,21 +116,22 @@ body.dark-mode #rotinaTitle {
 
 th[data-coluna] {
   white-space: nowrap; /* Impede que o título quebre linha */
-  min-width: 120px; /* Define uma largura mínima segura */
+  min-width: 50px; /* Define uma largura mínima segura */
   vertical-align: middle;
 }
 
 .sort-icon {
-    display: inline-block;
-    width: 20px; /* Largura fixa para o ícone */
-    text-align: center;
-    font-size: 0.8rem;
+  display: inline-block;
+  width: 18px; /* Largura fixa para o ícone */
+  text-align: center;
+  font-size: 0.8rem;
 }
 
 .header-content {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px; /* Espaço fixo entre texto e ícone */
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
 }
 
 /* Força botões e inputs a serem claros no Light Mode */
@@ -303,4 +304,19 @@ body.dark-mode .form-select:disabled {
   color: var(--readonly-text) !important;
   cursor: not-allowed !important;
   opacity: 0.8;
+}
+
+.table {
+  table-layout: auto;
+  width: 100%;
+}
+
+.badge {
+  display: inline-block;
+  width: 90px;
+  text-align: center;
+}
+
+.acoes {
+  min-width: 100px;
 }
