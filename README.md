@@ -13,7 +13,7 @@ A aplicação destaca-se pela sua arquitetura modular e pela automação no pree
 ## 📂 Estrutura do Projeto
 A organização dos arquivos no diretório segue uma estrutura lógica e limpa:
 
-Plaintext
+```Plaintext
 /
 ├── css/
 │   └── styles.css      # Estilização customizada da interface
@@ -26,7 +26,7 @@ Plaintext
 │   └── main.js         # Arquivo principal (Ponto de entrada do JS)
 ├── index.html          # Estrutura principal da aplicação (HTML5)
 └── README.md           # Documentação técnica
-
+```
 ## ⚙️ Funcionalidades Principais
 - Automação via API: Ao digitar um CEP ou CNPJ válido, o sistema busca e preenche automaticamente os campos de endereço e razão social.
 
