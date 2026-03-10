@@ -129,14 +129,14 @@
           <table class="table table-hover table-zebra align-middle mb-0">
             <thead class="table-dark">
               <tr>
-                <th>CÓDIGO</th>
-                <th>EMPRESA / CNPJ</th>
-                <th>RESPONSÁVEL / CONTATO</th>
-                <th>ENDEREÇO</th>
-                <th>MUNICÍPIO</th>
-                <th>SEGMENTO</th>
-                <th>STATUS</th>
-                <th class="text-center">AÇÕES</th>
+                <th onclick="UIController.ordenar('id')" style="cursor:pointer">ID ↕️</th>
+                <th onclick="UIController.ordenar('nome')" style="cursor:pointer">Empresa ↕️</th>
+                <th onclick="UIController.ordenar('responsavel')" style="cursor:pointer">Responsável ↕️</th>
+                <th>Endereço</th>
+                <th onclick="UIController.ordenar('municipio')" style="cursor:pointer">Município ↕️</th>
+                <th onclick="UIController.ordenar('segmento')" style="cursor:pointer">Segmento ↕️</th>
+                <th onclick="UIController.ordenar('status')" style="cursor:pointer">Status ↕️</th>
+                <th class="text-center">Ações</th>
               </tr>
             </thead>
 
