@@ -1,4 +1,4 @@
-## 🏗️ Portal de Gestão de Empreendimentos - SCTEC (Santa Catarina)
+# 🏗️ Portal de Gestão de Empreendimentos - SCTEC (Santa Catarina)
 O Portal SCTEC é uma aplicação focada no gerenciamento de empreendimentos e ativos logísticos no estado de Santa Catarina. Desenvolvido para a trilha IA para DEVs, o projeto simula um cenário real de controle de cadastros, utilizando automação via APIs e regras de integridade de dados voltadas ao setor de Supply Chain.
 
 ## 🚀 Diferenciais Técnicos
@@ -41,7 +41,7 @@ Plaintext
 ## 🔌 APIs Utilizadas
 - ViaCEP / BrasilAPI: Utilizadas para garantir a precisão dos dados geográficos e cadastrais informados pelo usuário.
 
-# 🔧 Como Executar
+## 🔧 Como Executar
 - Clone este repositório.
 - Abra o arquivo index.html diretamente em seu navegador.
 - Dica: Para uma experiência sem restrições de segurança do navegador em chamadas de API, utilize a extensão Live Server do VS Code.
