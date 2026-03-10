@@ -68,6 +68,7 @@ body {
   background-color: #f4f7f6;
   /* Fundo levemente acinzentado para destacar os cards brancos */
   color: #212529;
+
 }
 
 /* --- Navbar --- */
@@ -93,6 +94,16 @@ body {
 
 body.dark-mode #rotinaTitle {
   color: var(--dark-text);
+}
+
+.card-contadores{
+  background-color: var(--tab-header-bg);
+  color: var(--sc-header);
+  display: flex;
+  align-items:center;
+  justify-content: space-between;
+  flex-direction: column; 
+
 }
 
 /* Card de Pesquisa e Tabela */

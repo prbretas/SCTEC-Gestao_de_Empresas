@@ -94,6 +94,36 @@
         </div>
       </div>
 
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <div class="card bg-primary text-white border-0 shadow-sm">
+            <div class="card-body card-contadores">
+              <h6>Total de Registros</h6>
+              <h2 id="qtd-total" class="mb-0">0</h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card bg-success text-white border-0 shadow-sm">
+            <div class="card-body card-contadores">
+              <h6>Empreendimentos Ativos</h6>
+              <h2 id="qtd-ativos" class="mb-0">0</h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card bg-info text-white border-0 shadow-sm">
+            <div class="card-body card-contadores">
+              <h6>
+                Resultados da Busca
+                <i id="icon-filtro" class="bi bi-funnel text-white"></i>
+              </h6>
+              <h2 id="qtd-filtrados" class="mb-0">0</h2>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="card shadow-sm border-0">
         <div class="table-responsive rounded">
           <table class="table table-hover table-zebra align-middle mb-0">
@@ -144,7 +174,7 @@
 
           <div class="modal-body p-4">
             <form id="form-empreendimento">
-              <input type="hidden" id="emp-id" name="id">
+              <input type="hidden" id="emp-id" name="id" />
 
               <div class="row g-3">
                 <div class="col-md-8">
@@ -220,12 +250,22 @@
 
                 <div class="col-md-5">
                   <label class="form-label fw-bold">Endereço</label>
-                  <input type="text" name="endereco" id="endereco" class="form-control" />
+                  <input
+                    type="text"
+                    name="endereco"
+                    id="endereco"
+                    class="form-control"
+                  />
                 </div>
 
                 <div class="col-md-4">
                   <label class="form-label fw-bold">Município</label>
-                  <input type="text" name="municipio" id="municipio" class="form-control" />
+                  <input
+                    type="text"
+                    name="municipio"
+                    id="municipio"
+                    class="form-control"
+                  />
                 </div>
 
                 <div class="col-md-6">

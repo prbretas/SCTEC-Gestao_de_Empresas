@@ -8,31 +8,41 @@ const UIController = {
     this.initDarkMode();
     this.renderizarLista();
 
-    document.querySelector("#busca-empresa")?.addEventListener("input", () => this.renderizarLista());
-    document.querySelector("#tipo-busca")?.addEventListener("change", () => this.renderizarLista());
+    document
+      .querySelector("#busca-empresa")
+      ?.addEventListener("input", () => this.renderizarLista());
+    document
+      .querySelector("#tipo-busca")
+      ?.addEventListener("change", () => this.renderizarLista());
   },
 
   renderizarLista() {
     const listaCorpo = document.querySelector("#lista-corpo");
     if (!listaCorpo) return;
 
-    const termo = document.querySelector("#busca-empresa").value.toLowerCase().trim();
+    const termo = document
+      .querySelector("#busca-empresa")
+      .value.toLowerCase()
+      .trim();
     const filtro = document.querySelector("#tipo-busca").value;
     const empresas = EmpreendimentoStorage.buscarTodos();
 
-    const filtrados = empresas.filter(emp => {
+    const filtrados = empresas.filter((emp) => {
       if (!termo) return true;
-      if (filtro === "todos") return Object.values(emp).join(" ").toLowerCase().includes(termo);
+      if (filtro === "todos")
+        return Object.values(emp).join(" ").toLowerCase().includes(termo);
       return emp[filtro]?.toLowerCase().includes(termo);
     });
 
     listaCorpo.innerHTML = "";
-    filtrados.forEach(emp => {
+    filtrados.forEach((emp) => {
       const config = Utils.obterConfigSegmento(emp.segmento);
       const tr = document.createElement("tr");
       tr.style.cursor = "pointer";
 
-      tr.addEventListener("click", () => FormController.prepararVisualizacao(emp.id));
+      tr.addEventListener("click", () =>
+        FormController.prepararVisualizacao(emp.id),
+      );
 
       tr.innerHTML = `
     <td>${emp.id}</td>
@@ -65,6 +75,7 @@ const UIController = {
     </td>
       `;
       listaCorpo.appendChild(tr);
+      this.atualizarContadores(empresas, filtrados);
     });
   },
 
@@ -84,5 +95,36 @@ const UIController = {
     };
     aplicar(localStorage.getItem("SCTEC_THEME") === "dark");
     switchBtn?.addEventListener("change", (e) => aplicar(e.target.checked));
-  }
+  },
+
+  atualizarContadores(listaCompleta, listaExibida) {
+    const total = listaCompleta.length;
+    const filtrados = listaExibida.length;
+
+    const ativos = listaCompleta.filter(emp => emp.status === "Ativo").length;
+
+
+
+    // Atualiza o HTML
+    const elTotal = document.querySelector("#qtd-total");
+    const elSC = document.querySelector("#qtd-sc");
+    const elFiltrados = document.querySelector("#qtd-filtrados");
+    const elAtivos = document.querySelector("#qtd-ativos")
+    const iconFiltro = document.querySelector("#icon-filtro");
+
+    if (elTotal) elTotal.innerText = listaCompleta.length;
+    if (elAtivos) elAtivos.innerText = ativos;
+    if (elFiltrados) elFiltrados.innerText = listaExibida.length;
+
+    // Se a lista exibida for menor que a total, o ícone de filtro fica em destaque (amarelo)
+    if (iconFiltro) {
+      if (filtrados < total) {
+        iconFiltro.classList.replace("text-white", "text-warning");
+        iconFiltro.title = "Filtro Ativo";
+      } else {
+        iconFiltro.classList.replace("text-warning", "text-white");
+        iconFiltro.title = "Sem filtros";
+      }
+    }
+  },
 };
