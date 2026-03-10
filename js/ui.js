@@ -1,5 +1,5 @@
 let direcaoOrdenacao = 1; // 1 para A-Z, -1 para Z-A
-let colunaAtual = "";
+let colunaAtual = "id";
 
 const UIController = {
   modalForm: null,
@@ -8,18 +8,27 @@ const UIController = {
     const modalElem = document.getElementById("modalFormulario");
     if (modalElem) this.modalForm = new bootstrap.Modal(modalElem);
 
+    // 1. Inicializa o tema (Dark Mode)
     this.initDarkMode();
-    this.renderizarLista();
 
+    // 2. Configura os eventos de busca (APENAS UMA VEZ)
     document
       .querySelector("#busca-empresa")
       ?.addEventListener("input", () => this.renderizarLista());
     document
       .querySelector("#tipo-busca")
       ?.addEventListener("change", () => this.renderizarLista());
+
+    // 3. Define a ordenação inicial com um pequeno delay
+    // Isso garante que o DOM está pronto para receber os ícones 🔼/🔽
+    setTimeout(() => {
+      this.ordenar("id");
+    }, 200);
+
+    console.log("SCTEC - Sistema Inicializado com Ordenação Padrão.");
   },
 
-  renderizarLista(listaParaUso = null) {
+  renderizarLista(listaOrdenadaManual = null) {
     const listaCorpo = document.querySelector("#lista-corpo");
     if (!listaCorpo) return;
 
@@ -29,23 +38,32 @@ const UIController = {
       .trim();
     const filtro = document.querySelector("#tipo-busca").value;
 
-    // 1. Definição da base de dados: Se vier uma lista ordenada, usa ela. Senão, busca do storage.
-    let baseDeDados = listaParaUso || EmpreendimentoStorage.buscarTodos();
+    // 1. SEMPRE buscamos a base atualizada para garantir que novos registros apareçam
+    let dados = listaOrdenadaManual || EmpreendimentoStorage.buscarTodos();
 
-    // 2. Aplicação do Filtro de busca (Search)
-    const filtrados = baseDeDados.filter((emp) => {
+    // 2. Aplicamos a ordenação ATUAL (global) antes de filtrar
+    // Isso garante que mesmo buscando, a ordem escolhida (ex: Município) se mantenha
+    dados.sort((a, b) => {
+      let valA = a[colunaAtual] ? a[colunaAtual].toString().toLowerCase() : "";
+      let valB = b[colunaAtual] ? b[colunaAtual].toString().toLowerCase() : "";
+
+      if (!isNaN(valA) && !isNaN(valB)) {
+        return (Number(valA) - Number(valB)) * direcaoOrdenacao;
+      }
+      return valA.localeCompare(valB) * direcaoOrdenacao;
+    });
+
+    // 3. Filtramos os dados já ordenados
+    const filtrados = dados.filter((emp) => {
       if (!termo) return true;
       if (filtro === "todos") {
-        // Busca em todos os campos transformando o objeto em string
         return Object.values(emp).join(" ").toLowerCase().includes(termo);
       }
-      // Busca apenas na coluna selecionada no select
       return emp[filtro]?.toLowerCase().includes(termo);
     });
 
-    // 3. Limpeza e Renderização
+    // 4. Renderização no DOM
     listaCorpo.innerHTML = "";
-
     filtrados.forEach((emp) => {
       const config = Utils.obterConfigSegmento(emp.segmento);
       const tr = document.createElement("tr");
@@ -56,41 +74,40 @@ const UIController = {
       );
 
       tr.innerHTML = `
-      <td>${emp.id}</td>
-      <td>
-        <div class="fw-bold text-primary">${emp.nome}</div>
-        <div class="small">${emp.registro}</div>
-      </td>
-      <td>
-        <div class="fw-bold">${emp.responsavel || "N/D"}</div>
-        <div class="small">${emp.email || ""}</div>
-        <div class="small">${emp.telefone || ""}</div>
-      </td>
-      <td class="small text-wrap" style="max-width: 200px;">${emp.endereco || ""}</td>
-      <td class="small">${emp.municipio || ""}</td>
-      <td>
-        <span class="badge" style="background-color: ${config.bg}; color: ${config.text}; border: 1px solid ${config.border}">
-          ${emp.segmento}
-        </span>
-      </td>
-      <td>
-        <span class="badge ${emp.status === "Ativo" ? "bg-success" : "bg-danger"}">
-          ${emp.status || "Ativo"}
-        </span>
-      </td>
-      <td class="text-center">
-        <button class="btn btn-sm btn-outline-warning" 
-          onclick="event.stopPropagation(); FormController.prepararEdicao(${emp.id})">✏️</button>
-        <button class="btn btn-sm btn-outline-danger" 
-          onclick="event.stopPropagation(); UIController.confirmarExclusao(${emp.id})">🗑️</button>
-      </td>
-    `;
+            <td>${emp.id}</td>
+            <td>
+                <div class="fw-bold text-primary">${emp.nome}</div>
+                <div class="small">${emp.registro}</div>
+            </td>
+            <td>
+                <div class="fw-bold">${emp.responsavel || "N/D"}</div>
+                <div class="small">${emp.email || ""}</div>
+                <div class="small">${emp.telefone || ""}</div>
+            </td>
+            <td class="small text-wrap" style="max-width: 200px;">${emp.endereco || ""}</td>
+            <td class="small">${emp.municipio || ""}</td>
+            <td>
+                <span class="badge" style="background-color: ${config.bg}; color: ${config.text}; border: 1px solid ${config.border}">
+                    ${emp.segmento}
+                </span>
+            </td>
+            <td>
+                <span class="badge ${emp.status === "Ativo" ? "bg-success" : "bg-danger"}">
+                    ${emp.status || "Ativo"}
+                </span>
+            </td>
+            <td class="text-center">
+                <button class="btn btn-sm btn-outline-warning" onclick="event.stopPropagation(); FormController.prepararEdicao(${emp.id})">✏️</button>
+                <button class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); UIController.confirmarExclusao(${emp.id})">🗑️</button>
+            </td>
+        `;
       listaCorpo.appendChild(tr);
     });
 
-    // 4. Atualização dos contadores
-    // Passamos a base real do storage e a lista que realmente está em tela (filtrados)
+    // 5. Atualização dos contadores
     this.atualizarContadores(EmpreendimentoStorage.buscarTodos(), filtrados);
+    // 6. Garante que o ícone de ordenação permaneça visível após renderizar
+    this.atualizarIconesOrdenacao(colunaAtual, direcaoOrdenacao);
   },
 
   confirmarExclusao(id) {
@@ -139,9 +156,25 @@ const UIController = {
       }
     }
   },
+  atualizarIconesOrdenacao(colunaAtiva, direcao) {
+    // 1. Limpa todos os spans
+    const spans = document.querySelectorAll(".sort-icon");
+    spans.forEach((span) => {
+      span.textContent = "";
+    });
 
+    // 2. Busca o cabeçalho exato
+    const seletor = `th[data-coluna="${colunaAtiva}"] .sort-icon`;
+    const thAtivo = document.querySelector(seletor);
+
+    if (thAtivo) {
+      thAtivo.textContent = direcao === 1 ? " 🔼" : " 🔽";
+    } else {
+      // Se este erro aparecer no seu console (F12), o nome no HTML está errado
+      console.warn(`Elemento ${seletor} não encontrado no DOM.`);
+    }
+  },
   ordenar(coluna) {
-    // Se clicar na mesma coluna, inverte a ordem. Se for nova, começa A-Z.
     if (colunaAtual === coluna) {
       direcaoOrdenacao *= -1;
     } else {
@@ -149,28 +182,7 @@ const UIController = {
       direcaoOrdenacao = 1;
     }
 
-    // Buscamos os dados atuais (respeitando o que está no Storage)
-    const empresas = EmpreendimentoStorage.buscarTodos();
-
-    // Lógica de Comparação
-    empresas.sort((a, b) => {
-      let valA = a[coluna] ? a[coluna].toString().toLowerCase() : "";
-      let valB = b[coluna] ? b[coluna].toString().toLowerCase() : "";
-
-      // Tratamento especial para números (como o ID)
-      if (!isNaN(valA) && !isNaN(valB)) {
-        return (Number(valA) - Number(valB)) * direcaoOrdenacao;
-      }
-
-      // Ordenação de texto padrão
-      if (valA < valB) return -1 * direcaoOrdenacao;
-      if (valA > valB) return 1 * direcaoOrdenacao;
-      return 0;
-    });
-
-    // IMPORTANTE: Após ordenar o array, precisamos salvar essa ordem temporária
-    // ou apenas renderizar a lista novamente.
-    this.renderizarComOrdem(empresas);
+    this.renderizarLista();
   },
 
   renderizarComOrdem(listaOrdenada) {
