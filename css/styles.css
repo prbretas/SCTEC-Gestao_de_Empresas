@@ -18,8 +18,6 @@
   --readonly-bg: #333333;
   --readonly-border: #aaaaaa;
   --readonly-text: #f8f9fa;
-  ;
-
   /* --- Cores Dark Mode --- */
   --dark-bg: #121212;
   --dark-bg-grid: #1e1e1e;
@@ -30,15 +28,11 @@
 
 #telefone {
   color: var(--dark-bg);
-  
 }
 
 #telefone:disabled {
   color: var(--readonly-text) !important;
-  
 }
-
-
 
 #segmento:disabled {
   background-color: #e9ecef !important;
@@ -60,15 +54,15 @@ body.dark-mode #segmento:disabled {
   border-color: #dee2e6;
 }
 
-
 /* --- Base --- */
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  transition: background-color 0.3s, color 0.3s;
+  transition:
+    background-color 0.3s,
+    color 0.3s;
   background-color: #f4f7f6;
   /* Fundo levemente acinzentado para destacar os cards brancos */
   color: #212529;
-
 }
 
 /* --- Navbar --- */
@@ -81,7 +75,6 @@ body {
    COMPONENTES LIGHT MODE
    ========================================================================== */
 
-
 #rotinaTitle {
   color: var(--sc-header);
   font-size: 2rem;
@@ -89,21 +82,19 @@ body {
   margin: 30px 0;
   font-weight: bold;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-
 }
 
 body.dark-mode #rotinaTitle {
   color: var(--dark-text);
 }
 
-.card-contadores{
+.card-contadores {
   background-color: var(--tab-header-bg);
   color: var(--sc-header);
   display: flex;
-  align-items:center;
+  align-items: center;
   justify-content: space-between;
-  flex-direction: column; 
-
+  flex-direction: column;
 }
 
 /* Card de Pesquisa e Tabela */
@@ -123,12 +114,31 @@ body.dark-mode #rotinaTitle {
   letter-spacing: 0.5px;
 }
 
+th[data-coluna] {
+  white-space: nowrap; /* Impede que o título quebre linha */
+  min-width: 120px; /* Define uma largura mínima segura */
+  vertical-align: middle;
+}
+
+.sort-icon {
+    display: inline-block;
+    width: 20px; /* Largura fixa para o ícone */
+    text-align: center;
+    font-size: 0.8rem;
+}
+
+.header-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px; /* Espaço fixo entre texto e ícone */
+}
+
 /* Força botões e inputs a serem claros no Light Mode */
 .form-control,
 .form-select,
 .input-group-text {
   background-color: #ffffff;
-  color: #212529 ;
+  color: #212529;
   border: 1px solid #ced4da;
 }
 
@@ -143,7 +153,6 @@ body.dark-mode #rotinaTitle {
   background-color: var(--sc-btn-hover) !important;
   transform: translateY(-1px);
 }
-
 
 .btn-success:active {
   background-color: var(--sc-btn-active) !important;
@@ -168,11 +177,9 @@ body.dark-mode {
   background-color: var(--sc-header);
 }
 
-
 #titulo-modal-form {
   background-color: var(--sc-header);
 }
-
 
 /* Cards e Modais no Dark Mode */
 body.dark-mode .card,
@@ -251,7 +258,6 @@ body.dark-mode .modal-footer {
   background-color: var(--dark-bg-grid);
 }
 
-
 .btn-dwnld-csv {
   color: rgb(34, 115, 147);
 }
@@ -259,7 +265,6 @@ body.dark-mode .modal-footer {
 body.dark-mode .btn-dwnld-csv {
   color: rgb(105, 213, 255) !important;
 }
-
 
 .form-control:read-only,
 .form-control:disabled,
@@ -273,7 +278,6 @@ body.dark-mode .btn-dwnld-csv {
   border-color: #dee2e6;
 }
 
-
 body.dark-mode .form-control:read-only,
 body.dark-mode .form-control:disabled,
 body.dark-mode .form-select:disabled {
@@ -281,7 +285,6 @@ body.dark-mode .form-select:disabled {
   color: #adb5bd !important;
   border-color: #495057;
 }
-
 
 #observacoes {
   min-height: 120px;
@@ -293,7 +296,6 @@ body.dark-mode .form-select:disabled {
   /* Evita que o usuário quebre o layout manualmente */
   transition: height 0.2s ease;
 }
-
 
 .campo-bloqueado {
   background-color: var(--readonly-bg) !important;
