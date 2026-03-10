@@ -36,7 +36,7 @@
     </nav>
 
     <main class="container">
-      <h1 id="rotinaTitle">SCTEC - Gestão de Cadastros</h1>
+      <h1 id="rotinaTitle">Gestão de Cadastros</h1>
 
       <div class="card shadow-sm border-0 mb-4">
         <div class="card-body bg-white rounded p-3">
@@ -94,19 +94,104 @@
         </div>
       </div>
 
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <div class="card bg-primary text-white border-0 shadow-sm">
+            <div class="card-body card-contadores">
+              <h6>Total de Registros</h6>
+              <h2 id="qtd-total" class="mb-0">0</h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card bg-success text-white border-0 shadow-sm">
+            <div class="card-body card-contadores">
+              <h6>Empreendimentos Ativos</h6>
+              <h2 id="qtd-ativos" class="mb-0">0</h2>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card bg-info text-white border-0 shadow-sm">
+            <div class="card-body card-contadores">
+              <h6>
+                Resultados da Busca
+                <i id="icon-filtro" class="bi bi-funnel text-white"></i>
+              </h6>
+              <h2 id="qtd-filtrados" class="mb-0">0</h2>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="card shadow-sm border-0">
         <div class="table-responsive rounded">
           <table class="table table-hover table-zebra align-middle mb-0">
             <thead class="table-dark">
               <tr>
-                <th>CÓDIGO</th>
-                <th>EMPRESA / CNPJ</th>
-                <th>RESPONSÁVEL / CONTATO</th>
-                <th>ENDEREÇO</th>
-                <th>MUNICÍPIO</th>
-                <th>SEGMENTO</th>
-                <th>STATUS</th>
-                <th class="text-center">AÇÕES</th>
+                <th
+                  onclick="UIController.ordenar('id')"
+                  data-coluna="id"
+                  style="cursor: pointer; width: 75px"
+                >
+                  <div class="header-content">
+                    ID <span class="sort-icon"></span>
+                  </div>
+                </th>
+
+                <th
+                  onclick="UIController.ordenar('nome')"
+                  data-coluna="nome"
+                  style="cursor: pointer; min-width: 320px"
+                >
+                  <div class="header-content">
+                    EMPRESA <span class="sort-icon"></span>
+                  </div>
+                </th>
+
+                <th
+                  onclick="UIController.ordenar('responsavel')"
+                  data-coluna="responsavel"
+                  style="cursor: pointer; width: 180px"
+                >
+                  <div class="header-content">
+                    RESPONSÁVEL <span class="sort-icon"></span>
+                  </div>
+                </th>
+
+                <th style="min-width: 220px">ENDEREÇO</th>
+
+                <th
+                  onclick="UIController.ordenar('municipio')"
+                  data-coluna="municipio"
+                  style="cursor: pointer; width: 100px"
+                >
+                  <div class="header-content">
+                    MUNICÍPIO <span class="sort-icon"></span>
+                  </div>
+                </th>
+
+                <th
+                  onclick="UIController.ordenar('segmento')"
+                  data-coluna="segmento"
+                  style="cursor: pointer; width: 80px"
+                >
+                  <div class="header-content">
+                    SEGMENTO <span class="sort-icon"></span>
+                  </div>
+                </th>
+
+                <th
+                  onclick="UIController.ordenar('status')"
+                  data-coluna="status"
+                  style="cursor: pointer; width: 80px"
+                >
+                  <div class="header-content">
+                    STATUS <span class="sort-icon"></span>
+                  </div>
+                </th>
+
+                <th class="acoes" style="width: 200px">AÇÕES</th>
               </tr>
             </thead>
 
@@ -144,7 +229,7 @@
 
           <div class="modal-body p-4">
             <form id="form-empreendimento">
-              <input type="hidden" id="emp-id" name="id">
+              <input type="hidden" id="emp-id" name="id" />
 
               <div class="row g-3">
                 <div class="col-md-8">
@@ -220,12 +305,22 @@
 
                 <div class="col-md-5">
                   <label class="form-label fw-bold">Endereço</label>
-                  <input type="text" name="endereco" id="endereco" class="form-control" />
+                  <input
+                    type="text"
+                    name="endereco"
+                    id="endereco"
+                    class="form-control"
+                  />
                 </div>
 
                 <div class="col-md-4">
                   <label class="form-label fw-bold">Município</label>
-                  <input type="text" name="municipio" id="municipio" class="form-control" />
+                  <input
+                    type="text"
+                    name="municipio"
+                    id="municipio"
+                    class="form-control"
+                  />
                 </div>
 
                 <div class="col-md-6">

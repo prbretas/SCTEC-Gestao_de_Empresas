@@ -18,11 +18,11 @@ const EmpreendimentoStorage = {
   obterProximoId() {
     const lista = this.buscarTodos();
     if (lista.length === 0) return 1;
-    return Math.max(...lista.map(e => e.id)) + 1;
+    return Math.max(...lista.map((e) => e.id)) + 1;
   },
 
   buscarPorId(id) {
-    return this.buscarTodos().find(e => e.id === Number(id));
+    return this.buscarTodos().find((e) => e.id === Number(id));
   },
 
   adicionar(objeto) {
@@ -30,7 +30,7 @@ const EmpreendimentoStorage = {
     const novoRegistro = {
       ...objeto,
       id: this.obterProximoId(),
-      dataCadastro: new Date().toISOString()
+      dataCadastro: new Date().toISOString(),
     };
     lista.push(novoRegistro);
     this.salvarTodos(lista);
@@ -38,7 +38,7 @@ const EmpreendimentoStorage = {
   },
   atualizar(id, objetoAtualizado) {
     const lista = this.buscarTodos();
-    const index = lista.findIndex(e => e.id === Number(id));
+    const index = lista.findIndex((e) => e.id === Number(id));
 
     if (index !== -1) {
       // Mantém os dados antigos (como data de cadastro) e sobrepõe com os novos
@@ -46,7 +46,7 @@ const EmpreendimentoStorage = {
         ...lista[index],
         ...objetoAtualizado,
         id: Number(id), // Garante que o ID permaneça o mesmo
-        dataAtualizacao: new Date().toISOString()
+        dataAtualizacao: new Date().toISOString(),
       };
       this.salvarTodos(lista);
       return true;
@@ -56,7 +56,7 @@ const EmpreendimentoStorage = {
 
   excluir(id) {
     let lista = this.buscarTodos();
-    lista = lista.filter(e => e.id !== Number(id));
+    lista = lista.filter((e) => e.id !== Number(id));
     this.salvarTodos(lista);
-  }
+  },
 };
