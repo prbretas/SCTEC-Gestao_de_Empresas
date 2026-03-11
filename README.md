@@ -71,4 +71,7 @@ O projeto segue uma arquitetura modular com separação clara de responsabilidad
   - Abra diretamente por este link: https://prbretas.github.io/SCTEC-Gestao_de_Empresas/
 ---
 
+# Video Demonstração no Youtube:
+- https://youtu.be/zspEd3i0UZw
+
 Desenvolvido por Philippe Bretas.
