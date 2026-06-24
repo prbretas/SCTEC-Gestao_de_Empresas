@@ -30,7 +30,7 @@ const FormController = {
       }
     });
 
-    // Lógica BrasilAPI + Preenchimento de Observações (incluindo sócios QSA)
+    // Lógica BrasilAPI + Preenchimento de Observações + Sócios QSA visuais
     inputReg?.addEventListener("blur", async () => {
       const reg = inputReg.value.replace(/\D/g, "");
 
@@ -46,44 +46,29 @@ const FormController = {
         inputReg.placeholder = "";
 
         if (dados) {
-          // Preenchimento básico
+          // ── Preenchimento básico dos campos ──────────────────────────────
           document.querySelector("#nome").value = dados.razao_social || "";
           document.querySelector("#cep").value = dados.cep || "";
           document.querySelector("#endereco").value =
             `${dados.logradouro || ""}, ${dados.numero || ""}`;
           document.querySelector("#municipio").value = dados.municipio || "";
 
-          // ── Seção: Dados Cadastrais ──────────────────────────────────────
+          // ── Seção: Dados Cadastrais nas Observações ───────────────────────
           const infoExtra = `--- DADOS CADASTRAIS (RECEITA FEDERAL) ---
 DATA DE ABERTURA: ${dados.data_abertura || "N/A"}
 NOME FANTASIA: ${dados.nome_fantasia || "Não informado"}
 SITUAÇÃO: ${dados.situacao || "N/A"}
 CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
 
-          // ── Seção: Quadro de Sócios e Administradores (QSA) ─────────────
-          let secaoSocios = "";
-          if (dados.socios && dados.socios.length > 0) {
-            secaoSocios = "\n\n--- QUADRO DE SÓCIOS (QSA) ---";
-            dados.socios.forEach((socio, i) => {
-              const dataEntrada = socio.data_entrada_sociedade || "N/D";
-              secaoSocios += `\n${i + 1}. ${socio.nome_socio}`;
-              secaoSocios += `\n   Qualificação: ${socio.qualificacao_socio || "N/D"}`;
-              secaoSocios += `\n   Entrada na Sociedade: ${dataEntrada}`;
-            });
-            secaoSocios += "\n-------------------------------";
-          } else {
-            secaoSocios = "\n\nSÓCIOS: Não informados na base da Receita Federal";
-          }
-
-          const blocoCompleto = infoExtra + secaoSocios;
           const campoObs = document.querySelector("#observacoes");
-
-          // Concatena mantendo o que já existia em uma nova linha
           if (campoObs) {
             campoObs.value = campoObs.value
-              ? `${campoObs.value}\n\n${blocoCompleto}`
-              : blocoCompleto;
+              ? `${campoObs.value}\n\n${infoExtra}`
+              : infoExtra;
           }
+
+          // ── Seção: Sócios QSA — renderização visual ──────────────────────
+          FormController.renderizarSocios(dados.socios || []);
         }
       }
     });
@@ -229,6 +214,14 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
 
     // 4. Lógica de Persistência
     try {
+      // Coleta sócios renderizados para persistir junto ao registro.
+      // A seção visual armazena os dados brutos no atributo data-socios do container.
+      const sociosSection = document.querySelector("#socios-section");
+      const sociosJson = sociosSection ? sociosSection.getAttribute("data-socios") : null;
+      if (sociosJson) {
+        try { dados.socios = JSON.parse(sociosJson); } catch { dados.socios = []; }
+      }
+
       if (idExistente) {
         // MODO EDIÇÃO
         const confirmar = confirm(
@@ -288,6 +281,91 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
     document.querySelector("#segmento").value = emp.segmento || "Outros";
     document.querySelector("#status").value = emp.status || "Ativo";
     document.querySelector("#observacoes").value = emp.observacoes || "";
+
+    // Restaura sócios salvos (se houver)
+    const socios = emp.socios && emp.socios.length > 0 ? emp.socios : [];
+    FormController.renderizarSocios(socios);
+  },
+
+  /**
+   * Renderiza os cards de sócios na seção visual do modal.
+   * Também persiste os dados em um input hidden para salvar no storage.
+   * @param {Array} socios - Array do QSA retornado pela BrasilAPI
+   */
+  renderizarSocios(socios) {
+    const section = document.querySelector("#socios-section");
+    const lista = document.querySelector("#socios-lista");
+    const badge = document.querySelector("#socios-badge");
+
+    if (!section || !lista) return;
+
+    if (!socios || socios.length === 0) {
+      section.style.display = "none";
+      lista.innerHTML = "";
+      if (badge) badge.textContent = "0";
+      return;
+    }
+
+    section.style.display = "block";
+    if (badge) badge.textContent = socios.length;
+
+    // Armazena os dados brutos para persistência ao salvar
+    section.setAttribute("data-socios", JSON.stringify(socios));
+
+    lista.innerHTML = socios.map((socio, i) => {
+      const nome = socio.nome_socio || "Nome não informado";
+      const qual = socio.qualificacao_socio || "Qualificação não informada";
+      const entrada = socio.data_entrada_sociedade
+        ? new Date(socio.data_entrada_sociedade + "T00:00:00").toLocaleDateString("pt-BR")
+        : "N/D";
+      const faixaEtaria = socio.faixa_etaria || "";
+      const cpfCnpj = socio.cpf_representante_legal || "";
+      const qualRep = socio.qualificacao_representante_legal || "";
+
+      // Iniciais para o avatar
+      const iniciais = nome
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((p) => p[0].toUpperCase())
+        .join("");
+
+      // Badge de cor por qualificação
+      const isAdmin = qual.toLowerCase().includes("admin") || qual.toLowerCase().includes("sócio-admin");
+      const qualBadge = isAdmin
+        ? `<span class="badge bg-primary">${qual}</span>`
+        : `<span class="badge bg-secondary">${qual}</span>`;
+
+      return `
+        <div class="socio-card" data-index="${i}">
+          <div class="socio-avatar">${iniciais || "?"}</div>
+          <div class="socio-info">
+            <div class="socio-nome">${nome}</div>
+            <div class="socio-detalhes d-flex flex-wrap gap-2 mt-1">
+              ${qualBadge}
+              <span class="socio-data">📅 Entrada: ${entrada}</span>
+              ${faixaEtaria ? `<span class="socio-faixa">👤 ${faixaEtaria}</span>` : ""}
+              ${cpfCnpj ? `<span class="socio-rep">🔗 Rep.: ${cpfCnpj} — ${qualRep}</span>` : ""}
+            </div>
+          </div>
+          <div class="socio-numero">#${i + 1}</div>
+        </div>`;
+    }).join("");
+  },
+
+  /**
+   * Limpa a seção de sócios ao abrir modal para novo cadastro.
+   */
+  limparSocios() {
+    const section = document.querySelector("#socios-section");
+    const lista = document.querySelector("#socios-lista");
+    const badge = document.querySelector("#socios-badge");
+    if (section) {
+      section.style.display = "none";
+      section.removeAttribute("data-socios");
+    }
+    if (lista) lista.innerHTML = "";
+    if (badge) badge.textContent = "0";
   },
 };
 
@@ -295,6 +373,7 @@ window.abrirModalCadastro = () => {
   FormController.form.reset();
   document.querySelector("#emp-id").value = "";
   FormController.setReadOnly(false);
+  FormController.limparSocios();
   document.querySelector("#titulo-modal-form").textContent =
     "Novo Empreendimento";
   UIController.modalForm.show();

@@ -113,7 +113,7 @@ const Utils = {
       const registrosNaBase = EmpreendimentoStorage.buscarTodos();
       const novosParaImportar = [];
 
-      let totalNoArquivo = linhas.length - 1;
+      const totalNoArquivo = linhas.length - 1;
       let duplicadosEncontrados = 0;
       let errosLayout = 0;
 

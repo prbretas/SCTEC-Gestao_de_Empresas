@@ -39,13 +39,13 @@ const UIController = {
     const filtro = document.querySelector("#tipo-busca").value;
 
     // 1. SEMPRE buscamos a base atualizada para garantir que novos registros apareçam
-    let dados = listaOrdenadaManual || EmpreendimentoStorage.buscarTodos();
+    const dados = listaOrdenadaManual || EmpreendimentoStorage.buscarTodos();
 
     // 2. Aplicamos a ordenação ATUAL (global) antes de filtrar
     // Isso garante que mesmo buscando, a ordem escolhida (ex: Município) se mantenha
     dados.sort((a, b) => {
-      let valA = a[colunaAtual] ? a[colunaAtual].toString().toLowerCase() : "";
-      let valB = b[colunaAtual] ? b[colunaAtual].toString().toLowerCase() : "";
+      const valA = a[colunaAtual] ? a[colunaAtual].toString().toLowerCase() : "";
+      const valB = b[colunaAtual] ? b[colunaAtual].toString().toLowerCase() : "";
 
       if (!isNaN(valA) && !isNaN(valB)) {
         return (Number(valA) - Number(valB)) * direcaoOrdenacao;
