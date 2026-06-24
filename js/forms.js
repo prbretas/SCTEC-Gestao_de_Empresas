@@ -32,6 +32,10 @@ const FormController = {
 
     // Lógica BrasilAPI + Preenchimento de Observações + Sócios QSA visuais
     inputReg?.addEventListener("blur", async () => {
+      // Não executa nada se o campo estiver somente leitura
+      // (modo visualização ou edição — CNPJ não pode ser alterado)
+      if (inputReg.readOnly || inputReg.disabled) return;
+
       const reg = inputReg.value.replace(/\D/g, "");
 
       if (selectTipo.value === "PJ" && reg.length === 14) {
