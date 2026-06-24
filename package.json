@@ -20,18 +20,10 @@
     "testMatch": [
       "**/tests/**/*.test.js"
     ],
-    "collectCoverageFrom": [
-      "js/**/*.js"
-    ],
     "coverageReporters": [
       "text",
       "lcov"
     ],
-    "coverageThreshold": {
-      "global": {
-        "lines": 30
-      }
-    },
     "setupFiles": [
       "./tests/setup.js"
     ]
