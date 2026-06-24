@@ -136,7 +136,6 @@ const UIController = {
 
     // Atualiza o HTML
     const elTotal = document.querySelector("#qtd-total");
-    const elSC = document.querySelector("#qtd-sc");
     const elFiltrados = document.querySelector("#qtd-filtrados");
     const elAtivos = document.querySelector("#qtd-ativos");
     const iconFiltro = document.querySelector("#icon-filtro");

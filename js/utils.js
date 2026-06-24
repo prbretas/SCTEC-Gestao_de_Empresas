@@ -42,7 +42,6 @@ const Utils = {
   aplicarMascaraTelefone(valor) {
     if (!valor) return "";
     valor = valor.replace(/\D/g, ""); // Remove tudo que não é número
-    valor = valor.replace(/^(\)2)(\d)/g, "($1) $2"); // Coloca parênteses no DDD
 
     if (valor.length > 10) {
       // Formato Celular: (00) 00000-0000

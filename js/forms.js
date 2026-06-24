@@ -30,13 +30,20 @@ const FormController = {
       }
     });
 
-    // Lógica BrasilAPI + Preenchimento de Observações
-    // Lógica BrasilAPI + Preenchimento de Observações
+    // Lógica BrasilAPI + Preenchimento de Observações (incluindo sócios QSA)
     inputReg?.addEventListener("blur", async () => {
       const reg = inputReg.value.replace(/\D/g, "");
 
       if (selectTipo.value === "PJ" && reg.length === 14) {
+        // Feedback visual de carregamento
+        inputReg.disabled = true;
+        inputReg.placeholder = "Consultando CNPJ...";
+
         const dados = await ApiService.buscarCnpj(reg);
+
+        // Restaura o campo após a consulta
+        inputReg.disabled = false;
+        inputReg.placeholder = "";
 
         if (dados) {
           // Preenchimento básico
@@ -46,21 +53,36 @@ const FormController = {
             `${dados.logradouro || ""}, ${dados.numero || ""}`;
           document.querySelector("#municipio").value = dados.municipio || "";
 
-          // Montagem das informações para o campo Observações (limpando espaços extras)
-          const infoExtra = `--- SUGESTÃO IA (SETOR LOGÍSTICO) ---
+          // ── Seção: Dados Cadastrais ──────────────────────────────────────
+          const infoExtra = `--- DADOS CADASTRAIS (RECEITA FEDERAL) ---
 DATA DE ABERTURA: ${dados.data_abertura || "N/A"}
 NOME FANTASIA: ${dados.nome_fantasia || "Não informado"}
-SITUAÇÃO: ${dados.descricao_situacao_cadastral || "N/A"}
-CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}
-------------------------------------`;
+SITUAÇÃO: ${dados.situacao || "N/A"}
+CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
 
+          // ── Seção: Quadro de Sócios e Administradores (QSA) ─────────────
+          let secaoSocios = "";
+          if (dados.socios && dados.socios.length > 0) {
+            secaoSocios = "\n\n--- QUADRO DE SÓCIOS (QSA) ---";
+            dados.socios.forEach((socio, i) => {
+              const dataEntrada = socio.data_entrada_sociedade || "N/D";
+              secaoSocios += `\n${i + 1}. ${socio.nome_socio}`;
+              secaoSocios += `\n   Qualificação: ${socio.qualificacao_socio || "N/D"}`;
+              secaoSocios += `\n   Entrada na Sociedade: ${dataEntrada}`;
+            });
+            secaoSocios += "\n-------------------------------";
+          } else {
+            secaoSocios = "\n\nSÓCIOS: Não informados na base da Receita Federal";
+          }
+
+          const blocoCompleto = infoExtra + secaoSocios;
           const campoObs = document.querySelector("#observacoes");
 
           // Concatena mantendo o que já existia em uma nova linha
           if (campoObs) {
             campoObs.value = campoObs.value
-              ? `${campoObs.value}\n\n${infoExtra}`
-              : infoExtra;
+              ? `${campoObs.value}\n\n${blocoCompleto}`
+              : blocoCompleto;
           }
         }
       }
@@ -182,7 +204,7 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}
     });
 
     if (!formValido) {
-      alert("⚠️ PH, preencha os campos obrigatórios em destaque!");
+      alert("⚠️ Preencha os campos obrigatórios em destaque.");
       return;
     }
 

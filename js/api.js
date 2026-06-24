@@ -9,7 +9,7 @@ const ApiService = {
     const cleanCep = cep.replace(/\D/g, "");
     if (cleanCep.length !== 8) return null;
     try {
-      const response = await fetch(
+      const response = await globalThis.fetch(
         `https://viacep.com.br/ws/${cleanCep}/json/`,
       );
       const data = await response.json();
@@ -24,7 +24,7 @@ const ApiService = {
     const cleanCnpj = cnpj.replace(/\D/g, "");
     if (cleanCnpj.length !== 14) return null;
     try {
-      const response = await fetch(
+      const response = await globalThis.fetch(
         `https://brasilapi.com.br/api/cnpj/v1/${cleanCnpj}`,
       );
       if (!response.ok) throw new Error("CNPJ não encontrado");
@@ -46,6 +46,8 @@ const ApiService = {
         numero: data.numero,
         municipio: data.municipio,
         uf: data.uf,
+        // QSA — Quadro de Sócios e Administradores
+        socios: data.qsa || [],
       };
     } catch (err) {
       console.error("Erro BrasilAPI:", err);
