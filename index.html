@@ -363,6 +363,17 @@
                     rows="3"
                   ></textarea>
                 </div>
+
+                <!-- SEÇÃO DE SÓCIOS — visível apenas quando CNPJ retorna QSA -->
+                <div class="col-12" id="socios-section" style="display:none;">
+                  <div class="socios-header d-flex align-items-center gap-2 mb-2">
+                    <span class="socios-icon">👥</span>
+                    <label class="form-label fw-bold mb-0">Quadro de Sócios e Administradores (QSA)</label>
+                    <span id="socios-badge" class="badge bg-secondary ms-1">0</span>
+                  </div>
+                  <div id="socios-lista" class="socios-lista"></div>
+                </div>
+
               </div>
             </form>
           </div>

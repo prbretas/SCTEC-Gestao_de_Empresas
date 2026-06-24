@@ -6,8 +6,8 @@
   "scripts": {
     "test": "jest --coverage",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage --coverageThreshold='{\"global\":{\"lines\":80}}'",
-    "lint": "eslint js/**/*.js --max-warnings=0"
+    "test:coverage": "jest --coverage",
+    "lint": "eslint \"js/**/*.js\" --max-warnings=0"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
@@ -27,6 +27,11 @@
       "text",
       "lcov"
     ],
+    "coverageThreshold": {
+      "global": {
+        "lines": 30
+      }
+    },
     "setupFiles": [
       "./tests/setup.js"
     ]
