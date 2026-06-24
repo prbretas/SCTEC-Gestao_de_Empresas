@@ -35,6 +35,15 @@ const FormController = {
       const reg = inputReg.value.replace(/\D/g, "");
 
       if (selectTipo.value === "PJ" && reg.length === 14) {
+        // ── Validação dos dígitos verificadores antes de consultar a API ──
+        if (!Utils.validarCNPJ(reg)) {
+          inputReg.classList.add("is-invalid");
+          inputReg.title = "CNPJ inválido — verifique os dígitos";
+          return;
+        }
+        inputReg.classList.remove("is-invalid");
+        inputReg.title = "";
+
         // Feedback visual de carregamento
         inputReg.disabled = true;
         inputReg.placeholder = "Consultando CNPJ...";
@@ -150,20 +159,6 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
     UIController.modalForm.show();
   },
 
-  preencherForm(emp) {
-    document.querySelector("#emp-id").value = emp.id;
-    document.querySelector("#nome").value = emp.nome;
-    document.querySelector("#tipo-pessoa").value = emp.tipoPessoa;
-    document.querySelector("#registro").value = emp.registro;
-    document.querySelector("#responsavel").value = emp.responsavel;
-    document.querySelector("#cep").value = emp.cep || "";
-    document.querySelector("#endereco").value = emp.endereco;
-    document.querySelector("#municipio").value = emp.municipio;
-    document.querySelector("#segmento").value = emp.segmento;
-    document.querySelector("#status").value = emp.status;
-    document.querySelector("#observacoes").value = emp.observacoes || "";
-  },
-
   async handleSave(e) {
     e.preventDefault();
 
@@ -245,25 +240,6 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
     }
   },
 
-  validarFormulario(dados) {
-    let valido = true;
-    const camposObrigatorios = ["nome", "registro"];
-
-    camposObrigatorios.forEach((campo) => {
-      const el = document.querySelector(`#${campo}`);
-      if (!dados[campo] || dados[campo].trim() === "") {
-        el.classList.add("is-invalid"); // Borda vermelha do Bootstrap
-        valido = false;
-      } else {
-        el.classList.remove("is-invalid");
-      }
-    });
-
-    if (!valido) {
-      alert("PH, preencha todos os campos obrigatórios em destaque!");
-    }
-    return valido;
-  },
   carregarDadosNoForm(emp) {
     // Reset do formulário para garantir que nada fique "sujo"
     this.form.reset();

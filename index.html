@@ -84,6 +84,24 @@
               </label>
 
               <button
+                onclick="Utils.backupJSON()"
+                class="btn btn-outline-secondary"
+                title="Fazer backup completo dos dados em JSON"
+              >
+                💾 Backup
+              </button>
+
+              <label class="btn btn-outline-secondary mb-0" title="Restaurar backup JSON">
+                📦 Restore
+                <input
+                  type="file"
+                  hidden
+                  accept=".json"
+                  onchange="Utils.restaurarJSON(this.files[0])"
+                />
+              </label>
+
+              <button
                 class="btn btn-success fw-bold shadow-sm px-4"
                 onclick="abrirModalCadastro()"
               >

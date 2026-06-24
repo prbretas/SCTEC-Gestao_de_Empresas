@@ -118,3 +118,63 @@ describe('Utils.formatarDataHora', () => {
     expect(Utils.formatarDataHora(undefined)).toBe('N/A');
   });
 });
+
+// ─────────────────────────────────────────────────────────
+// validarCNPJ
+// ─────────────────────────────────────────────────────────
+
+describe('Utils.validarCNPJ', () => {
+  test('aceita CNPJ valido com mascara', () => {
+    expect(Utils.validarCNPJ('11.222.333/0001-81')).toBe(true);
+  });
+
+  test('aceita CNPJ valido sem mascara', () => {
+    expect(Utils.validarCNPJ('11222333000181')).toBe(true);
+  });
+
+  test('rejeita CNPJ com digito verificador errado', () => {
+    expect(Utils.validarCNPJ('11.222.333/0001-00')).toBe(false);
+  });
+
+  test('rejeita sequencia uniforme (00000000000000)', () => {
+    expect(Utils.validarCNPJ('00000000000000')).toBe(false);
+  });
+
+  test('rejeita sequencia uniforme (11111111111111)', () => {
+    expect(Utils.validarCNPJ('11111111111111')).toBe(false);
+  });
+
+  test('rejeita CNPJ com menos de 14 digitos', () => {
+    expect(Utils.validarCNPJ('1234567')).toBe(false);
+  });
+
+  test('rejeita string vazia', () => {
+    expect(Utils.validarCNPJ('')).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────
+// validarCPF
+// ─────────────────────────────────────────────────────────
+
+describe('Utils.validarCPF', () => {
+  test('aceita CPF valido com mascara', () => {
+    expect(Utils.validarCPF('529.982.247-25')).toBe(true);
+  });
+
+  test('aceita CPF valido sem mascara', () => {
+    expect(Utils.validarCPF('52998224725')).toBe(true);
+  });
+
+  test('rejeita CPF com digito verificador errado', () => {
+    expect(Utils.validarCPF('529.982.247-00')).toBe(false);
+  });
+
+  test('rejeita sequencia uniforme (11111111111)', () => {
+    expect(Utils.validarCPF('11111111111')).toBe(false);
+  });
+
+  test('rejeita CPF com menos de 11 digitos', () => {
+    expect(Utils.validarCPF('12345')).toBe(false);
+  });
+});
