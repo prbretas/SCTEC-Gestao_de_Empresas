@@ -26,6 +26,16 @@ function carregarScript(arquivo) {
   );
 }
 
+// Registra ConfigController
+const configCode = fs.readFileSync(path.join(__dirname, '../js/config.js'), 'utf8');
+const configCodeGlobal = configCode
+  .replace(/^const\s+CONFIG_KEY\s*=/m, 'globalThis.CONFIG_KEY =')
+  .replace(/^const\s+CONFIG_PADRAO\s*=/m, 'globalThis.CONFIG_PADRAO =')
+  .replace(/^const\s+ConfigController\s*=/m, 'globalThis.ConfigController =')
+  .replace(/window\.ConfigController\s*=\s*ConfigController;?/, '');
+// eslint-disable-next-line no-new-func
+new Function('globalThis', 'localStorage', configCodeGlobal)(globalThis, globalThis.localStorage);
+
 // Registra Utils no global para que os testes possam usar diretamente
 const utilsCode = fs.readFileSync(path.join(__dirname, '../js/utils.js'), 'utf8');
 // Substitui "const Utils" por "globalThis.Utils" para forcar escopo global

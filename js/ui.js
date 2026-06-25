@@ -1,5 +1,7 @@
 let direcaoOrdenacao = 1; // 1 para A-Z, -1 para Z-A
 let colunaAtual = "id";
+let paginaAtual = 1;
+let itensPorPagina = parseInt(localStorage.getItem("SCTEC_PAGE_SIZE") || "25", 10);
 
 const UIController = {
   modalForm: null,
@@ -14,15 +16,44 @@ const UIController = {
     // 2. Configura os eventos de busca (APENAS UMA VEZ)
     document
       .querySelector("#busca-empresa")
-      ?.addEventListener("input", () => this.renderizarLista());
+      ?.addEventListener("input", () => { paginaAtual = 1; this.renderizarLista(); });
     document
       .querySelector("#tipo-busca")
-      ?.addEventListener("change", () => this.renderizarLista());
+      ?.addEventListener("change", () => { paginaAtual = 1; this.renderizarLista(); });
+
+    // Eventos de paginação
+    document.querySelector("#btn-anterior")?.addEventListener("click", () => {
+      if (paginaAtual > 1) { paginaAtual--; this.renderizarLista(); }
+    });
+    document.querySelector("#btn-proxima")?.addEventListener("click", () => {
+      paginaAtual++; this.renderizarLista();
+    });
+    document.querySelector("#itens-por-pagina")?.addEventListener("change", (e) => {
+      itensPorPagina = parseInt(e.target.value, 10);
+      localStorage.setItem("SCTEC_PAGE_SIZE", itensPorPagina);
+      paginaAtual = 1;
+      this.renderizarLista();
+    });
+
+    // Botão Exportar Excel
+    document.querySelector("#btn-exportar-excel")?.addEventListener("click", () => {
+      Utils.exportarExcel(this._ultimaListaFiltrada || []);
+    });
 
     // 3. Define a ordenação inicial com um pequeno delay
-    // Isso garante que o DOM está pronto para receber os ícones 🔼/🔽
     setTimeout(() => {
       this.ordenar("id");
+      // Popula o select de itens por página
+      const selectPag = document.querySelector("#itens-por-pagina");
+      if (selectPag) {
+        [10, 25, 50, 100].forEach((n) => {
+          const opt = document.createElement("option");
+          opt.value = n;
+          opt.textContent = n;
+          if (n === itensPorPagina) opt.selected = true;
+          selectPag.appendChild(opt);
+        });
+      }
     }, 200);
 
     console.log("SCTEC - Sistema Inicializado com Ordenação Padrão.");
@@ -62,9 +93,16 @@ const UIController = {
       return emp[filtro]?.toLowerCase().includes(termo);
     });
 
-    // 4. Renderização no DOM
+    // 4. Salva lista filtrada para exportação Excel e aplica paginação
+    this._ultimaListaFiltrada = filtrados;
+    const totalPaginas = Math.max(1, Math.ceil(filtrados.length / itensPorPagina));
+    if (paginaAtual > totalPaginas) paginaAtual = totalPaginas;
+    const inicio = (paginaAtual - 1) * itensPorPagina;
+    const paginada = filtrados.slice(inicio, inicio + itensPorPagina);
+
+    // 5. Renderização no DOM
     listaCorpo.innerHTML = "";
-    filtrados.forEach((emp) => {
+    paginada.forEach((emp) => {
       const config = Utils.obterConfigSegmento(emp.segmento);
       const tr = document.createElement("tr");
       tr.style.cursor = "pointer";
@@ -104,10 +142,31 @@ const UIController = {
       listaCorpo.appendChild(tr);
     });
 
-    // 5. Atualização dos contadores
+    // 6. Atualização dos contadores e paginação
     this.atualizarContadores(EmpreendimentoStorage.buscarTodos(), filtrados);
-    // 6. Garante que o ícone de ordenação permaneça visível após renderizar
     this.atualizarIconesOrdenacao(colunaAtual, direcaoOrdenacao);
+    this.atualizarPaginacao(filtrados.length);
+  },
+
+  atualizarPaginacao(totalFiltrados) {
+    const totalPaginas = Math.max(1, Math.ceil(totalFiltrados / itensPorPagina));
+    const container = document.querySelector("#paginacao");
+    const info = document.querySelector("#paginacao-info");
+    const btnAnt = document.querySelector("#btn-anterior");
+    const btnProx = document.querySelector("#btn-proxima");
+    const pagInfo = document.querySelector("#pagina-atual-info");
+
+    if (!container) return;
+    container.style.display = totalFiltrados > 0 ? "flex" : "none";
+
+    if (info) {
+      const ini = Math.min((paginaAtual - 1) * itensPorPagina + 1, totalFiltrados);
+      const fim = Math.min(paginaAtual * itensPorPagina, totalFiltrados);
+      info.textContent = `Exibindo ${ini}–${fim} de ${totalFiltrados} registros`;
+    }
+    if (btnAnt) btnAnt.disabled = paginaAtual <= 1;
+    if (btnProx) btnProx.disabled = paginaAtual >= totalPaginas;
+    if (pagInfo) pagInfo.textContent = `Pág. ${paginaAtual}/${totalPaginas}`;
   },
 
   confirmarExclusao(id) {

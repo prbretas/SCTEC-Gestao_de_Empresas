@@ -436,3 +436,45 @@ body.dark-mode .socios-header {
 body.dark-mode .socios-lista {
   scrollbar-color: #444 #1e1e1e;
 }
+
+/* ==========================================================================
+   PAGINAÇÃO
+   ========================================================================== */
+
+#paginacao {
+  flex-wrap: wrap;
+}
+
+#paginacao-info,
+#pagina-atual-info {
+  font-size: 0.82rem;
+}
+
+body.dark-mode #paginacao .btn-outline-secondary {
+  color: var(--dark-text);
+  border-color: #555;
+}
+
+body.dark-mode #paginacao .btn-outline-secondary:hover {
+  background-color: #333;
+}
+
+body.dark-mode #itens-por-pagina {
+  background-color: var(--dark-input) !important;
+  color: var(--dark-text) !important;
+  border-color: #444 !important;
+}
+
+body.dark-mode #paginacao-info,
+body.dark-mode #pagina-atual-info {
+  color: var(--dark-text) !important;
+}
+
+/* ==========================================================================
+   LINK DE CONFIGURAÇÕES NO NAVBAR
+   ========================================================================== */
+
+.navbar .btn-outline-light {
+  font-size: 1rem;
+  padding: 2px 8px;
+}

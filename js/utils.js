@@ -250,6 +250,50 @@ const Utils = {
   },
 
   /**
+   * Exporta os registros para Excel (.xlsx) usando SheetJS.
+   * Exporta apenas os registros atualmente filtrados na tela.
+   * Feature: #19
+   * @param {Array} registrosFiltrados - lista visível atual (passada pelo UIController)
+   */
+  exportarExcel(registrosFiltrados) {
+    if (!window.XLSX) {
+      alert("⚠️ Biblioteca Excel não carregada. Verifique a conexão com a internet.");
+      return;
+    }
+    const dados = registrosFiltrados || EmpreendimentoStorage.buscarTodos();
+    if (dados.length === 0) return alert("Não há dados para exportar.");
+
+    const linhas = dados.map((item) => ({
+      ID: item.id,
+      Nome: item.nome || "",
+      Tipo: item.tipoPessoa || "PJ",
+      Registro: item.registro || "",
+      Responsavel: item.responsavel || "",
+      Email: item.email || "",
+      Telefone: item.telefone || "",
+      Endereco: item.endereco || "",
+      Municipio: item.municipio || "",
+      Segmento: item.segmento || "",
+      Status: item.status || "",
+      Observacoes: (item.observacoes || "").replace(/\n/g, " "),
+      DataCadastro: item.dataCadastro ? new Date(item.dataCadastro).toLocaleDateString("pt-BR") : "",
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(linhas);
+
+    // Largura das colunas
+    ws["!cols"] = [
+      { wch: 6 }, { wch: 40 }, { wch: 6 }, { wch: 20 }, { wch: 25 },
+      { wch: 30 }, { wch: 18 }, { wch: 35 }, { wch: 20 }, { wch: 15 },
+      { wch: 10 }, { wch: 40 }, { wch: 15 },
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Empreendimentos");
+    XLSX.writeFile(wb, `SCTEC_Export_${new Date().toISOString().split("T")[0]}.xlsx`);
+  },
+
+  /**
    * Faz o backup completo do LocalStorage como arquivo JSON.
    * FEATURE-05
    */
