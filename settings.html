@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Configurações — SCTEC</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="./css/styles.css" />
+  </head>
+  <body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm mb-4">
+      <div class="container">
+        <a class="navbar-brand h1 mb-0 text-decoration-none" href="index.html">🏭 SCTEC - Gestão Empresarial</a>
+        <div class="d-flex align-items-center gap-3">
+          <div class="form-check form-switch text-light mb-0">
+            <input class="form-check-input" type="checkbox" id="dark-mode-switch" />
+            <label class="form-check-label">Modo Escuro</label>
+          </div>
+          <a href="index.html" class="btn btn-outline-light btn-sm">← Voltar</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container pb-5">
+      <h1 id="rotinaTitle">⚙️ Configurações do Sistema</h1>
+
+      <!-- IDENTIDADE VISUAL -->
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-3">🎨 Identidade Visual</h5>
+          <div class="row g-3">
+
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Nome do Sistema</label>
+              <input type="text" id="cfg-nome" class="form-control" placeholder="Ex: SCTEC - Gestão Empresarial" />
+              <div class="form-text">Exibido no navbar e na aba do navegador.</div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Logo da Empresa</label>
+              <div class="d-flex align-items-center gap-3">
+                <div id="logo-preview" style="width:48px;height:48px;border:2px dashed #dee2e6;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🏭</div>
+                <div class="flex-grow-1">
+                  <label class="btn btn-outline-secondary btn-sm mb-0 w-100">
+                    📁 Selecionar imagem (PNG/SVG, max 500KB)
+                    <input type="file" id="cfg-logo" hidden accept="image/png,image/svg+xml" />
+                  </label>
+                  <button class="btn btn-outline-danger btn-sm w-100 mt-1" id="btn-remover-logo">🗑️ Remover logo</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-bold">Cor Principal (Navbar)</label>
+              <div class="d-flex gap-2 align-items-center">
+                <input type="color" id="cfg-cor-header" class="form-control form-control-color" style="width:48px;" />
+                <input type="text" id="cfg-cor-header-hex" class="form-control form-control-sm" placeholder="#333a60" maxlength="7" />
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-bold">Cor dos Botões</label>
+              <div class="d-flex gap-2 align-items-center">
+                <input type="color" id="cfg-cor-btn" class="form-control form-control-color" style="width:48px;" />
+                <input type="text" id="cfg-cor-btn-hex" class="form-control form-control-sm" placeholder="#006ebc" maxlength="7" />
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-bold">Cor de Destaque (Borda Navbar)</label>
+              <div class="d-flex gap-2 align-items-center">
+                <input type="color" id="cfg-cor-destaque" class="form-control form-control-color" style="width:48px;" />
+                <input type="text" id="cfg-cor-destaque-hex" class="form-control form-control-sm" placeholder="#67ff61" maxlength="7" />
+              </div>
+            </div>
+
+            <!-- Preview da navbar -->
+            <div class="col-12">
+              <label class="form-label fw-bold">Preview</label>
+              <div id="navbar-preview" class="p-3 rounded d-flex align-items-center gap-2" style="border-bottom:4px solid;">
+                <span id="preview-brand" class="text-white fw-bold">🏭 SCTEC - Gestão Empresarial</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- SEGMENTOS -->
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-3">🏷️ Segmentos</h5>
+          <p class="text-muted small">Adicione ou remova segmentos. Eles aparecerão no formulário de cadastro.</p>
+          <div id="segmentos-lista" class="d-flex flex-wrap gap-2 mb-3"></div>
+          <div class="d-flex gap-2">
+            <input type="text" id="novo-segmento" class="form-control" placeholder="Nome do novo segmento" style="max-width:300px;" />
+            <button class="btn btn-success" id="btn-add-segmento">+ Adicionar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- AÇÕES -->
+      <div class="d-flex justify-content-between align-items-center">
+        <button class="btn btn-outline-secondary" id="btn-restaurar-padrao">🔄 Restaurar Padrão</button>
+        <button class="btn btn-success px-5" id="btn-salvar-config">💾 Salvar Configurações</button>
+      </div>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="./js/config.js"></script>
+    <script>
+      // ─── Estado local da tela ───────────────────────────────────────────
+      let configAtual = ConfigController.obter();
+
+      // ─── Inicialização ──────────────────────────────────────────────────
+      document.addEventListener("DOMContentLoaded", () => {
+        ConfigController.aplicar(configAtual);
+        carregarFormulario(configAtual);
+        initDarkMode();
+        initEventos();
+      });
+
+      function carregarFormulario(config) {
+        document.querySelector("#cfg-nome").value = config.nomeSistema;
+        document.querySelector("#cfg-cor-header").value = config.cores.header;
+        document.querySelector("#cfg-cor-header-hex").value = config.cores.header;
+        document.querySelector("#cfg-cor-btn").value = config.cores.btn;
+        document.querySelector("#cfg-cor-btn-hex").value = config.cores.btn;
+        document.querySelector("#cfg-cor-destaque").value = config.cores.destaque;
+        document.querySelector("#cfg-cor-destaque-hex").value = config.cores.destaque;
+        atualizarPreview(config);
+        renderizarSegmentos(config.segmentos);
+
+        if (config.logoBase64) {
+          document.querySelector("#logo-preview").innerHTML = `<img src="${config.logoBase64}" style="max-width:44px;max-height:44px;border-radius:6px;" />`;
+        }
+      }
+
+      function atualizarPreview(config) {
+        const preview = document.querySelector("#navbar-preview");
+        const brand = document.querySelector("#preview-brand");
+        if (preview) {
+          preview.style.backgroundColor = config.cores.header;
+          preview.style.borderBottomColor = config.cores.destaque;
+        }
+        if (brand) {
+          brand.textContent = config.logoBase64
+            ? `[Logo] ${config.nomeSistema || "SCTEC"}`
+            : `🏭 ${config.nomeSistema || "SCTEC"}`;
+        }
+      }
+
+      function renderizarSegmentos(segmentos) {
+        const lista = document.querySelector("#segmentos-lista");
+        if (!lista) return;
+        lista.innerHTML = segmentos.map((s) => `
+          <span class="badge bg-secondary d-flex align-items-center gap-1 p-2" style="font-size:.85rem;">
+            ${s}
+            <button class="btn-close btn-close-white ms-1" style="font-size:.5rem;" aria-label="Remover" onclick="removerSegmento('${s}')"></button>
+          </span>`).join("");
+      }
+
+      function removerSegmento(nome) {
+        configAtual.segmentos = configAtual.segmentos.filter((s) => s !== nome);
+        renderizarSegmentos(configAtual.segmentos);
+      }
+
+      function initEventos() {
+        // Cores — sincroniza picker ↔ input de texto e aplica preview em tempo real
+        const sincronizarCor = (pickerId, hexId, propriedade) => {
+          const picker = document.querySelector(`#${pickerId}`);
+          const hexInput = document.querySelector(`#${hexId}`);
+          picker.addEventListener("input", () => {
+            hexInput.value = picker.value;
+            configAtual.cores[propriedade] = picker.value;
+            atualizarPreview(configAtual);
+            ConfigController.aplicar(configAtual);
+          });
+          hexInput.addEventListener("blur", () => {
+            if (/^#[0-9a-fA-F]{6}$/.test(hexInput.value)) {
+              picker.value = hexInput.value;
+              configAtual.cores[propriedade] = hexInput.value;
+              atualizarPreview(configAtual);
+              ConfigController.aplicar(configAtual);
+            }
+          });
+        };
+        sincronizarCor("cfg-cor-header", "cfg-cor-header-hex", "header");
+        sincronizarCor("cfg-cor-btn", "cfg-cor-btn-hex", "btn");
+        sincronizarCor("cfg-cor-destaque", "cfg-cor-destaque-hex", "destaque");
+
+        // Nome do sistema — preview em tempo real
+        document.querySelector("#cfg-nome").addEventListener("input", (e) => {
+          configAtual.nomeSistema = e.target.value;
+          atualizarPreview(configAtual);
+        });
+
+        // Upload de logo
+        document.querySelector("#cfg-logo").addEventListener("change", (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          if (file.size > 500 * 1024) {
+            alert("❌ Arquivo muito grande. O limite é 500KB.");
+            return;
+          }
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            configAtual.logoBase64 = ev.target.result;
+            document.querySelector("#logo-preview").innerHTML = `<img src="${ev.target.result}" style="max-width:44px;max-height:44px;border-radius:6px;" />`;
+            atualizarPreview(configAtual);
+          };
+          reader.readAsDataURL(file);
+        });
+
+        // Remover logo
+        document.querySelector("#btn-remover-logo").addEventListener("click", () => {
+          configAtual.logoBase64 = null;
+          document.querySelector("#logo-preview").innerHTML = "🏭";
+          atualizarPreview(configAtual);
+        });
+
+        // Adicionar segmento
+        document.querySelector("#btn-add-segmento").addEventListener("click", () => {
+          const input = document.querySelector("#novo-segmento");
+          const nome = input.value.trim();
+          if (!nome) return;
+          if (configAtual.segmentos.includes(nome)) {
+            alert("Este segmento já existe.");
+            return;
+          }
+          configAtual.segmentos.push(nome);
+          renderizarSegmentos(configAtual.segmentos);
+          input.value = "";
+        });
+        document.querySelector("#novo-segmento").addEventListener("keydown", (e) => {
+          if (e.key === "Enter") document.querySelector("#btn-add-segmento").click();
+        });
+
+        // Salvar
+        document.querySelector("#btn-salvar-config").addEventListener("click", () => {
+          configAtual.nomeSistema = document.querySelector("#cfg-nome").value.trim() || "SCTEC - Gestão Empresarial";
+          ConfigController.salvar(configAtual);
+          alert("✅ Configurações salvas com sucesso!");
+        });
+
+        // Restaurar padrão
+        document.querySelector("#btn-restaurar-padrao").addEventListener("click", () => {
+          if (!confirm("Deseja restaurar todas as configurações para o padrão original?")) return;
+          ConfigController.restaurarPadrao();
+          configAtual = ConfigController.obter();
+          carregarFormulario(configAtual);
+          alert("✅ Configurações restauradas.");
+        });
+      }
+
+      function initDarkMode() {
+        const switchBtn = document.querySelector("#dark-mode-switch");
+        const aplicar = (dark) => {
+          document.body.classList.toggle("dark-mode", dark);
+          localStorage.setItem("SCTEC_THEME", dark ? "dark" : "light");
+          if (switchBtn) switchBtn.checked = dark;
+        };
+        aplicar(localStorage.getItem("SCTEC_THEME") === "dark");
+        switchBtn?.addEventListener("change", (e) => aplicar(e.target.checked));
+      }
+    </script>
+  </body>
+</html>

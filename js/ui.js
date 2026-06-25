@@ -1,5 +1,7 @@
 let direcaoOrdenacao = 1; // 1 para A-Z, -1 para Z-A
 let colunaAtual = "id";
+let paginaAtual = 1;
+let itensPorPagina = parseInt(localStorage.getItem("SCTEC_PAGE_SIZE") || "25", 10);
 
 const UIController = {
   modalForm: null,
@@ -14,15 +16,44 @@ const UIController = {
     // 2. Configura os eventos de busca (APENAS UMA VEZ)
     document
       .querySelector("#busca-empresa")
-      ?.addEventListener("input", () => this.renderizarLista());
+      ?.addEventListener("input", () => { paginaAtual = 1; this.renderizarLista(); });
     document
       .querySelector("#tipo-busca")
-      ?.addEventListener("change", () => this.renderizarLista());
+      ?.addEventListener("change", () => { paginaAtual = 1; this.renderizarLista(); });
+
+    // Eventos de paginação
+    document.querySelector("#btn-anterior")?.addEventListener("click", () => {
+      if (paginaAtual > 1) { paginaAtual--; this.renderizarLista(); }
+    });
+    document.querySelector("#btn-proxima")?.addEventListener("click", () => {
+      paginaAtual++; this.renderizarLista();
+    });
+    document.querySelector("#itens-por-pagina")?.addEventListener("change", (e) => {
+      itensPorPagina = parseInt(e.target.value, 10);
+      localStorage.setItem("SCTEC_PAGE_SIZE", itensPorPagina);
+      paginaAtual = 1;
+      this.renderizarLista();
+    });
+
+    // Botão Exportar Excel
+    document.querySelector("#btn-exportar-excel")?.addEventListener("click", () => {
+      Utils.exportarExcel(this._ultimaListaFiltrada || []);
+    });
 
     // 3. Define a ordenação inicial com um pequeno delay
-    // Isso garante que o DOM está pronto para receber os ícones 🔼/🔽
     setTimeout(() => {
       this.ordenar("id");
+      // Popula o select de itens por página
+      const selectPag = document.querySelector("#itens-por-pagina");
+      if (selectPag) {
+        [10, 25, 50, 100].forEach((n) => {
+          const opt = document.createElement("option");
+          opt.value = n;
+          opt.textContent = n;
+          if (n === itensPorPagina) opt.selected = true;
+          selectPag.appendChild(opt);
+        });
+      }
     }, 200);
 
     console.log("SCTEC - Sistema Inicializado com Ordenação Padrão.");
