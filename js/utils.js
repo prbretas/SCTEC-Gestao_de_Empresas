@@ -292,6 +292,9 @@ const Utils = {
     XLSX.utils.book_append_sheet(wb, ws, "Empreendimentos");
     XLSX.writeFile(wb, `SCTEC_Export_${new Date().toISOString().split("T")[0]}.xlsx`);
   },
+
+  /**
+   * Faz o backup completo do LocalStorage como arquivo JSON.
    * FEATURE-05
    */
   backupJSON() {

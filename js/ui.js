@@ -93,9 +93,16 @@ const UIController = {
       return emp[filtro]?.toLowerCase().includes(termo);
     });
 
-    // 4. Renderização no DOM
+    // 4. Salva lista filtrada para exportação Excel e aplica paginação
+    this._ultimaListaFiltrada = filtrados;
+    const totalPaginas = Math.max(1, Math.ceil(filtrados.length / itensPorPagina));
+    if (paginaAtual > totalPaginas) paginaAtual = totalPaginas;
+    const inicio = (paginaAtual - 1) * itensPorPagina;
+    const paginada = filtrados.slice(inicio, inicio + itensPorPagina);
+
+    // 5. Renderização no DOM
     listaCorpo.innerHTML = "";
-    filtrados.forEach((emp) => {
+    paginada.forEach((emp) => {
       const config = Utils.obterConfigSegmento(emp.segmento);
       const tr = document.createElement("tr");
       tr.style.cursor = "pointer";
@@ -135,10 +142,31 @@ const UIController = {
       listaCorpo.appendChild(tr);
     });
 
-    // 5. Atualização dos contadores
+    // 6. Atualização dos contadores e paginação
     this.atualizarContadores(EmpreendimentoStorage.buscarTodos(), filtrados);
-    // 6. Garante que o ícone de ordenação permaneça visível após renderizar
     this.atualizarIconesOrdenacao(colunaAtual, direcaoOrdenacao);
+    this.atualizarPaginacao(filtrados.length);
+  },
+
+  atualizarPaginacao(totalFiltrados) {
+    const totalPaginas = Math.max(1, Math.ceil(totalFiltrados / itensPorPagina));
+    const container = document.querySelector("#paginacao");
+    const info = document.querySelector("#paginacao-info");
+    const btnAnt = document.querySelector("#btn-anterior");
+    const btnProx = document.querySelector("#btn-proxima");
+    const pagInfo = document.querySelector("#pagina-atual-info");
+
+    if (!container) return;
+    container.style.display = totalFiltrados > 0 ? "flex" : "none";
+
+    if (info) {
+      const ini = Math.min((paginaAtual - 1) * itensPorPagina + 1, totalFiltrados);
+      const fim = Math.min(paginaAtual * itensPorPagina, totalFiltrados);
+      info.textContent = `Exibindo ${ini}–${fim} de ${totalFiltrados} registros`;
+    }
+    if (btnAnt) btnAnt.disabled = paginaAtual <= 1;
+    if (btnProx) btnProx.disabled = paginaAtual >= totalPaginas;
+    if (pagInfo) pagInfo.textContent = `Pág. ${paginaAtual}/${totalPaginas}`;
   },
 
   confirmarExclusao(id) {

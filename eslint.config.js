@@ -38,6 +38,7 @@ module.exports = [
         FormData: 'readonly',
         // ── Dependencias externas (CDN) ──────────────────────────────────────
         bootstrap: 'readonly',
+        XLSX: 'readonly',
         // ── Globals cross-file: variaveis definidas em outros modulos JS ─────
         // (declaradas aqui para que no-undef nao reclame quando um arquivo
         //  usa uma variavel definida em outro arquivo da aplicacao)
@@ -46,6 +47,7 @@ module.exports = [
         ApiService: 'readonly',
         UIController: 'readonly',
         FormController: 'readonly',
+        ConfigController: 'readonly',
         abrirModalCadastro: 'readonly',
         direcaoOrdenacao: 'writable',
         colunaAtual: 'writable',
