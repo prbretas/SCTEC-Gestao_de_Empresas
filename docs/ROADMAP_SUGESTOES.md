@@ -359,6 +359,11 @@ Sprint 3 (longo prazo)
  10. Backend + multi-usuário real — seção 3.9 + técnico
 ```
 
+
+
+## NOVA FUNCIONALIDADE: 
+**Prioridade:** 🟢 BAIXA
+
 ---
 
 *Documento mantido por Philippe Bretas — atualizar conforme o produto evolui.*
