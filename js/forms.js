@@ -283,6 +283,14 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
         try { dados.socios = JSON.parse(sociosJson); } catch { dados.socios = []; }
       }
 
+      // Coleta contatos e tarefas das abas
+      if (ContatosController) {
+        dados.contatos = ContatosController.obterContatos();
+      }
+      if (TarefasController) {
+        dados.tarefas = TarefasController.obterTarefas();
+      }
+
       if (idExistente) {
         // MODO EDIÇÃO
         const confirmar = confirm(
@@ -330,6 +338,14 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
     // Restaura sócios salvos (se houver)
     const socios = emp.socios && emp.socios.length > 0 ? emp.socios : [];
     FormController.renderizarSocios(socios);
+
+    // Carrega contatos e tarefas nas abas
+    if (ContatosController) {
+      ContatosController.carregarContatos(emp.id, emp.contatos || []);
+    }
+    if (TarefasController) {
+      TarefasController.carregarTarefas(emp.id, emp.tarefas || []);
+    }
   },
 
   /**

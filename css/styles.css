@@ -478,3 +478,56 @@ body.dark-mode #pagina-atual-info {
   font-size: 1rem;
   padding: 2px 8px;
 }
+
+/* ==========================================================================
+   CARDS DE CONTATOS E TAREFAS
+   ========================================================================== */
+
+.contatos-container,
+.tarefas-container {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.contatos-container .card,
+.tarefas-container .card {
+  border-left: 4px solid var(--sc-btn);
+  margin-bottom: 0.75rem;
+}
+
+.contatos-container .card.border-left-primary {
+  border-left-color: #007bff;
+}
+
+.tarefas-container .card {
+  border-left-color: #ffc107;
+}
+
+.btn-xs {
+  font-size: 0.7rem;
+  padding: 0.25rem 0.5rem;
+  margin-right: 0.25rem;
+}
+
+/* Dark Mode para Cards */
+body.dark-mode .contatos-container .card,
+body.dark-mode .tarefas-container .card {
+  background-color: var(--dark-input);
+  border-color: var(--dark-border);
+  color: var(--dark-text);
+}
+
+body.dark-mode .contatos-container .card-body,
+body.dark-mode .tarefas-container .card-body {
+  background-color: var(--dark-input);
+}
+
+body.dark-mode .contatos-container .card h6,
+body.dark-mode .tarefas-container .card h6 {
+  color: var(--dark-text);
+}
+
+body.dark-mode .contatos-container .small.text-muted,
+body.dark-mode .tarefas-container .small.text-muted {
+  color: #a0a0a0 !important;
+}
