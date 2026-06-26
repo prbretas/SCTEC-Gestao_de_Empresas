@@ -216,11 +216,38 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
     const dados = Object.fromEntries(formData.entries());
     const idExistente = document.querySelector("#emp-id").value;
 
+    // 0. NORMALIZA TODOS OS CAMPOS DE TEXTO PARA MAIÚSCULAS
+    const camposTexto = [
+      "nome",
+      "responsavel",
+      "endereco",
+      "municipio",
+      "email",
+      "telefone",
+      "observacoes",
+    ];
+    camposTexto.forEach((campo) => {
+      if (dados[campo]) {
+        dados[campo] = dados[campo].toUpperCase().trim();
+      }
+    });
+
     // 1. Garante Status padrão se estiver vazio
     if (!dados.status) dados.status = "Ativo";
 
-    // 2. Validação visual de campos obrigatórios
-    const obrigatorios = ["nome", "registro"];
+    // 2. VALIDAÇÃO: ESTADO E MUNICÍPIO PREENCHIDOS
+    if (!dados.estado || dados.estado === "") {
+      const inputEstado = this.form.querySelector('[name="estado"]');
+      if (inputEstado) inputEstado.classList.add("is-invalid");
+      alert("⚠️ Estado (UF) é obrigatório.");
+      return;
+    } else {
+      const inputEstado = this.form.querySelector('[name="estado"]');
+      if (inputEstado) inputEstado.classList.remove("is-invalid");
+    }
+
+    // 3. Validação visual de campos obrigatórios
+    const obrigatorios = ["nome", "registro", "municipio"];
     let formValido = true;
 
     obrigatorios.forEach((campo) => {
@@ -236,6 +263,23 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
     if (!formValido) {
       alert("⚠️ Preencha os campos obrigatórios em destaque.");
       return;
+    }
+
+    // 4. VALIDAÇÃO: COMBINAÇÃO ESTADO + MUNICÍPIO DUPLICADA
+    const baseAtual = EmpreendimentoStorage.buscarTodos();
+    const municipioDuplicado = baseAtual.find((emp) => {
+      return (
+        emp.municipio === dados.municipio &&
+        emp.estado === dados.estado &&
+        Number(emp.id) !== Number(idExistente)
+      );
+    });
+
+    if (municipioDuplicado) {
+      alert(
+        `ℹ️ Aviso: Já existe um registro para ${dados.municipio} - ${dados.estado}. Verifique se não é duplicado.`,
+      );
+      // Deixa continuar pois é apenas um aviso (mesmo nome de cidade em outro estado é válido)
     }
 
     const tipoPessoa = dados.tipoPessoa || "PJ";
@@ -255,9 +299,7 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
       return;
     }
 
-    // 3. VALIDAÇÃO DE CNPJ/CPF DUPLICADO (Limpando pontuação)
-    const baseAtual = EmpreendimentoStorage.buscarTodos();
-
+    // 5. VALIDAÇÃO DE CNPJ/CPF DUPLICADO (Limpando pontuação)
     const registroDuplicado = baseAtual.find((emp) => {
       const registroLimpoBase = emp.registro.replace(/\D/g, "");
       return (
@@ -273,7 +315,7 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
       return;
     }
 
-    // 4. Lógica de Persistência
+    // 6. Lógica de Persistência
     try {
       // Coleta sócios renderizados para persistir junto ao registro.
       // A seção visual armazena os dados brutos no atributo data-socios do container.

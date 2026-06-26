@@ -236,17 +236,17 @@ const TarefasController = {
   salvarTarefa(e) {
     e.preventDefault();
 
-    const titulo = document.querySelector("#tarefa-titulo").value.trim();
+    const titulo = document.querySelector("#tarefa-titulo").value.trim().toUpperCase();
     const descricao = document
       .querySelector("#tarefa-descricao")
-      .value.trim();
+      .value.trim().toUpperCase();
     const dataVencimento = document
       .querySelector("#tarefa-vencimento")
       .value.trim();
     const prioridade = document.querySelector("#tarefa-prioridade").value;
     const responsavel = document
       .querySelector("#tarefa-responsavel")
-      .value.trim();
+      .value.trim().toUpperCase();
     const status = document.querySelector("#tarefa-status").value;
 
     // Validação

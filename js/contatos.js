@@ -244,14 +244,14 @@ const ContatosController = {
   salvarContato(e) {
     e.preventDefault();
 
-    const nome = document.querySelector("#contato-nome").value.trim();
-    const cargo = document.querySelector("#contato-cargo").value.trim();
+    const nome = document.querySelector("#contato-nome").value.trim().toUpperCase();
+    const cargo = document.querySelector("#contato-cargo").value.trim().toUpperCase();
     const telefone = document.querySelector("#contato-telefone").value.trim();
-    const email = document.querySelector("#contato-email").value.trim();
+    const email = document.querySelector("#contato-email").value.trim().toUpperCase();
     const whatsapp = document.querySelector("#contato-whatsapp").value.trim();
     const observacao = document
       .querySelector("#contato-observacao")
-      .value.trim();
+      .value.trim().toUpperCase();
 
     // Validação
     if (!nome) {
