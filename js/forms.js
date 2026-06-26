@@ -1,10 +1,63 @@
 const FormController = {
   form: document.querySelector("#form-empreendimento"),
+  ignoreDirtyPrompt: false,
 
   init() {
     if (!this.form) return;
     this.form.addEventListener("submit", (e) => this.handleSave(e));
+    this.form.addEventListener("input", () => this.marcarDirty());
+    this.form.addEventListener("change", () => this.marcarDirty());
     this.initInputs();
+    this.limparDirty();
+  },
+
+  marcarDirty() {
+    if (!this.form) return;
+    this.form.dataset.dirty = "true";
+  },
+
+  limparDirty() {
+    if (!this.form) return;
+    this.form.dataset.dirty = "false";
+  },
+
+  isDirty() {
+    return this.form?.dataset?.dirty === "true";
+  },
+
+  confirmarSaidaSemSalvar() {
+    if (this.ignoreDirtyPrompt || !this.isDirty()) return true;
+
+    return confirm(
+      "Existem alterações não salvas no formulário. Deseja fechar mesmo assim?",
+    );
+  },
+
+  montarObservacoesExtras(dados) {
+    const infoExtra = `--- DADOS CADASTRAIS (RECEITA FEDERAL) ---
+DATA DE ABERTURA: ${dados.data_abertura || "N/A"}
+NOME FANTASIA: ${dados.nome_fantasia || "Não informado"}
+SITUAÇÃO: ${dados.situacao || "N/A"}
+CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
+
+    let secaoSocios = "";
+    if (dados.socios && dados.socios.length > 0) {
+      secaoSocios = "\n\n--- QUADRO DE SÓCIOS (QSA) ---";
+      dados.socios.forEach((socio, i) => {
+        const dataEntrada = socio.data_entrada_sociedade || "N/D";
+        const nome = socio.nome_socio || "Nome não informado";
+        const qualificacao = socio.qualificacao_socio || "N/D";
+
+        secaoSocios += `\n${i + 1}. ${nome}`;
+        secaoSocios += `\n   Qualificação: ${qualificacao}`;
+        secaoSocios += `\n   Entrada na Sociedade: ${dataEntrada}`;
+      });
+      secaoSocios += "\n-------------------------------";
+    } else {
+      secaoSocios = "\n\nSÓCIOS: Não informados na base da Receita Federal";
+    }
+
+    return `${infoExtra}${secaoSocios}`;
   },
 
   initInputs() {
@@ -63,12 +116,7 @@ const FormController = {
           document.querySelector("#municipio").value = dados.municipio || "";
 
           // ── Seção: Dados Cadastrais nas Observações ───────────────────────
-          const infoExtra = `--- DADOS CADASTRAIS (RECEITA FEDERAL) ---
-DATA DE ABERTURA: ${dados.data_abertura || "N/A"}
-NOME FANTASIA: ${dados.nome_fantasia || "Não informado"}
-SITUAÇÃO: ${dados.situacao || "N/A"}
-CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
-
+          const infoExtra = FormController.montarObservacoesExtras(dados);
           const campoObs = document.querySelector("#observacoes");
           if (campoObs) {
             campoObs.value = campoObs.value
@@ -113,6 +161,7 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
     if (!emp) return;
 
     this.carregarDadosNoForm(emp);
+    this.limparDirty();
     this.setReadOnly(true); // TRAVA OS INPUTS
 
     document.querySelector("#titulo-modal-form").textContent =
@@ -143,6 +192,7 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
     if (!emp) return;
 
     this.carregarDadosNoForm(emp);
+    this.limparDirty();
     this.setReadOnly(false);
 
     const inputNome = document.querySelector("#nome");
@@ -188,9 +238,25 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
       return;
     }
 
+    const tipoPessoa = dados.tipoPessoa || "PJ";
+    const registroLimpoNovo = dados.registro.replace(/\D/g, "");
+
+    if (tipoPessoa === "PJ" && !Utils.validarCNPJ(registroLimpoNovo)) {
+      const input = this.form.querySelector('[name="registro"]');
+      if (input) input.classList.add("is-invalid");
+      alert("🚨 CNPJ inválido. Verifique os dígitos e tente novamente.");
+      return;
+    }
+
+    if (tipoPessoa === "PF" && !Utils.validarCPF(registroLimpoNovo)) {
+      const input = this.form.querySelector('[name="registro"]');
+      if (input) input.classList.add("is-invalid");
+      alert("🚨 CPF inválido. Verifique os dígitos e tente novamente.");
+      return;
+    }
+
     // 3. VALIDAÇÃO DE CNPJ/CPF DUPLICADO (Limpando pontuação)
     const baseAtual = EmpreendimentoStorage.buscarTodos();
-    const registroLimpoNovo = dados.registro.replace(/\D/g, "");
 
     const registroDuplicado = baseAtual.find((emp) => {
       const registroLimpoBase = emp.registro.replace(/\D/g, "");
@@ -231,7 +297,10 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
       }
 
       this.form.reset();
+      this.limparDirty();
+      this.ignoreDirtyPrompt = true;
       UIController.modalForm.hide();
+      this.ignoreDirtyPrompt = false;
       UIController.renderizarLista();
       console.log("Sucesso no processamento.");
     } catch (error) {
@@ -347,6 +416,7 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
 
 window.abrirModalCadastro = () => {
   FormController.form.reset();
+  FormController.limparDirty();
   document.querySelector("#emp-id").value = "";
   FormController.setReadOnly(false);
   FormController.limparSocios();
