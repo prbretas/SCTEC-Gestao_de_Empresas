@@ -8,7 +8,18 @@ const UIController = {
 
   init() {
     const modalElem = document.getElementById("modalFormulario");
-    if (modalElem) this.modalForm = new bootstrap.Modal(modalElem);
+    if (modalElem) {
+      this.modalForm = new bootstrap.Modal(modalElem);
+
+      modalElem.addEventListener("hide.bs.modal", (event) => {
+        if (
+          typeof FormController.confirmarSaidaSemSalvar === "function" &&
+          !FormController.confirmarSaidaSemSalvar()
+        ) {
+          event.preventDefault();
+        }
+      });
+    }
 
     // 1. Inicializa o tema (Dark Mode)
     this.initDarkMode();
@@ -241,11 +252,5 @@ const UIController = {
     }
 
     this.renderizarLista();
-  },
-
-  renderizarComOrdem(listaOrdenada) {
-    // Aqui chamamos a sua função renderizarLista, mas passando a lista já ordenada
-    // Se a sua renderizarLista() busca sempre do Storage, vamos precisar de um pequeno ajuste:
-    this.renderizarLista(listaOrdenada);
   },
 };
