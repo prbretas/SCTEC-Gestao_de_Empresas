@@ -9,9 +9,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // Aplica config visual
   if (window.ConfigController) ConfigController.aplicar(ConfigController.obter());
 
-  // Preenche saudação
+  // Preenche saudação com nickname#ID
   document.getElementById("home-nome-usuario").textContent = sessao.nome;
-  document.getElementById("home-id-usuario").textContent = `#${sessao.id}`;
+  document.getElementById("home-id-usuario").textContent = sessao.identidade || `${sessao.nome}#${sessao.id}`;
 
   // Dark mode
   const switchBtn = document.getElementById("dark-mode-switch");

@@ -82,7 +82,7 @@ const AuthService = {
 
   /**
    * Cadastra um novo usuário.
-   * @param {string} nome
+   * @param {string} nome - nickname do usuário
    * @param {string} senha
    * @param {string} perguntaSecreta
    * @param {string} respostaSecreta
@@ -90,8 +90,16 @@ const AuthService = {
    */
   async cadastrar(nome, senha, perguntaSecreta, respostaSecreta) {
     nome = nome.trim();
-    if (!nome || nome.length < 2) {
-      return { ok: false, erro: "O nome deve ter pelo menos 2 caracteres." };
+
+    // Valida nickname: 3-20 chars, apenas letras, números e underline
+    if (!nome || nome.length < 3) {
+      return { ok: false, erro: "O nickname deve ter pelo menos 3 caracteres." };
+    }
+    if (nome.length > 20) {
+      return { ok: false, erro: "O nickname pode ter no máximo 20 caracteres." };
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(nome)) {
+      return { ok: false, erro: "O nickname aceita apenas letras, números e underline (_). Sem espaços." };
     }
     if (!senha || senha.length < 4) {
       return { ok: false, erro: "A senha deve ter pelo menos 4 caracteres." };
@@ -100,7 +108,7 @@ const AuthService = {
       return { ok: false, erro: "A pergunta e a resposta secreta são obrigatórias." };
     }
     if (this.buscarPorNome(nome)) {
-      return { ok: false, erro: `Já existe um usuário com o nome "${nome}".` };
+      return { ok: false, erro: `Nickname "${nome}" já está em uso. Escolha outro.` };
     }
 
     const senhaHash = await this.hashSenha(senha);
@@ -109,7 +117,7 @@ const AuthService = {
 
     const novoUsuario = {
       id,
-      nome,
+      nome,           // nickname
       senhaHash,
       perguntaSecreta,
       respostaHash,
@@ -144,6 +152,7 @@ const AuthService = {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify({
       id: usuario.id,
       nome: usuario.nome,
+      identidade: `${usuario.nome}#${usuario.id}`, // nickname#ID
       loginEm: new Date().toISOString(),
     }));
 
