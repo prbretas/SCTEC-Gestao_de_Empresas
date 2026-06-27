@@ -130,7 +130,7 @@ A mensagem de alerta para campos obrigatórios contém o nome do desenvolvedor, 
 **Evidência:**
 ```javascript
 // ❌ Texto de desenvolvimento exposto ao usuário
-alert("⚠️ PH, preencha os campos obrigatórios em destaque!");
+alert("⚠️ Preencha os campos obrigatórios em destaque!");
 ```
 
 **Correção:**

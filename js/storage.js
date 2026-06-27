@@ -1,19 +1,38 @@
-const STORAGE_KEY = "SCTEC_EMPREENDIMENTOS_DB";
+/**
+ * storage.js — Persistência de dados por usuário.
+ * A chave de storage é dinâmica: SCTEC_DATA_{userId}
+ * para garantir isolamento entre múltiplos usuários no mesmo dispositivo.
+ */
+
+const STORAGE_KEY_LEGACY = "SCTEC_EMPREENDIMENTOS_DB";
 
 const EmpreendimentoStorage = {
+
+  /**
+   * Retorna a chave de storage do usuário atual.
+   * Se não há sessão (ex: telas de login/register), usa a chave legacy.
+   */
+  _obterChave() {
+    if (window.AuthService) {
+      const chave = AuthService.obterChaveDados();
+      if (chave) return chave;
+    }
+    return STORAGE_KEY_LEGACY;
+  },
+
   buscarTodos() {
     try {
-      const dados = localStorage.getItem(STORAGE_KEY);
+      const dados = localStorage.getItem(this._obterChave());
       return dados ? JSON.parse(dados) : [];
     } catch (e) {
       console.error("Erro ao ler localStorage:", e);
-      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(this._obterChave());
       return [];
     }
   },
 
   salvarTodos(lista) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
+    localStorage.setItem(this._obterChave(), JSON.stringify(lista));
   },
 
   obterProximoId() {
@@ -37,16 +56,16 @@ const EmpreendimentoStorage = {
     this.salvarTodos(lista);
     return novoRegistro;
   },
+
   atualizar(id, objetoAtualizado) {
     const lista = this.buscarTodos();
     const index = lista.findIndex((e) => e.id === Number(id));
 
     if (index !== -1) {
-      // Mantém os dados antigos (como data de cadastro) e sobrepõe com os novos
       lista[index] = {
         ...lista[index],
         ...objetoAtualizado,
-        id: Number(id), // Garante que o ID permaneça o mesmo
+        id: Number(id),
         dataAtualizacao: new Date().toISOString(),
       };
       this.salvarTodos(lista);

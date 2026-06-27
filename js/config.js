@@ -65,7 +65,7 @@ const ConfigController = {
     const navbarBrand = document.querySelector(".navbar-brand");
     if (navbarBrand) {
       navbarBrand.innerHTML = config.logoBase64
-        ? `<img src="${config.logoBase64}" alt="Logo" style="height:32px;width:auto;margin-right:8px;vertical-align:middle;">${config.nomeSistema}`
+        ? `<img src="${config.logoBase64}" alt="Logo" style="height:48px;max-width:180px;width:auto;margin-right:10px;vertical-align:middle;object-fit:contain;">${config.nomeSistema}`
         : `🏭 ${config.nomeSistema}`;
     }
     document.title = config.nomeSistema || "SCTEC";

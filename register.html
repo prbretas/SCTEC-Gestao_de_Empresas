@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Criar Conta — SCTEC</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="./css/styles.css" />
+    <script>
+      (function () {
+        try {
+          var cfg = JSON.parse(localStorage.getItem("SCTEC_CONFIG") || "{}");
+          var cores = cfg.cores || {};
+          var r = document.documentElement;
+          if (cores.header) r.style.setProperty("--sc-header", cores.header);
+          if (cores.btn) r.style.setProperty("--sc-btn", cores.btn);
+          if (cores.destaque) r.style.setProperty("--sc-header2", cores.destaque);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+
+  <body class="bg-light d-flex flex-column min-vh-100">
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-dark shadow-sm mb-0">
+      <div class="container">
+        <span class="navbar-brand h1 mb-0">🏭 SCTEC - Gestão Empresarial</span>
+      </div>
+    </nav>
+
+    <!-- CONTEÚDO -->
+    <main class="flex-grow-1 d-flex align-items-center justify-content-center py-5">
+      <div class="card shadow border-0" style="width: 100%; max-width: 460px;">
+        <div class="card-body p-4">
+
+          <h4 class="fw-bold mb-1 text-center">Criar Conta</h4>
+          <p class="text-muted text-center small mb-4">Preencha os dados para acessar o sistema</p>
+
+          <form id="form-register">
+
+            <!-- Dados de acesso -->
+            <h6 class="fw-bold text-muted mb-2 text-uppercase" style="font-size:.75rem; letter-spacing:.5px">Dados de Acesso</h6>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Nome de Usuário</label>
+              <input type="text" id="reg-nome" class="form-control" placeholder="Insira o seu nome" autocomplete="username" required />
+              <div class="form-text">Usado para login. Mínimo 2 caracteres.</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Senha</label>
+              <div class="input-group">
+                <input type="password" id="reg-senha" class="form-control" placeholder="Mínimo 4 caracteres" autocomplete="new-password" required />
+                <button type="button" class="btn btn-outline-secondary" id="btn-toggle-senha" tabindex="-1">👁</button>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-bold">Confirmar Senha</label>
+              <input type="password" id="reg-confirmar" class="form-control" placeholder="Repita a senha" autocomplete="new-password" required />
+            </div>
+
+            <!-- Recuperação de senha -->
+            <h6 class="fw-bold text-muted mb-2 text-uppercase" style="font-size:.75rem; letter-spacing:.5px">Pergunta Secreta (para recuperar senha)</h6>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Pergunta</label>
+              <select id="reg-pergunta" class="form-select">
+                <option value="">Selecione uma pergunta...</option>
+                <option>Qual o nome do seu primeiro animal de estimação?</option>
+                <option>Qual a cidade onde você nasceu?</option>
+                <option>Qual o nome da sua mãe?</option>
+                <option>Qual foi o nome da sua primeira escola?</option>
+                <option>Qual o modelo do seu primeiro carro?</option>
+                <option>Qual o seu time de futebol favorito?</option>
+              </select>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-bold">Resposta</label>
+              <input type="text" id="reg-resposta" class="form-control" placeholder="Sua resposta secreta" />
+              <div class="form-text">Guarde bem — será usada para recuperar sua senha.</div>
+            </div>
+
+            <div id="reg-erro" class="alert alert-danger py-2 small d-none"></div>
+            <div id="reg-sucesso" class="alert alert-success py-2 small d-none"></div>
+
+            <button type="submit" class="btn btn-success w-100 fw-bold" id="btn-cadastrar">
+              Criar Conta
+            </button>
+          </form>
+
+          <hr class="my-3" />
+          <div class="text-center small">
+            Já tem uma conta? <a href="login.html" class="text-decoration-none">Fazer login</a>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="./js/config.js"></script>
+    <script src="./js/auth.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        if (window.ConfigController) ConfigController.aplicar(ConfigController.obter());
+
+        // Se já tem sessão, vai para home
+        if (AuthService.obterSessao()) {
+          window.location.href = "home.html";
+          return;
+        }
+
+        // Toggle senha
+        document.getElementById("btn-toggle-senha").addEventListener("click", () => {
+          const input = document.getElementById("reg-senha");
+          input.type = input.type === "password" ? "text" : "password";
+        });
+
+        // Submit
+        document.getElementById("form-register").addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const nome = document.getElementById("reg-nome").value;
+          const senha = document.getElementById("reg-senha").value;
+          const confirmar = document.getElementById("reg-confirmar").value;
+          const pergunta = document.getElementById("reg-pergunta").value;
+          const resposta = document.getElementById("reg-resposta").value;
+          const erroEl = document.getElementById("reg-erro");
+          const sucessoEl = document.getElementById("reg-sucesso");
+          const btnCadastrar = document.getElementById("btn-cadastrar");
+
+          erroEl.classList.add("d-none");
+          sucessoEl.classList.add("d-none");
+
+          if (senha !== confirmar) {
+            erroEl.textContent = "As senhas não coincidem.";
+            erroEl.classList.remove("d-none");
+            return;
+          }
+
+          if (!pergunta) {
+            erroEl.textContent = "Selecione uma pergunta secreta.";
+            erroEl.classList.remove("d-none");
+            return;
+          }
+
+          btnCadastrar.disabled = true;
+          btnCadastrar.textContent = "Criando conta...";
+
+          const resultado = await AuthService.cadastrar(nome, senha, pergunta, resposta);
+
+          if (resultado.ok) {
+            sucessoEl.textContent = `✅ Conta criada! Seu ID é #${resultado.usuario.id}. Redirecionando...`;
+            sucessoEl.classList.remove("d-none");
+            setTimeout(() => { window.location.href = "login.html"; }, 2000);
+          } else {
+            erroEl.textContent = resultado.erro;
+            erroEl.classList.remove("d-none");
+            btnCadastrar.disabled = false;
+            btnCadastrar.textContent = "Criar Conta";
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
