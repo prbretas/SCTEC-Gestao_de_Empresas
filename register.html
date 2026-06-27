@@ -6,18 +6,6 @@
     <title>Criar Conta — SCTEC</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="./css/styles.css" />
-    <script>
-      (function () {
-        try {
-          var cfg = JSON.parse(localStorage.getItem("SCTEC_CONFIG") || "{}");
-          var cores = cfg.cores || {};
-          var r = document.documentElement;
-          if (cores.header) r.style.setProperty("--sc-header", cores.header);
-          if (cores.btn) r.style.setProperty("--sc-btn", cores.btn);
-          if (cores.destaque) r.style.setProperty("--sc-header2", cores.destaque);
-        } catch (e) {}
-      })();
-    </script>
   </head>
 
   <body class="bg-light d-flex flex-column min-vh-100">
@@ -39,7 +27,6 @@
 
           <form id="form-register">
 
-            <!-- Dados de acesso -->
             <h6 class="fw-bold text-muted mb-2 text-uppercase" style="font-size:.75rem; letter-spacing:.5px">Dados de Acesso</h6>
 
             <div class="mb-3">
@@ -61,7 +48,6 @@
               <input type="password" id="reg-confirmar" class="form-control" placeholder="Repita a senha" autocomplete="new-password" required />
             </div>
 
-            <!-- Recuperação de senha -->
             <h6 class="fw-bold text-muted mb-2 text-uppercase" style="font-size:.75rem; letter-spacing:.5px">Pergunta Secreta (para recuperar senha)</h6>
 
             <div class="mb-3">
@@ -102,67 +88,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="./js/config.js"></script>
     <script src="./js/auth.js"></script>
-    <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        if (window.ConfigController) ConfigController.aplicar(ConfigController.obter());
-
-        // Se já tem sessão, vai para home
-        if (AuthService.obterSessao()) {
-          window.location.href = "home.html";
-          return;
-        }
-
-        // Toggle senha
-        document.getElementById("btn-toggle-senha").addEventListener("click", () => {
-          const input = document.getElementById("reg-senha");
-          input.type = input.type === "password" ? "text" : "password";
-        });
-
-        // Submit
-        document.getElementById("form-register").addEventListener("submit", async (e) => {
-          e.preventDefault();
-
-          const nome = document.getElementById("reg-nome").value;
-          const senha = document.getElementById("reg-senha").value;
-          const confirmar = document.getElementById("reg-confirmar").value;
-          const pergunta = document.getElementById("reg-pergunta").value;
-          const resposta = document.getElementById("reg-resposta").value;
-          const erroEl = document.getElementById("reg-erro");
-          const sucessoEl = document.getElementById("reg-sucesso");
-          const btnCadastrar = document.getElementById("btn-cadastrar");
-
-          erroEl.classList.add("d-none");
-          sucessoEl.classList.add("d-none");
-
-          if (senha !== confirmar) {
-            erroEl.textContent = "As senhas não coincidem.";
-            erroEl.classList.remove("d-none");
-            return;
-          }
-
-          if (!pergunta) {
-            erroEl.textContent = "Selecione uma pergunta secreta.";
-            erroEl.classList.remove("d-none");
-            return;
-          }
-
-          btnCadastrar.disabled = true;
-          btnCadastrar.textContent = "Criando conta...";
-
-          const resultado = await AuthService.cadastrar(nome, senha, pergunta, resposta);
-
-          if (resultado.ok) {
-            sucessoEl.textContent = `✅ Conta criada! Seu ID é #${resultado.usuario.id}. Redirecionando...`;
-            sucessoEl.classList.remove("d-none");
-            setTimeout(() => { window.location.href = "login.html"; }, 2000);
-          } else {
-            erroEl.textContent = resultado.erro;
-            erroEl.classList.remove("d-none");
-            btnCadastrar.disabled = false;
-            btnCadastrar.textContent = "Criar Conta";
-          }
-        });
-      });
-    </script>
+    <script src="./js/register.js"></script>
   </body>
 </html>
