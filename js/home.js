@@ -1,19 +1,21 @@
 /**
  * home.js — Lógica da tela home (hub de navegação).
+ * Os cards são renderizados dinamicamente com base nos módulos ativos da organização.
  */
 document.addEventListener("DOMContentLoaded", () => {
   // Guard de rota
   const sessao = AuthService.requireAuth();
   if (!sessao) return;
 
-  // Aplica config visual
+  // Aplica config visual da organização
   if (window.ConfigController) ConfigController.aplicar(ConfigController.obter());
 
   // Preenche saudação com nickname#ID
   document.getElementById("home-nome-usuario").textContent = sessao.nome;
-  document.getElementById("home-id-usuario").textContent = sessao.identidade || `${sessao.nome}#${sessao.id}`;
+  document.getElementById("home-id-usuario").textContent =
+    sessao.identidade || `${sessao.nome}#${sessao.id}`;
 
-  // Exibe badge de role
+  // Badge de role
   const badgeRole = document.getElementById("home-role-badge");
   if (badgeRole) {
     if (sessao.role === "admin") {
@@ -25,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Exibe código de convite apenas para Admin
+  // Código de convite — apenas Admin
   const codigoEl = document.getElementById("home-codigo-convite");
   if (codigoEl && sessao.role === "admin") {
     const codigo = AuthService.obterCodigoConvite();
@@ -35,15 +37,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Oculta card de Configurações para não-Admin
-  if (sessao.role !== "admin") {
-    const cardSettings = document.getElementById("card-settings");
-    if (cardSettings) cardSettings.style.display = "none";
-  } else {
-    // Exibe linha de cards do Admin
-    const adminCards = document.getElementById("admin-cards");
-    if (adminCards) adminCards.style.removeProperty("display");
-  }
+  // Renderiza cards de módulos dinamicamente
+  _renderizarCards(sessao);
 
   // Dark mode
   const switchBtn = document.getElementById("dark-mode-switch");
@@ -57,8 +52,54 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Logout
   document.getElementById("btn-logout").addEventListener("click", () => {
-    if (confirm("Deseja sair do sistema?")) {
-      AuthService.logout();
-    }
+    if (confirm("Deseja sair do sistema?")) AuthService.logout();
   });
 });
+
+/**
+ * Renderiza os cards de módulos no grid da home.
+ * Módulos adminOnly ficam em linha separada.
+ */
+function _renderizarCards(sessao) {
+  const modulos = window.ModulesController
+    ? ModulesController.obterModulosVisiveis()
+    : [];
+
+  const gridPrincipal = document.getElementById("cards-grid");
+  const gridAdmin = document.getElementById("cards-grid-admin");
+
+  if (!gridPrincipal) return;
+
+  // Separar módulos normais dos admin-only
+  const modulosNormais = modulos.filter((m) => !m.adminOnly);
+  const modulosAdmin = modulos.filter((m) => m.adminOnly);
+
+  // Render principal
+  gridPrincipal.innerHTML = modulosNormais.map((m) => `
+    <div class="col-md-4">
+      <a href="${m.url}" class="home-card card shadow-sm text-center">
+        <div class="card-body">
+          <div class="card-icon mb-3">${m.icon}</div>
+          <h5 class="fw-bold mb-1">${m.label}</h5>
+        </div>
+      </a>
+    </div>`).join("");
+
+  // Render admin
+  if (gridAdmin) {
+    if (modulosAdmin.length > 0) {
+      gridAdmin.innerHTML = modulosAdmin.map((m) => `
+        <div class="col-md-4">
+          <a href="${m.url}" class="home-card card shadow-sm text-center border border-warning">
+            <div class="card-body">
+              <div class="card-icon mb-3">${m.icon}</div>
+              <h5 class="fw-bold mb-1">${m.label}</h5>
+            </div>
+          </a>
+        </div>`).join("");
+      gridAdmin.style.removeProperty("display");
+    } else {
+      gridAdmin.style.display = "none";
+    }
+  }
+}

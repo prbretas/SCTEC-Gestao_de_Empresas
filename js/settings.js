@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
   carregarFormulario(configAtual);
   initDarkMode();
   initEventos();
+  renderizarModulos();
 });
 
 function carregarFormulario(config) {
@@ -172,4 +173,45 @@ function initDarkMode() {
   };
   aplicar(localStorage.getItem("SCTEC_THEME") === "dark");
   switchBtn?.addEventListener("change", (e) => aplicar(e.target.checked));
+}
+
+/**
+ * Renderiza os toggles de módulos na seção de Configurações.
+ */
+function renderizarModulos() {
+  const container = document.querySelector("#modulos-lista");
+  if (!container || !window.MODULOS_CATALOGO) return;
+
+  const estado = window.ModulesController ? ModulesController.obterEstado() : {};
+
+  container.innerHTML = MODULOS_CATALOGO.map((m) => {
+    const isAtivo = estado[m.id] !== false;
+    const adminLabel = m.adminOnly ? ' <span class="badge bg-warning text-dark ms-1" style="font-size:.65rem;">Admin</span>' : "";
+    return `
+      <div class="col-md-6 col-lg-4">
+        <div class="card border-0 bg-light p-3 d-flex flex-row align-items-center gap-3">
+          <span style="font-size:1.8rem;">${m.icon}</span>
+          <div class="flex-grow-1">
+            <div class="fw-bold">${m.label}${adminLabel}</div>
+            <div class="small text-muted">${m.url}</div>
+          </div>
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" role="switch"
+              id="mod-${m.id}"
+              ${isAtivo ? "checked" : ""}
+              onchange="toggleModulo('${m.id}', this.checked)"
+            />
+          </div>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+/**
+ * Ativa ou desativa um módulo e re-renderiza a lista.
+ */
+function toggleModulo(moduleId, ativo) {
+  if (window.ModulesController) {
+    ModulesController.definir(moduleId, ativo);
+  }
 }

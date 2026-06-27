@@ -197,3 +197,15 @@
 - Card "Gerenciar Usuários" visível na home apenas para Admin
 - **Arquivos:** `admin.html`, `js/admin.js`, `home.html`, `js/home.js`
 - **Commit:** pendente neste sprint
+
+---
+
+### [Junho/2026] — Item 7: Arquitetura Modular — Ativação por Segmento
+- `js/modules.js` criado com catálogo de módulos e `ModulesController`
+- Estado salvo por organização em `SCTEC_MODULES_{orgId}`
+- `home.js` renderiza cards dinamicamente com base nos módulos ativos
+- `home.html` usa grids dinâmicos `#cards-grid` e `#cards-grid-admin`
+- Seção "🧩 Módulos do Sistema" adicionada em `settings.html` com toggles por rotina
+- `settings.js` renderiza e persiste alterações de módulos
+- **Arquivos:** `js/modules.js`, `js/home.js`, `js/settings.js`, `home.html`, `settings.html`
+- **Commit:** pendente neste sprint
