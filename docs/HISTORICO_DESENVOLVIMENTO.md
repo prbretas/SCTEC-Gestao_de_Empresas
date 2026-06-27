@@ -209,3 +209,34 @@
 - `settings.js` renderiza e persiste alterações de módulos
 - **Arquivos:** `js/modules.js`, `js/home.js`, `js/settings.js`, `home.html`, `settings.html`
 - **Commit:** pendente neste sprint
+
+---
+
+### [Junho/2026] — Item 5: Módulo Agenda de Compromissos
+- `agenda.html` + `js/agenda.js` criados
+- Compromissos com título, data, hora, tipo, empresa relacionada, descrição e status
+- Filtros por mês, tipo e busca livre
+- CRUD completo com modal; dados por organização em `SCTEC_AGENDA_{orgId}`
+- Módulo registrado no catálogo em `modules.js`
+- **Arquivos:** `agenda.html`, `js/agenda.js`, `js/modules.js`
+- **Commit:** neste sprint
+
+---
+
+### [Junho/2026] — Item 5: Módulo CRM / Funil de Vendas
+- `crm.html` + `js/crm.js` criados
+- Board Kanban com 6 etapas: Prospecção, Contato, Proposta, Negociação, Fechado, Perdido
+- Oportunidades com título, empresa, valor, previsão de fechamento, responsável e observações
+- Mover etapa direto no card; CRUD completo com modal
+- Dados por organização em `SCTEC_CRM_{orgId}`
+- Módulo registrado no catálogo em `modules.js`
+- **Arquivos:** `crm.html`, `js/crm.js`, `js/modules.js`
+- **Commit:** neste sprint
+
+---
+
+### [Junho/2026] — Item 6: Análise MenteMX PRO
+- Specs lidos localmente: `REQUIREMENTS.MD`, `DESIGN.MD`, `TASK.MD`
+- Conclusão: MenteMX PRO é plataforma de nicho esportivo (Motocross) — sem integração direta com SCTEC
+- Documentado como roadmap separado; sem implementação de integração
+- **Status:** Concluído (análise) — sem pendências técnicas
