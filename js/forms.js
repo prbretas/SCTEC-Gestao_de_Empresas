@@ -222,6 +222,7 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
       "responsavel",
       "endereco",
       "municipio",
+      "estado",
       "email",
       "telefone",
       "observacoes",
@@ -372,6 +373,7 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
 
     document.querySelector("#cep").value = emp.cep || "";
     document.querySelector("#endereco").value = emp.endereco || "";
+    document.querySelector("#estado").value = emp.estado || "";
     document.querySelector("#municipio").value = emp.municipio || "";
     document.querySelector("#segmento").value = emp.segmento || "Outros";
     document.querySelector("#status").value = emp.status || "Ativo";

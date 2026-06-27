@@ -94,9 +94,6 @@ const ContatosController = {
    * Renderiza um cartão de contato com informações e ações rápidas
    */
   renderizarCartaoContato(contato, idx) {
-    const telefoneFormatado = contato.telefone || "";
-    const telefoneWhatsApp = contato.telefone.replace(/\D/g, "");
-
     return `
       <div class="card mb-2 border-left-primary">
         <div class="card-body pb-2">

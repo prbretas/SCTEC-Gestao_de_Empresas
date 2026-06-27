@@ -51,21 +51,19 @@ const UIController = {
       Utils.exportarExcel(this._ultimaListaFiltrada || []);
     });
 
-    // 3. Define a ordenação inicial com um pequeno delay
-    setTimeout(() => {
-      this.ordenar("id");
-      // Popula o select de itens por página
-      const selectPag = document.querySelector("#itens-por-pagina");
-      if (selectPag) {
-        [10, 25, 50, 100].forEach((n) => {
-          const opt = document.createElement("option");
-          opt.value = n;
-          opt.textContent = n;
-          if (n === itensPorPagina) opt.selected = true;
-          selectPag.appendChild(opt);
-        });
-      }
-    }, 200);
+    // 3. Renderiza a lista imediatamente e popula o select de itens por página
+    this.ordenar("id");
+
+    const selectPag = document.querySelector("#itens-por-pagina");
+    if (selectPag) {
+      [10, 25, 50, 100].forEach((n) => {
+        const opt = document.createElement("option");
+        opt.value = n;
+        opt.textContent = n;
+        if (n === itensPorPagina) opt.selected = true;
+        selectPag.appendChild(opt);
+      });
+    }
 
     console.log("SCTEC - Sistema Inicializado com Ordenação Padrão.");
   },
@@ -134,6 +132,7 @@ const UIController = {
                 <div class="small">${emp.telefone || ""}</div>
             </td>
             <td class="small text-wrap" style="max-width: 200px;">${emp.endereco || ""}</td>
+            <td class="small">${emp.estado || ""}</td>
             <td class="small">${emp.municipio || ""}</td>
             <td>
                 <span class="badge" style="background-color: ${config.bg}; color: ${config.text}; border: 1px solid ${config.border}">

@@ -7,6 +7,7 @@ const EmpreendimentoStorage = {
       return dados ? JSON.parse(dados) : [];
     } catch (e) {
       console.error("Erro ao ler localStorage:", e);
+      localStorage.removeItem(STORAGE_KEY);
       return [];
     }
   },
