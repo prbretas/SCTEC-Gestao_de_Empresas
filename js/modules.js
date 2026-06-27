@@ -11,12 +11,14 @@ const MODULES_KEY_PREFIX = "SCTEC_MODULES_";
  * Cada módulo tem: id, label, icon, url, defaultActive
  */
 const MODULOS_CATALOGO = [
-  { id: "cadastros",   label: "Cadastros",          icon: "📋", url: "cadastros.html",  defaultActive: true },
-  { id: "dashboard",   label: "Dashboard",          icon: "📊", url: "dashboard.html",  defaultActive: true },
-  { id: "agenda",      label: "Agenda",             icon: "📅", url: "agenda.html",     defaultActive: true },
-  { id: "crm",         label: "CRM / Funil",        icon: "🎯", url: "crm.html",        defaultActive: true },
-  { id: "settings",    label: "Configurações",      icon: "⚙️", url: "settings.html",   defaultActive: true, adminOnly: true },
-  { id: "admin",       label: "Gerenciar Usuários", icon: "👑", url: "admin.html",      defaultActive: true, adminOnly: true },
+  { id: "cadastros",   label: "Cadastros",          icon: "📋", url: "cadastros.html",   defaultActive: true },
+  { id: "dashboard",   label: "Dashboard",          icon: "📊", url: "dashboard.html",   defaultActive: true },
+  { id: "agenda",      label: "Agenda",             icon: "📅", url: "agenda.html",      defaultActive: true },
+  { id: "crm",         label: "CRM / Funil",        icon: "🎯", url: "crm.html",         defaultActive: true },
+  { id: "propostas",   label: "Propostas",          icon: "📄", url: "propostas.html",   defaultActive: true },
+  { id: "financeiro",  label: "Financeiro",         icon: "💰", url: "financeiro.html",  defaultActive: true },
+  { id: "settings",    label: "Configurações",      icon: "⚙️", url: "settings.html",    defaultActive: true, adminOnly: true },
+  { id: "admin",       label: "Gerenciar Usuários", icon: "👑", url: "admin.html",       defaultActive: true, adminOnly: true },
 ];
 
 const ModulesController = {

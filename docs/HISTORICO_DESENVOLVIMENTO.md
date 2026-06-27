@@ -240,3 +240,25 @@
 - Conclusão: MenteMX PRO é plataforma de nicho esportivo (Motocross) — sem integração direta com SCTEC
 - Documentado como roadmap separado; sem implementação de integração
 - **Status:** Concluído (análise) — sem pendências técnicas
+
+---
+
+### [Junho/2026] — Item 5b: Módulo Controle Financeiro
+- `financeiro.html` + `js/financeiro.js` criados
+- Transações de entrada/saída com categoria, empresa vinculada e observações
+- Cards de resumo: total entradas, saídas e saldo (cor dinâmica positivo/negativo)
+- Filtros por mês, tipo e busca livre
+- Storage por organização em `SCTEC_FINANCEIRO_{orgId}`
+- Módulo adicionado ao catálogo em `modules.js`
+- **Arquivos:** `financeiro.html`, `js/financeiro.js`, `js/modules.js`
+
+---
+
+### [Junho/2026] — Item 5a: Módulo Propostas e Orçamentos
+- `propostas.html` + `js/propostas.js` criados
+- Proposta com itens (descrição, qtd, valor unit., subtotal), total automático
+- Número automático sequencial, validade, status (Rascunho/Enviada/Aceita/Recusada)
+- Impressão/PDF via `window.open()` + `window.print()` com layout formatado
+- Storage por organização em `SCTEC_PROPOSTAS_{orgId}`
+- Módulo adicionado ao catálogo em `modules.js`
+- **Arquivos:** `propostas.html`, `js/propostas.js`, `js/modules.js`
