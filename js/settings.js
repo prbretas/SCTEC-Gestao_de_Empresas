@@ -2,8 +2,8 @@
  * settings.js — Lógica da tela de Configurações do Sistema.
  */
 
-// Guard de rota — executado imediatamente (config.js e auth.js já carregados no <head>)
-if (window.AuthService) AuthService.requireAuth();
+// Guard de rota — apenas Admin pode acessar Configurações
+if (window.AuthService) AuthService.requireAuth(true);
 
 let configAtual = ConfigController.obter();
 

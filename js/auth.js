@@ -1,11 +1,12 @@
 /**
  * auth.js — Módulo de Autenticação SCTEC
- * Gerencia usuários, sessão, hash de senha e guard de rotas.
+ * Gerencia usuários, sessão, hash de senha, roles e organizações.
  * Todas as senhas são armazenadas como SHA-256 (Web Crypto API nativa).
  */
 
 const USERS_KEY = "SCTEC_USERS";
 const SESSION_KEY = "SCTEC_SESSION";
+const ORGS_KEY = "SCTEC_ORGS";
 
 const AuthService = {
 
@@ -22,6 +23,117 @@ const AuthService = {
     const hashBuffer = await crypto.subtle.digest("SHA-256", data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+  },
+
+  // ─── Gerenciamento de Organizações ─────────────────────────────────────
+
+  /**
+   * Retorna todas as organizações cadastradas.
+   * @returns {Array}
+   */
+  obterOrgs() {
+    try {
+      return JSON.parse(localStorage.getItem(ORGS_KEY) || "[]");
+    } catch {
+      return [];
+    }
+  },
+
+  salvarOrgs(orgs) {
+    localStorage.setItem(ORGS_KEY, JSON.stringify(orgs));
+  },
+
+  /**
+   * Busca uma organização pelo ID.
+   * @param {string} orgId
+   * @returns {Object|null}
+   */
+  buscarOrgPorId(orgId) {
+    return this.obterOrgs().find((o) => o.id === orgId) || null;
+  },
+
+  /**
+   * Busca uma organização pelo código de convite.
+   * @param {string} codigo
+   * @returns {Object|null}
+   */
+  buscarOrgPorCodigo(codigo) {
+    return this.obterOrgs().find(
+      (o) => o.codigoConvite === codigo.toUpperCase().trim()
+    ) || null;
+  },
+
+  /**
+   * Gera código de convite único no formato SCTEC-ORG-XXXXX.
+   * @returns {string}
+   */
+  _gerarCodigoConvite() {
+    const orgs = this.obterOrgs();
+    const existentes = new Set(orgs.map((o) => o.codigoConvite));
+    let codigo;
+    do {
+      codigo = `SCTEC-ORG-${String(Math.floor(10000 + Math.random() * 90000))}`;
+    } while (existentes.has(codigo));
+    return codigo;
+  },
+
+  /**
+   * Cria uma nova organização com o usuário como Admin.
+   * @param {string} adminId - ID do usuário criador
+   * @param {string} nomeOrg - nome da organização (opcional)
+   * @returns {Object} organização criada
+   */
+  criarOrganizacao(adminId, nomeOrg = "Minha Organização") {
+    const orgs = this.obterOrgs();
+    const novaOrg = {
+      id: String(Math.floor(10000 + Math.random() * 90000)),
+      nome: nomeOrg,
+      adminId,
+      codigoConvite: this._gerarCodigoConvite(),
+      dataCriacao: new Date().toISOString(),
+    };
+    orgs.push(novaOrg);
+    this.salvarOrgs(orgs);
+    return novaOrg;
+  },
+
+  /**
+   * Retorna o código de convite da organização do usuário logado.
+   * @returns {string|null}
+   */
+  obterCodigoConvite() {
+    const sessao = this.obterSessao();
+    if (!sessao || !sessao.orgId) return null;
+    const org = this.buscarOrgPorId(sessao.orgId);
+    return org ? org.codigoConvite : null;
+  },
+
+  /**
+   * Verifica se o usuário logado é Admin da sua organização.
+   * @returns {boolean}
+   */
+  isAdmin() {
+    const sessao = this.obterSessao();
+    return sessao?.role === "admin";
+  },
+
+  /**
+   * Guard de rota: redireciona para login se não há sessão.
+   * Opcionalmente restringe a Admins.
+   * @param {boolean} apenasAdmin
+   */
+  requireAuth(apenasAdmin = false) {
+    const sessao = this.obterSessao();
+    if (!sessao) {
+      window.location.href = "login.html";
+      return null;
+    }
+    if (apenasAdmin && sessao.role !== "admin") {
+      alert("⛔ Acesso restrito. Apenas administradores podem acessar esta área.");
+      window.location.href = "home.html";
+      return null;
+    }
+    return sessao;
   },
 
   // ─── Gerenciamento de Usuários ──────────────────────────────────────────
@@ -86,9 +198,10 @@ const AuthService = {
    * @param {string} senha
    * @param {string} perguntaSecreta
    * @param {string} respostaSecreta
-   * @returns {Promise<{ok: boolean, erro?: string, usuario?: Object}>}
+   * @param {string} [codigoConvite] - se informado, vincula à organização existente
+   * @returns {Promise<{ok: boolean, erro?: string, usuario?: Object, org?: Object}>}
    */
-  async cadastrar(nome, senha, perguntaSecreta, respostaSecreta) {
+  async cadastrar(nome, senha, perguntaSecreta, respostaSecreta, codigoConvite = "") {
     nome = nome.trim();
 
     // Valida nickname: 3-20 chars, apenas letras, números e underline
@@ -111,16 +224,43 @@ const AuthService = {
       return { ok: false, erro: `Nickname "${nome}" já está em uso. Escolha outro.` };
     }
 
+    // Resolve organização
+    let orgId = null;
+    let role = "user";
+    let org = null;
+
+    if (codigoConvite && codigoConvite.trim() !== "") {
+      // Usuário sendo convidado — vincula à organização existente
+      org = this.buscarOrgPorCodigo(codigoConvite);
+      if (!org) {
+        return { ok: false, erro: "Código de convite inválido. Verifique e tente novamente." };
+      }
+      orgId = org.id;
+      role = "user";
+    } else {
+      // Primeiro usuário sem código — cria nova organização e torna-se Admin
+      role = "admin";
+      // orgId será definido após criar a org abaixo
+    }
+
     const senhaHash = await this.hashSenha(senha);
     const respostaHash = await this.hashSenha(respostaSecreta.toLowerCase().trim());
     const id = this.gerarId();
 
+    // Se for Admin sem org, cria a organização agora
+    if (role === "admin") {
+      org = this.criarOrganizacao(id);
+      orgId = org.id;
+    }
+
     const novoUsuario = {
       id,
-      nome,           // nickname
+      nome,
       senhaHash,
       perguntaSecreta,
       respostaHash,
+      role,
+      orgId,
       dataCadastro: new Date().toISOString(),
     };
 
@@ -128,7 +268,7 @@ const AuthService = {
     usuarios.push(novoUsuario);
     this.salvarUsuarios(usuarios);
 
-    return { ok: true, usuario: novoUsuario };
+    return { ok: true, usuario: novoUsuario, org };
   },
 
   /**
@@ -152,7 +292,9 @@ const AuthService = {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify({
       id: usuario.id,
       nome: usuario.nome,
-      identidade: `${usuario.nome}#${usuario.id}`, // nickname#ID
+      role: usuario.role || "user",
+      orgId: usuario.orgId || null,
+      identidade: `${usuario.nome}#${usuario.id}`,
       loginEm: new Date().toISOString(),
     }));
 
@@ -177,19 +319,6 @@ const AuthService = {
     } catch {
       return null;
     }
-  },
-
-  /**
-   * Guard de rota: redireciona para login se não há sessão ativa.
-   * Chamar no início de cada página protegida.
-   */
-  requireAuth() {
-    const sessao = this.obterSessao();
-    if (!sessao) {
-      window.location.href = "login.html";
-      return null;
-    }
-    return sessao;
   },
 
   // ─── Recuperação de Senha ───────────────────────────────────────────────
@@ -235,15 +364,21 @@ const AuthService = {
     return { ok: true };
   },
 
-  // ─── Storage Isolado por Usuário ────────────────────────────────────────
+  // ─── Storage Isolado por Organização ───────────────────────────────────
 
   /**
-   * Retorna a chave de storage dos dados para o usuário logado.
+   * Retorna a chave de storage dos dados.
+   * Se o usuário pertence a uma organização, usa a chave da org (dados compartilhados).
+   * Caso contrário, usa a chave individual do usuário.
    * @returns {string|null}
    */
   obterChaveDados() {
     const sessao = this.obterSessao();
-    return sessao ? `SCTEC_DATA_${sessao.id}` : null;
+    if (!sessao) return null;
+    // Dados compartilhados pela organização
+    if (sessao.orgId) return `SCTEC_DATA_ORG_${sessao.orgId}`;
+    // Fallback: dados individuais
+    return `SCTEC_DATA_${sessao.id}`;
   },
 
   /**
