@@ -1,10 +1,10 @@
 /**
  * config.js — Gerenciamento de configurações e identidade visual do sistema.
- * Persiste em LocalStorage sob a chave SCTEC_CONFIG.
- * Feature: #17
+ * Persiste em LocalStorage por organização: SCTEC_CONFIG_{orgId}
+ * Fallback para SCTEC_CONFIG quando não há organização.
  */
 
-const CONFIG_KEY = "SCTEC_CONFIG";
+const CONFIG_KEY_GLOBAL = "SCTEC_CONFIG";
 
 const CONFIG_PADRAO = {
   nomeSistema: "SCTEC - Gestão Empresarial",
@@ -27,15 +27,28 @@ const CONFIG_PADRAO = {
 };
 
 const ConfigController = {
+
+  /**
+   * Retorna a chave de config para a org atual (ou global como fallback).
+   */
+  _obterChave() {
+    try {
+      if (window.AuthService) {
+        const sessao = AuthService.obterSessao();
+        if (sessao && sessao.orgId) return `SCTEC_CONFIG_${sessao.orgId}`;
+      }
+    } catch {}
+    return CONFIG_KEY_GLOBAL;
+  },
+
   /**
    * Retorna a config atual ou o padrão se não houver nada salvo.
    */
   obter() {
     try {
-      const salvo = localStorage.getItem(CONFIG_KEY);
+      const salvo = localStorage.getItem(this._obterChave());
       if (!salvo) return { ...CONFIG_PADRAO, cores: { ...CONFIG_PADRAO.cores }, segmentos: [...CONFIG_PADRAO.segmentos] };
       const config = JSON.parse(salvo);
-      // Garante que campos novos do padrão existam em configs antigas
       return {
         ...CONFIG_PADRAO,
         ...config,
@@ -48,20 +61,20 @@ const ConfigController = {
   },
 
   /**
-   * Salva a config no LocalStorage e aplica imediatamente na UI.
+   * Salva a config no LocalStorage da org e aplica imediatamente na UI.
    */
   salvar(config) {
-    localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+    localStorage.setItem(this._obterChave(), JSON.stringify(config));
     this.aplicar(config);
   },
 
   /**
-   * Aplica as configurações na UI da página atual (navbar, cores, title).
+   * Aplica as configurações na UI da página atual.
+   * Na tela de login (sem sessão), usa identidade neutra.
    */
   aplicar(config) {
     if (!config) config = this.obter();
 
-    // Nome do sistema
     const navbarBrand = document.querySelector(".navbar-brand");
     if (navbarBrand) {
       navbarBrand.innerHTML = config.logoBase64
@@ -70,7 +83,6 @@ const ConfigController = {
     }
     document.title = config.nomeSistema || "SCTEC";
 
-    // Cores via CSS custom properties
     const root = document.documentElement;
     root.style.setProperty("--sc-header", config.cores.header);
     root.style.setProperty("--sc-btn", config.cores.btn);
@@ -80,24 +92,64 @@ const ConfigController = {
   },
 
   /**
-   * Restaura as configurações para o padrão original.
+   * Restaura as configurações para o padrão original da org atual.
    */
   restaurarPadrao() {
-    localStorage.removeItem(CONFIG_KEY);
+    localStorage.removeItem(this._obterChave());
     this.aplicar(CONFIG_PADRAO);
   },
 
-  /**
-   * Retorna a lista de segmentos ativos (da config ou o padrão).
-   */
   obterSegmentos() {
     return this.obter().segmentos;
   },
 
   /**
-   * Escurece uma cor hex em `percent`%.
-   * Usado para gerar hover/active dos botões.
+   * Exporta as configurações como JSON para download.
    */
+  exportarConfiguracoes() {
+    const config = this.obter();
+    const payload = {
+      versao: "1.0",
+      dataExport: new Date().toISOString(),
+      config,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `SCTEC_Config_${new Date().toISOString().split("T")[0]}.json`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  },
+
+  /**
+   * Importa configurações de um arquivo JSON.
+   * @param {File} arquivo
+   * @param {Function} onSuccess - callback após importação
+   */
+  importarConfiguracoes(arquivo, onSuccess) {
+    if (!arquivo) return;
+    const leitor = new FileReader();
+    leitor.onload = (e) => {
+      try {
+        const payload = JSON.parse(e.target.result);
+        const config = payload.config || payload;
+        if (!config.cores || !config.nomeSistema) {
+          return alert("❌ Arquivo inválido. Selecione um arquivo de configurações gerado pelo SCTEC.");
+        }
+        if (!confirm(`Importar configurações de "${config.nomeSistema}"?\nIsso substituirá as configurações atuais.`)) return;
+        this.salvar(config);
+        alert("✅ Configurações importadas com sucesso!");
+        if (onSuccess) onSuccess(config);
+      } catch {
+        alert("❌ Arquivo inválido ou corrompido.");
+      }
+    };
+    leitor.readAsText(arquivo, "UTF-8");
+  },
+
   _escurecer(hex, percent) {
     const num = parseInt(hex.replace("#", ""), 16);
     const r = Math.max(0, (num >> 16) - Math.round(2.55 * percent));

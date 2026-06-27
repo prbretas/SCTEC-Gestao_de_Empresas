@@ -39,6 +39,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (sessao.role !== "admin") {
     const cardSettings = document.getElementById("card-settings");
     if (cardSettings) cardSettings.style.display = "none";
+  } else {
+    // Exibe linha de cards do Admin
+    const adminCards = document.getElementById("admin-cards");
+    if (adminCards) adminCards.style.removeProperty("display");
   }
 
   // Dark mode

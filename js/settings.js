@@ -147,6 +147,20 @@ function initEventos() {
     carregarFormulario(configAtual);
     alert("✅ Configurações restauradas.");
   });
+
+  // Exportar configurações
+  document.querySelector("#btn-exportar-config")?.addEventListener("click", () => {
+    ConfigController.exportarConfiguracoes();
+  });
+
+  // Importar configurações
+  document.querySelector("#input-importar-config")?.addEventListener("change", (e) => {
+    ConfigController.importarConfiguracoes(e.target.files[0], (cfg) => {
+      configAtual = cfg;
+      carregarFormulario(configAtual);
+      e.target.value = "";
+    });
+  });
 }
 
 function initDarkMode() {

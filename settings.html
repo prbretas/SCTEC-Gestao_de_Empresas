@@ -197,10 +197,19 @@
       </div>
 
       <!-- AÇÕES -->
-      <div class="d-flex justify-content-between align-items-center">
-        <button class="btn btn-outline-secondary" id="btn-restaurar-padrao">
-          🔄 Restaurar Padrão
-        </button>
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-secondary" id="btn-restaurar-padrao">
+            🔄 Restaurar Padrão
+          </button>
+          <button class="btn btn-outline-secondary" id="btn-exportar-config" title="Exportar configurações como JSON">
+            📤 Exportar Config
+          </button>
+          <label class="btn btn-outline-secondary mb-0" title="Importar configurações de outro usuário/organização">
+            📥 Importar Config
+            <input type="file" id="input-importar-config" hidden accept=".json" />
+          </label>
+        </div>
         <button class="btn btn-success px-5" id="btn-salvar-config">
           💾 Salvar Configurações
         </button>
