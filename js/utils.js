@@ -231,7 +231,7 @@ const Utils = {
 
   baixarModeloCSV() {
     const cabecalho = "Nome;TipoPessoa;Registro;Responsavel;Email;Telefone;Endereco;Municipio;Segmento;Status;Observacoes";
-    const exemplo = "Exemplo Empresa SC;PJ;00.000.000/0000-00;Philippe PH;contato@exemplo.com.br;(47) 99999-8888;Rua das Indústrias, 100;Joinville;Tecnologia;Ativo;Registro de teste para importação";
+    const exemplo = "Exemplo Empresa SC;PJ;00.000.000/0000-00;Nome do Usuario;contato@exemplo.com.br;(47) 99999-8888;Rua das Indústrias, 100;Joinville;Tecnologia;Ativo;Registro de teste para importação";
 
     const conteudo = [cabecalho, exemplo].join("\n");
     const blob = new Blob(["\ufeff" + conteudo], { type: "text/csv;charset=utf-8;" });
@@ -295,16 +295,23 @@ const Utils = {
 
   /**
    * Faz o backup completo do LocalStorage como arquivo JSON.
-   * FEATURE-05
+   * FEATURE-05 + AUTH: inclui assinatura do exportador para validação na importação.
    */
-  backupJSON() {
+  async backupJSON() {
     const dados = EmpreendimentoStorage.buscarTodos();
     if (dados.length === 0) return alert("Não há dados para fazer backup.");
 
+    // Gera assinatura do usuário atual (se autenticado)
+    let assinatura = {};
+    if (window.AuthService) {
+      assinatura = await AuthService.gerarAssinaturaBackup();
+    }
+
     const payload = {
-      versao: "1.0",
+      versao: "2.0",
       dataBackup: new Date().toISOString(),
       totalRegistros: dados.length,
+      ...assinatura,
       registros: dados,
     };
 
@@ -326,14 +333,14 @@ const Utils = {
 
   /**
    * Restaura o backup de um arquivo JSON gerado por backupJSON().
-   * FEATURE-05
+   * FEATURE-05 + AUTH: valida a senha do exportador se o backup foi feito por outro usuário.
    * @param {File} arquivo
    */
   restaurarJSON(arquivo) {
     if (!arquivo) return;
 
     const leitor = new FileReader();
-    leitor.onload = (e) => {
+    leitor.onload = async (e) => {
       let payload;
       try {
         payload = JSON.parse(e.target.result);
@@ -350,13 +357,36 @@ const Utils = {
         ? new Date(payload.dataBackup).toLocaleString("pt-BR")
         : "Data desconhecida";
 
+      // Verifica se é backup de outro usuário
+      let senhaDigitada = null;
+      if (window.AuthService && payload.exportadoPorId) {
+        const sessao = AuthService.obterSessao();
+        const eOutroUsuario = !sessao || sessao.id !== payload.exportadoPorId;
+
+        if (eOutroUsuario) {
+          const nomeExportador = payload.exportadoPorNome || `#${payload.exportadoPorId}`;
+          senhaDigitada = prompt(
+            `🔒 Este backup foi exportado por "${nomeExportador}".\n` +
+            `Para importar, digite a senha desse usuário:`
+          );
+
+          if (senhaDigitada === null) return; // Cancelou
+
+          const validacao = await AuthService.validarSenhaBackup(payload, senhaDigitada);
+          if (!validacao.ok) {
+            return alert(`❌ ${validacao.erro}`);
+          }
+        }
+      }
+
       const confirmMsg =
         `📦 RESTAURAR BACKUP\n` +
         `----------------------------------\n` +
         `📅 Data do backup: ${dataBackup}\n` +
+        (payload.exportadoPorNome ? `👤 Exportado por: ${payload.exportadoPorNome} (#${payload.exportadoPorId})\n` : "") +
         `📄 Registros a restaurar: ${total}\n` +
         `----------------------------------\n` +
-        `⚠️ ATENÇÃO: Isso substituirá TODOS os dados atuais.\n` +
+        `⚠️ ATENÇÃO: Isso substituirá TODOS os seus dados atuais.\n` +
         `Deseja continuar?`;
 
       if (!confirm(confirmMsg)) return;

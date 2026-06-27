@@ -79,6 +79,11 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
           document.querySelector("#endereco").value =
             `${dados.logradouro}, ${dados.bairro}`;
           document.querySelector("#municipio").value = dados.localidade;
+          // Preenche o Estado (UF) retornado pelo ViaCEP
+          const selectEstado = document.querySelector("#estado");
+          if (selectEstado && dados.uf) {
+            selectEstado.value = dados.uf;
+          }
         }
       }
     });
@@ -114,6 +119,11 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
           document.querySelector("#endereco").value =
             `${dados.logradouro || ""}, ${dados.numero || ""}`;
           document.querySelector("#municipio").value = dados.municipio || "";
+          // Preenche o Estado (UF) retornado pela BrasilAPI
+          const selectEstado = document.querySelector("#estado");
+          if (selectEstado && dados.uf) {
+            selectEstado.value = dados.uf;
+          }
 
           // ── Seção: Dados Cadastrais nas Observações ───────────────────────
           const infoExtra = FormController.montarObservacoesExtras(dados);

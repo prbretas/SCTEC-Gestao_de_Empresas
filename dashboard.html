@@ -17,6 +17,20 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./css/styles.css" />
+
+    <!-- Aplica cores salvas ANTES do render para evitar flash -->
+    <script>
+      (function() {
+        try {
+          var cfg = JSON.parse(localStorage.getItem('SCTEC_CONFIG') || '{}');
+          var cores = cfg.cores || {};
+          var r = document.documentElement;
+          if (cores.header) r.style.setProperty('--sc-header', cores.header);
+          if (cores.btn) r.style.setProperty('--sc-btn', cores.btn);
+          if (cores.destaque) r.style.setProperty('--sc-header2', cores.destaque);
+        } catch(e) {}
+      })();
+    </script>
   </head>
 
   <body class="bg-light">
@@ -25,6 +39,8 @@
         <a href="index.html" class="navbar-brand h1 mb-0">🏭 SCTEC - Gestão Empresarial</a>
 
         <div class="d-flex align-items-center gap-3">
+          <span class="text-white small d-none d-md-inline" id="navbar-usuario-dash"></span>
+          <a href="home.html" class="btn btn-outline-light btn-sm" title="Home">🏠</a>
           <a href="settings.html" class="btn btn-outline-light btn-sm" title="Configurações do sistema">⚙️</a>
           <div class="form-check form-switch text-light mb-0">
             <input
@@ -34,6 +50,7 @@
             />
             <label class="form-check-label">Modo Escuro</label>
           </div>
+          <button class="btn btn-outline-light btn-sm" id="btn-logout-dash" title="Sair">🚪</button>
         </div>
       </div>
     </nav>
@@ -176,7 +193,25 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script src="./js/config.js"></script>
+    <script src="./js/auth.js"></script>
     <script src="./js/storage.js"></script>
     <script src="./js/dashboard.js"></script>
+
+    <!-- Guard de rota + aplica tema de cores e logo após o DOM carregar -->
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const sessao = AuthService.requireAuth();
+        if (sessao) {
+          const el = document.getElementById("navbar-usuario-dash");
+          if (el) el.textContent = `👤 ${sessao.nome} #${sessao.id}`;
+        }
+        document.getElementById("btn-logout-dash")?.addEventListener("click", () => {
+          if (confirm("Deseja sair do sistema?")) AuthService.logout();
+        });
+        if (window.ConfigController) {
+          ConfigController.aplicar(ConfigController.obter());
+        }
+      });
+    </script>
   </body>
 </html>
