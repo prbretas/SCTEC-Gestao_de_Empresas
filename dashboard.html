@@ -1,218 +1,220 @@
 <!doctype html>
 <html lang="pt-br">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <link
-      rel="icon"
-      type="image/png"
-      href="https://images.emojiterra.com/google/noto-emoji/unicode-16.0/color/svg/1f3ed.svg"
-    />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>Dashboard — SCTEC</title>
+  <link rel="icon" type="image/png"
+    href="https://images.emojiterra.com/google/noto-emoji/unicode-16.0/color/svg/1f3ed.svg" />
 
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="./css/styles.css" />
+  <title>Dashboard — SCTEC</title>
 
-    <!-- Aplica cores salvas ANTES do render para evitar flash -->
-    <script>
-      (function() {
-        try {
-          var cfg = JSON.parse(localStorage.getItem('SCTEC_CONFIG') || '{}');
-          var cores = cfg.cores || {};
-          var r = document.documentElement;
-          if (cores.header) r.style.setProperty('--sc-header', cores.header);
-          if (cores.btn) r.style.setProperty('--sc-btn', cores.btn);
-          if (cores.destaque) r.style.setProperty('--sc-header2', cores.destaque);
-        } catch(e) {}
-      })();
-    </script>
-  </head>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="./css/styles.css" />
 
-  <body class="bg-light">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm mb-4">
-      <div class="container">
-        <a href="cadastros.html" class="navbar-brand h1 mb-0">🏭 SCTEC - Gestão Empresarial</a>
+  <!-- Aplica cores salvas ANTES do render para evitar flash -->
+  <script>
+    (function () {
+      try {
+        var cfg = JSON.parse(localStorage.getItem('SCTEC_CONFIG') || '{}');
+        var cores = cfg.cores || {};
+        var r = document.documentElement;
+        if (cores.header) r.style.setProperty('--sc-header', cores.header);
+        if (cores.btn) r.style.setProperty('--sc-btn', cores.btn);
+        if (cores.destaque) r.style.setProperty('--sc-header2', cores.destaque);
+      } catch (e) { }
+    })();
+  </script>
+</head>
 
-        <div class="d-flex align-items-center gap-3">
-          <span class="text-white small d-none d-md-inline" id="navbar-usuario-dash"></span>
-          <a href="home.html" class="btn btn-outline-light btn-sm" title="Home">🏠</a>
-          <a href="settings.html" class="btn btn-outline-light btn-sm" title="Configurações do sistema">⚙️</a>
-          <div class="form-check form-switch text-light mb-0">
-            <input
-              class="form-check-input"
-              type="checkbox"
-              id="dark-mode-switch"
-            />
-            <label class="form-check-label">Modo Escuro</label>
-          </div>
-          <button class="btn btn-outline-light btn-sm" id="btn-logout-dash" title="Sair">🚪</button>
+<body class="bg-light">
+<!--  <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm mb-4">
+    <div class="container">
+      <a href="cadastros.html" class="navbar-brand h1 mb-0">🏭 SCTEC - Gestão Empresarial</a>
+
+      <div class="d-flex align-items-center gap-3">
+        <span class="text-white small d-none d-md-inline" id="navbar-usuario-dash"></span>
+        <a href="home.html" class="btn btn-outline-light btn-sm" title="Home">🏠</a>
+        <a href="settings.html" class="btn btn-outline-light btn-sm" title="Configurações do sistema">⚙️</a>
+        <div class="form-check form-switch text-light mb-0">
+          <input class="form-check-input" type="checkbox" id="dark-mode-switch" />
+          <label class="form-check-label">Modo Escuro</label>
         </div>
+        <button class="btn btn-outline-light btn-sm" id="btn-logout-dash" title="Sair">🚪</button>
       </div>
-    </nav>
+    </div>
+  </nav>
 
-    <main class="container">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 id="rotinaTitle">📊 Dashboard Analítico</h1>
-        <button onclick="window.print()" class="btn btn-outline-secondary">
-          🖨️ Imprimir / Exportar PDF
-        </button>
-      </div>
 
-      <!-- INDICADORES -->
-      <div class="row g-3 mb-4">
-        <div class="col-md-3">
-          <div class="card shadow-sm border-0 h-100">
-            <div class="card-body text-center">
-              <h6 class="card-subtitle mb-2 text-muted">Total de Empreendimentos</h6>
-              <h2 class="card-title display-4" id="ind-total">0</h2>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card shadow-sm border-0 h-100">
-            <div class="card-body text-center">
-              <h6 class="card-subtitle mb-2 text-muted">🟢 Ativos</h6>
-              <h2 class="card-title display-4 text-success" id="ind-ativos">0</h2>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card shadow-sm border-0 h-100">
-            <div class="card-body text-center">
-              <h6 class="card-subtitle mb-2 text-muted">🔴 Inativos</h6>
-              <h2 class="card-title display-4 text-danger" id="ind-inativos">0</h2>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card shadow-sm border-0 h-100">
-            <div class="card-body text-center">
-              <h6 class="card-subtitle mb-2 text-muted">Segmento + Freq.</h6>
-              <h5 class="card-title text-truncate" id="ind-segmento">N/A</h5>
-              <small class="text-muted" id="ind-segmento-qtd">0 registros</small>
-            </div>
+-->
+
+  <div id="app-navbar"></div>
+
+
+  <main class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 id="rotinaTitle">📊 Dashboard Analítico</h1>
+      <button onclick="window.print()" class="btn btn-outline-secondary">
+        🖨️ Imprimir / Exportar PDF
+      </button>
+    </div>
+
+    <!-- INDICADORES -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-3">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body text-center">
+            <h6 class="card-subtitle mb-2 text-muted">Total de Empreendimentos</h6>
+            <h2 class="card-title display-4" id="ind-total">0</h2>
           </div>
         </div>
       </div>
-
-      <div class="row g-3 mb-4">
-        <div class="col-md-4">
-          <div class="card shadow-sm border-0 h-100">
-            <div class="card-body text-center">
-              <h6 class="card-subtitle mb-2 text-muted">Município + Freq.</h6>
-              <h5 class="card-title text-truncate" id="ind-municipio">N/A</h5>
-              <small class="text-muted" id="ind-municipio-qtd">0 registros</small>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card shadow-sm border-0 h-100">
-            <div class="card-body text-center">
-              <h6 class="card-subtitle mb-2 text-muted">Sem E-mail</h6>
-              <h2 class="card-title display-5 text-warning" id="ind-sem-email">0</h2>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card shadow-sm border-0 h-100">
-            <div class="card-body text-center">
-              <h6 class="card-subtitle mb-2 text-muted">Sem Telefone</h6>
-              <h2 class="card-title display-5 text-warning" id="ind-sem-telefone">0</h2>
-            </div>
+      <div class="col-md-3">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body text-center">
+            <h6 class="card-subtitle mb-2 text-muted">🟢 Ativos</h6>
+            <h2 class="card-title display-4 text-success" id="ind-ativos">0</h2>
           </div>
         </div>
       </div>
-
-      <!-- GRÁFICOS -->
-      <div class="row g-3 mb-4">
-        <div class="col-md-6">
-          <div class="card shadow-sm border-0">
-            <div class="card-header bg-light">
-              <h6 class="mb-0">📊 Distribuição por Segmento</h6>
-            </div>
-            <div class="card-body">
-              <canvas id="chart-segmento" height="300"></canvas>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="card shadow-sm border-0">
-            <div class="card-header bg-light">
-              <h6 class="mb-0">🟢 Ativo vs Inativo</h6>
-            </div>
-            <div class="card-body">
-              <canvas id="chart-status" height="300"></canvas>
-            </div>
+      <div class="col-md-3">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body text-center">
+            <h6 class="card-subtitle mb-2 text-muted">🔴 Inativos</h6>
+            <h2 class="card-title display-4 text-danger" id="ind-inativos">0</h2>
           </div>
         </div>
       </div>
-
-      <div class="row g-3 mb-4">
-        <div class="col-md-6">
-          <div class="card shadow-sm border-0">
-            <div class="card-header bg-light">
-              <h6 class="mb-0">📍 Top 10 Municípios</h6>
-            </div>
-            <div class="card-body">
-              <canvas id="chart-municipios" height="400"></canvas>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="card shadow-sm border-0">
-            <div class="card-header bg-light">
-              <h6 class="mb-0">📈 Evolução de Cadastros</h6>
-            </div>
-            <div class="card-body">
-              <canvas id="chart-evolucao" height="400"></canvas>
-            </div>
+      <div class="col-md-3">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body text-center">
+            <h6 class="card-subtitle mb-2 text-muted">Segmento + Freq.</h6>
+            <h5 class="card-title text-truncate" id="ind-segmento">N/A</h5>
+            <small class="text-muted" id="ind-segmento-qtd">0 registros</small>
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="row g-3">
-        <div class="col-12">
-          <div class="card shadow-sm border-0">
-            <div class="card-header bg-light">
-              <h6 class="mb-0">🆕 Últimos Registros Cadastrados</h6>
-            </div>
-            <div class="card-body">
-              <div id="ultimos-registros" class="small"></div>
-            </div>
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body text-center">
+            <h6 class="card-subtitle mb-2 text-muted">Município + Freq.</h6>
+            <h5 class="card-title text-truncate" id="ind-municipio">N/A</h5>
+            <small class="text-muted" id="ind-municipio-qtd">0 registros</small>
           </div>
         </div>
       </div>
-    </main>
+      <div class="col-md-4">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body text-center">
+            <h6 class="card-subtitle mb-2 text-muted">Sem E-mail</h6>
+            <h2 class="card-title display-5 text-warning" id="ind-sem-email">0</h2>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body text-center">
+            <h6 class="card-subtitle mb-2 text-muted">Sem Telefone</h6>
+            <h2 class="card-title display-5 text-warning" id="ind-sem-telefone">0</h2>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- GRÁFICOS -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">📊 Distribuição por Segmento</h6>
+          </div>
+          <div class="card-body">
+            <canvas id="chart-segmento" height="300"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">🟢 Ativo vs Inativo</h6>
+          </div>
+          <div class="card-body">
+            <canvas id="chart-status" height="300"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    <script src="./js/config.js"></script>
-    <script src="./js/auth.js"></script>
-    <script src="./js/storage.js"></script>
-    <script src="./js/dashboard.js"></script>
-    <script src="./js/inactivity.js"></script>
+    <div class="row g-3 mb-4">
+      <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">📍 Top 10 Municípios</h6>
+          </div>
+          <div class="card-body">
+            <canvas id="chart-municipios" height="400"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">📈 Evolução de Cadastros</h6>
+          </div>
+          <div class="card-body">
+            <canvas id="chart-evolucao" height="400"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    <!-- Guard de rota + aplica tema de cores e logo após o DOM carregar -->
-    <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        const sessao = AuthService.requireAuth();
-        if (sessao) {
-          const el = document.getElementById("navbar-usuario-dash");
-          if (el) el.textContent = `👤 ${sessao.nome} #${sessao.id}`;
-        }
-        document.getElementById("btn-logout-dash")?.addEventListener("click", () => {
-          if (confirm("Deseja sair do sistema?")) AuthService.logout();
-        });
-        if (window.ConfigController) {
-          ConfigController.aplicar(ConfigController.obter());
-        }
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="card shadow-sm border-0">
+          <div class="card-header bg-light">
+            <h6 class="mb-0">🆕 Últimos Registros Cadastrados</h6>
+          </div>
+          <div class="card-body">
+            <div id="ultimos-registros" class="small"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script src="./js/config.js"></script>
+  <script src="./js/auth.js"></script>
+  <script src="./js/storage.js"></script>
+  <script src="./js/modules.js"></script>
+  <script src="./js/theme.js"></script>
+  <script src="./js/navbar.js"></script>
+  <script src="./js/crm.js"></script>
+  <script src="./js/dashboard.js"></script>
+  <script src="./js/inactivity.js"></script>
+
+  <!-- Guard de rota + aplica tema de cores e logo após o DOM carregar -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const sessao = AuthService.requireAuth();
+      if (sessao) {
+        const el = document.getElementById("navbar-usuario-dash");
+        if (el) el.textContent = `👤 ${sessao.nome} #${sessao.id}`;
+      }
+      document.getElementById("btn-logout-dash")?.addEventListener("click", () => {
+        if (confirm("Deseja sair do sistema?")) AuthService.logout();
       });
-    </script>
-  </body>
+      if (window.ConfigController) {
+        ConfigController.aplicar(ConfigController.obter());
+      }
+    });
+  </script>
+</body>
+
 </html>

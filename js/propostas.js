@@ -39,6 +39,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const sessao = AuthService.requireAuth();
   if (!sessao) return;
   if (window.ConfigController) ConfigController.aplicar(ConfigController.obter());
+  if (window.NavbarController) NavbarController.init("propostas");
+  if (window.ThemeController) ThemeController.init();
 
   const modal = new bootstrap.Modal(document.getElementById("modal-proposta"));
   _preencherEmpresas();

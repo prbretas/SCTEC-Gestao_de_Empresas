@@ -1,17 +1,16 @@
 /**
  * setup.js — Carrega os modulos JS do projeto no contexto global do Jest/jsdom.
- *
- * Estrategia: executa o codigo via Function() com globalThis como contexto,
- * garantindo que os objetos literais (const Utils = {...}) fiquem acessiveis
- * no escopo global de cada worker.
- *
- * Os arquivos JS usam "const X = {...}; window.X = X;" — o window.X e o que
- * precisamos disponivel nos testes. Como o jsdom mapeia window = global,
- * atribuir a window.X equivale a global.X.
  */
 
 const fs = require('fs');
 const path = require('path');
+
+// Polyfills para Web Crypto API (necessário para auth.js que usa crypto.subtle)
+const { TextEncoder, TextDecoder } = require('util');
+const { webcrypto } = require('crypto');
+if (typeof globalThis.TextEncoder === 'undefined') globalThis.TextEncoder = TextEncoder;
+if (typeof globalThis.TextDecoder === 'undefined') globalThis.TextDecoder = TextDecoder;
+if (!globalThis.crypto || !globalThis.crypto.subtle) globalThis.crypto = webcrypto;
 
 function carregarScript(arquivo) {
   const codigo = fs.readFileSync(path.join(__dirname, '..', 'js', arquivo), 'utf8');

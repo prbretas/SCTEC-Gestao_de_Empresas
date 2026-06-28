@@ -62,6 +62,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!sessao) return;
 
   if (window.ConfigController) ConfigController.aplicar(ConfigController.obter());
+  if (window.NavbarController) NavbarController.init("crm");
+  if (window.ThemeController) ThemeController.init();
 
   const modal = new bootstrap.Modal(document.getElementById("modal-oportunidade"));
 
