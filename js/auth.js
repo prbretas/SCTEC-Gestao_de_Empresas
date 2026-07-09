@@ -125,7 +125,7 @@ const AuthService = {
   requireAuth(apenasAdmin = false) {
     const sessao = this.obterSessao();
     if (!sessao) {
-      window.location.href = "login.html";
+      window.location.href = "index.html";
       return null;
     }
     if (apenasAdmin && sessao.role !== "admin") {
@@ -306,7 +306,7 @@ const AuthService = {
    */
   logout() {
     sessionStorage.removeItem(SESSION_KEY);
-    window.location.href = "login.html";
+    window.location.href = "index.html";
   },
 
   /**

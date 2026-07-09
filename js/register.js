@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       sucessoEl.classList.remove("d-none");
-      setTimeout(() => { window.location.href = "login.html"; }, 3500);
+      setTimeout(() => { window.location.href = "index.html"; }, 3500);
     } else {
       erroEl.textContent = resultado.erro;
       erroEl.classList.remove("d-none");

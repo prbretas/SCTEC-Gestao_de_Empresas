@@ -38,7 +38,7 @@ const InactivityWatcher = {
         AuthService.logout();
       } else {
         sessionStorage.clear();
-        window.location.href = "login.html";
+        window.location.href = "index.html";
       }
     }, this.TIMEOUT_MS);
   },
