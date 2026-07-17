@@ -12,12 +12,19 @@ document.addEventListener("DOMContentLoaded", () => {
   // Aplica config visual da organização
   if (window.ConfigController) ConfigController.aplicar(ConfigController.obter());
 
-  // Exibe identidade e nome da org
-  document.getElementById("admin-identidade").textContent = sessao.identidade || `${sessao.nome}#${sessao.id}`;
+  // Renderiza navbar padronizado
+  if (window.NavbarController) NavbarController.init("admin");
+  if (window.ThemeController) ThemeController.init();
+
+  // Exibe identidade no campo legado (caso ainda exista em outro contexto)
+  const elIdentidade = document.getElementById("admin-identidade");
+  if (elIdentidade) elIdentidade.textContent = sessao.identidade || `${sessao.nome}#${sessao.id}`;
   const org = AuthService.buscarOrgPorId(sessao.orgId);
   if (org) {
-    document.getElementById("admin-org-nome").textContent = `Org: ${org.nome}`;
-    document.getElementById("codigo-convite-display").textContent = org.codigoConvite;
+    const elOrg = document.getElementById("admin-org-nome");
+    if (elOrg) elOrg.textContent = `Org: ${org.nome}`;
+    const elCodigo = document.getElementById("codigo-convite-display");
+    if (elCodigo) elCodigo.textContent = org.codigoConvite;
   }
 
   // Copiar código de convite

@@ -30,7 +30,7 @@ globalThis.sessionStorage = mockSS;
 
 // Carrega auth.js no contexto global — usa globalThis.crypto diretamente
 beforeAll(() => {
-  const code = fs.readFileSync(path.join(__dirname, "../js/auth.js"), "utf8");
+  const code = fs.readFileSync(path.join(__dirname, "../src/js/core/auth.js"), "utf8");
   // Injeta crypto do Node.js no topo do código para que auth.js o encontre no escopo
   const withCryptoPolyfill = `const crypto = globalThis.crypto;\n${code}`;
   // eslint-disable-next-line no-new-func

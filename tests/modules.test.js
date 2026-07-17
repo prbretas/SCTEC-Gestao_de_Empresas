@@ -7,14 +7,14 @@ const path = require("path");
 
 beforeAll(() => {
   // Carrega auth.js (necessário para obterSessao)
-  const authCode = fs.readFileSync(path.join(__dirname, "../js/auth.js"), "utf8");
+  const authCode = fs.readFileSync(path.join(__dirname, "../src/js/core/auth.js"), "utf8");
   // eslint-disable-next-line no-new-func
   new Function("globalThis", "window", "localStorage", "sessionStorage", "crypto", authCode)(
     globalThis, globalThis, globalThis.localStorage, globalThis.sessionStorage, globalThis.crypto
   );
 
   // Carrega modules.js
-  const code = fs.readFileSync(path.join(__dirname, "../js/modules.js"), "utf8");
+  const code = fs.readFileSync(path.join(__dirname, "../src/js/core/modules.js"), "utf8");
   // eslint-disable-next-line no-new-func
   new Function("globalThis", "window", "localStorage", code)(
     globalThis, globalThis, globalThis.localStorage

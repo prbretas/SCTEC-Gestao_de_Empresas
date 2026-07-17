@@ -68,7 +68,7 @@ O SCTEC é uma aplicação web front-end para gerenciamento de empreendimentos c
 
 1. WHEN o código de `forms.js` for revisado, THEN as funções `validarFormulario()` e `preencherForm()` SHALL ser removidas ou integradas, eliminando a duplicidade com `handleSave()` e `carregarDadosNoForm()`.
 2. WHEN o código de `ui.js` for revisado, THEN a referência à variável `elSC` e ao elemento `#qtd-sc` inexistente SHALL ser removida.
-3. WHEN um campo obrigatório não for preenchido no formulário, THEN a mensagem de alerta SHALL ser genérica e profissional, sem referências a nomes de desenvolvimento (ex: "⚠️ PH, preencha...").
+3. WHEN um campo obrigatório não for preenchido no formulário, THEN a mensagem de alerta SHALL ser genérica e profissional, sem referências a nomes de desenvolvimento (ex: "⚠️ Preencha...").
 
 ---
 

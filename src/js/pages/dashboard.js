@@ -8,11 +8,20 @@ const DashboardController = {
   charts: {},
 
   init() {
+    const sessao = window.AuthService ? AuthService.requireAuth() : null;
+    if (!sessao) return;
+
+    // Aplica configurações de cores/logo
+    if (window.ConfigController) ConfigController.aplicar(ConfigController.obter());
+
+    // Renderiza navbar padronizado
+    if (window.NavbarController) NavbarController.init("dashboard");
+
+    // Inicializa dark mode via ThemeController centralizado
+    if (window.ThemeController) ThemeController.init();
+
     // Carrega dados do localStorage
     this.registros = EmpreendimentoStorage.buscarTodos();
-
-    // Aplica dark mode se necessário
-    this.aplicarDarkMode();
 
     // Renderiza indicadores
     this.renderizarIndicadores();
@@ -23,14 +32,12 @@ const DashboardController = {
     // Renderiza últimos registros
     this.renderizarUltimosRegistros();
 
-    // Listener para dark mode toggle
-    const darkModeSwitch = document.querySelector("#dark-mode-switch");
-    if (darkModeSwitch) {
-      darkModeSwitch.checked = document.body.classList.contains("dark-mode");
-      darkModeSwitch.addEventListener("change", () => {
-        this.toggleDarkMode();
-      });
-    }
+    // Re-renderiza gráficos ao alternar dark mode
+    document.addEventListener("change", (e) => {
+      if (e.target && e.target.id === "dark-mode-switch") {
+        setTimeout(() => this.renderizarGraficos(), 100);
+      }
+    });
   },
 
   /**
@@ -392,32 +399,6 @@ const DashboardController = {
       acc[chave].push(item);
       return acc;
     }, {});
-  },
-
-  /**
-   * Toggle Dark Mode
-   */
-  toggleDarkMode() {
-    document.body.classList.toggle("dark-mode");
-    localStorage.setItem(
-      "darkMode",
-      document.body.classList.contains("dark-mode"),
-    );
-
-    // Atualiza cores dos gráficos
-    setTimeout(() => {
-      this.renderizarGraficos();
-    }, 100);
-  },
-
-  /**
-   * Aplica dark mode se estava ativado anteriormente
-   */
-  aplicarDarkMode() {
-    const isDarkMode = localStorage.getItem("darkMode") === "true";
-    if (isDarkMode) {
-      document.body.classList.add("dark-mode");
-    }
   },
 };
 

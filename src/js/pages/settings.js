@@ -9,8 +9,9 @@ let configAtual = ConfigController.obter();
 
 document.addEventListener("DOMContentLoaded", () => {
   ConfigController.aplicar(configAtual);
+  if (window.NavbarController) NavbarController.init("settings");
+  if (window.ThemeController) ThemeController.init();
   carregarFormulario(configAtual);
-  initDarkMode();
   initEventos();
   renderizarModulos();
 });
@@ -162,17 +163,6 @@ function initEventos() {
       e.target.value = "";
     });
   });
-}
-
-function initDarkMode() {
-  const switchBtn = document.querySelector("#dark-mode-switch");
-  const aplicar = (dark) => {
-    document.body.classList.toggle("dark-mode", dark);
-    localStorage.setItem("SCTEC_THEME", dark ? "dark" : "light");
-    if (switchBtn) switchBtn.checked = dark;
-  };
-  aplicar(localStorage.getItem("SCTEC_THEME") === "dark");
-  switchBtn?.addEventListener("change", (e) => aplicar(e.target.checked));
 }
 
 /**
