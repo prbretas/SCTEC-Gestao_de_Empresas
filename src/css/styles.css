@@ -531,3 +531,36 @@ body.dark-mode .contatos-container .small.text-muted,
 body.dark-mode .tarefas-container .small.text-muted {
   color: #a0a0a0 !important;
 }
+
+/* ==========================================================================
+   FIX #32 — Financeiro: thead escuro sem vazar cor para o tbody no Light Mode
+   ========================================================================== */
+
+/* Cabeçalho escuro customizado (substitui table-dark do Bootstrap) */
+.thead-sctec th {
+  background-color: #343a40 !important;
+  color: #ffffff !important;
+  border-bottom: 2px solid #454d55 !important;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+}
+
+/* Garante que o tbody da tabela financeiro sempre use cor escura no Light Mode */
+.table tbody tr td {
+  color: #212529;
+}
+
+/* Dark Mode: tbody da tabela financeiro */
+body.dark-mode .table tbody tr td {
+  color: var(--dark-text) !important;
+  background-color: var(--dark-bg-grid) !important;
+}
+
+/* Dark Mode: thead customizado */
+body.dark-mode .thead-sctec th {
+  background-color: #2c2c2c !important;
+  color: #67ff61 !important;
+  border-bottom: 2px solid #444 !important;
+}
