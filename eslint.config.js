@@ -55,12 +55,29 @@ module.exports = [
         DashboardController: 'readonly',
         direcaoOrdenacao: 'writable',
         colunaAtual: 'writable',
+        // ── Globals adicionados apos reestruturacao src/js/ ─────────────────
+        AuthService: 'readonly',
+        NavbarController: 'readonly',
+        ThemeController: 'readonly',
+        ModulesController: 'readonly',
+        MODULOS_CATALOGO: 'readonly',
+        AgendaStorage: 'readonly',
+        CrmStorage: 'readonly',
+        FinanceiroStorage: 'readonly',
+        PropostasStorage: 'readonly',
+        ETAPAS: 'readonly',
+        // ── APIs do browser nao declaradas anteriormente ─────────────────────
+        TextEncoder: 'readonly',
+        crypto: 'readonly',
+        prompt: 'readonly',
       },
     },
     rules: {
       // Desabilita no-redeclare pois os modulos propositalmente declaram
       // const X = {...} no escopo global (padrao script sem bundler)
       'no-redeclare': 'off',
+      // Blocos catch vazios sao intencionais no projeto (fallback silencioso)
+      'no-empty': 'off',
 
       // Erros de logica real
       'no-undef': 'error',

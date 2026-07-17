@@ -96,7 +96,6 @@ function _resetarForm() {
 
 function _adicionarLinhaItem(item = {}) {
   const lista = document.getElementById("prop-itens-lista");
-  const idx = lista.children.length;
   const div = document.createElement("div");
   div.className = "row g-2 mb-2 item-linha";
   div.innerHTML = `
