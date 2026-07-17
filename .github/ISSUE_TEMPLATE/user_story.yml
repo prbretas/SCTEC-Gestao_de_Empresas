@@ -1,0 +1,76 @@
+name: User Story
+description: Nova funcionalidade ou melhoria para o SCTEC
+title: "[FEATURE] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use este template para propor novas funcionalidades ou melhorias no sistema SCTEC.
+
+  - type: textarea
+    id: user-story
+    attributes:
+      label: User Story
+      description: Descreva a funcionalidade do ponto de vista do usuário
+      placeholder: "Como [tipo de usuário], quero [ação], para que [benefício]"
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexto
+      description: Qual o problema ou necessidade que motivou esta story?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: module
+    attributes:
+      label: Módulo afetado
+      options:
+        - Autenticação / Organização
+        - Cadastros (Empreendimentos)
+        - Dashboard
+        - Agenda
+        - CRM (Funil de Vendas)
+        - Financeiro
+        - Propostas
+        - Configurações
+        - Admin (Gerenciar Usuários)
+        - Múltiplos módulos
+        - Infraestrutura / CI
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Prioridade
+      options:
+        - "🔴 Alta"
+        - "🟡 Média"
+        - "🟢 Baixa"
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Critérios de Aceitação
+      description: Liste os critérios que devem ser atendidos para considerar a story concluída
+      placeholder: |
+        - [ ] Critério 1
+        - [ ] Critério 2
+        - [ ] Critério 3
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Observações / Notas Técnicas
+      description: Referências, dependências, arquivos envolvidos ou decisões de design relevantes
+    validations:
+      required: false

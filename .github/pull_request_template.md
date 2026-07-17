@@ -1,4 +1,4 @@
-## Descricao
+## Descrição
 
 > Descreva o que foi alterado e por que.
 
@@ -6,41 +6,43 @@
 
 Closes #<!-- numero da issue -->
 
-## Tipo de alteracao
+## Tipo de alteração
 
 - [ ] Bug fix
 - [ ] Nova funcionalidade (feature)
-- [ ] Refatoracao (sem mudanca de comportamento)
-- [ ] Documentacao
-- [ ] Configuracao / CI
+- [ ] Refatoração (sem mudança de comportamento)
+- [ ] Documentação
+- [ ] Configuração / CI
 
-## Checklist — obrigatorio antes de solicitar review
+## Checklist — obrigatório antes de solicitar review
 
 ### Testes
 - [ ] Executei `npm test` localmente e todos os testes passaram
-- [ ] Executei `npm run test:coverage` e a cobertura esta acima de 80%
-- [ ] Adicionei testes para o codigo novo ou corrigido
+- [ ] Adicionei testes para o código novo ou corrigido
 - [ ] Nenhum teste existente foi quebrado
 
-### Codigo
-- [ ] O codigo segue o padrao do projeto (objetos literais, sem framework JS)
+### Código
+- [ ] Executei `npm run lint` com 0 erros e 0 warnings
+- [ ] O código segue o padrão do projeto (objetos literais, vanilla JS, sem framework)
 - [ ] Removi `console.log` de debug
-- [ ] Nao ha codigo morto ou comentado desnecessariamente
+- [ ] Não há código morto ou comentado desnecessariamente
+- [ ] Novos arquivos JS adicionados ao `eslint.config.js` se necessário
 
-### Validacao manual
+### Validação Manual
 - [ ] Testei no Chrome e/ou Firefox
 - [ ] Testei em modo Light e Dark
 - [ ] Testei em tela mobile (responsividade)
-- [ ] As funcionalidades de CNPJ, CEP, Salvar, Editar e Excluir continuam funcionando
+- [ ] Login, logout e guard de rota funcionando
+- [ ] Módulos afetados pela mudança testados manualmente
 
-## Como testar
+## Como Testar
 
-> Descreva o passo a passo para o reviewer validar a alteracao.
+> Descreva o passo a passo para o reviewer validar a alteração.
 
-1. 
+1. Acesse `https://prbretas.github.io/SCTEC-Gestao_de_Empresas/` ou abra localmente via Live Server
 2. 
 3. 
 
-## Screenshots (se aplicavel)
+## Screenshots (se aplicável)
 
-<!-- Adicione prints antes/depois se houver mudanca visual -->
+<!-- Adicione prints antes/depois se houver mudança visual -->
