@@ -80,3 +80,8 @@ const EmpreendimentoStorage = {
     this.salvarTodos(lista);
   },
 };
+
+// Expõe no escopo global para que os módulos possam verificar window.EmpreendimentoStorage
+if (typeof window !== "undefined") {
+  window.EmpreendimentoStorage = EmpreendimentoStorage;
+}
