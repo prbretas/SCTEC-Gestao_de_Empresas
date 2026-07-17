@@ -564,3 +564,31 @@ body.dark-mode .thead-sctec th {
   color: #67ff61 !important;
   border-bottom: 2px solid #444 !important;
 }
+
+/* ==========================================================================
+   FIX #32 — Cards de Resumo do Financeiro
+   Protege o fundo colorido dos cards de ser sobrescrito pelo .card global
+   ========================================================================== */
+
+.card-resumo.bg-success {
+  background-color: #198754 !important;
+}
+
+.card-resumo.bg-danger {
+  background-color: #dc3545 !important;
+}
+
+.card-resumo.bg-primary {
+  background-color: #0d6efd !important;
+}
+
+/* Texto dos cards de resumo sempre branco (fundo sempre colorido) */
+.card-resumo .card-body,
+.card-resumo .card-body * {
+  color: #ffffff !important;
+}
+
+/* Dark mode: mantém o mesmo comportamento */
+body.dark-mode .card-resumo.bg-success { background-color: #157347 !important; }
+body.dark-mode .card-resumo.bg-danger  { background-color: #b02a37 !important; }
+body.dark-mode .card-resumo.bg-primary { background-color: #0a58ca !important; }

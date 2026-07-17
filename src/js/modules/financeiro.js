@@ -137,7 +137,7 @@ function renderizar() {
   document.getElementById("resumo-saidas").textContent = _fmt(totalSaidas);
   document.getElementById("resumo-saldo").textContent = _fmt(saldo);
   const cardSaldo = document.getElementById("card-saldo");
-  cardSaldo.className = `card border-0 shadow-sm text-white ${saldo >= 0 ? "bg-primary" : "bg-danger"}`;
+  cardSaldo.className = `card-resumo card border-0 shadow-sm ${saldo >= 0 ? "bg-primary" : "bg-danger"}`;
 
   if (dados.length === 0) {
     tbody.innerHTML = ""; vazio?.classList.remove("d-none"); return;
