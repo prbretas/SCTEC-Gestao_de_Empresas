@@ -21,10 +21,7 @@ const UIController = {
       });
     }
 
-    // 1. Inicializa o tema (Dark Mode)
-    this.initDarkMode();
-
-    // 2. Configura os eventos de busca (APENAS UMA VEZ)
+    // 1. Configura os eventos de busca (APENAS UMA VEZ)
     document
       .querySelector("#busca-empresa")
       ?.addEventListener("input", () => { paginaAtual = 1; this.renderizarLista(); });
@@ -184,17 +181,6 @@ const UIController = {
       EmpreendimentoStorage.excluir(id);
       this.renderizarLista();
     }
-  },
-
-  initDarkMode() {
-    const switchBtn = document.querySelector("#dark-mode-switch");
-    const aplicar = (dark) => {
-      document.body.classList.toggle("dark-mode", dark);
-      localStorage.setItem("SCTEC_THEME", dark ? "dark" : "light");
-      if (switchBtn) switchBtn.checked = dark;
-    };
-    aplicar(localStorage.getItem("SCTEC_THEME") === "dark");
-    switchBtn?.addEventListener("change", (e) => aplicar(e.target.checked));
   },
 
   atualizarContadores(listaCompleta, listaExibida) {
