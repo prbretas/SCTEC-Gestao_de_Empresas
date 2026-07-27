@@ -2,8 +2,9 @@
  * settings.js — Lógica da tela de Configurações do Sistema.
  */
 
-// Guard de rota — apenas Admin pode acessar Configurações
-if (window.AuthService) AuthService.requireAuth(true);
+// Guard de rota — todos os usuários logados podem acessar Configurações
+// (Admin pode ver todas as seções; usuários comuns veem apenas a seção Segurança)
+if (window.AuthService) AuthService.requireAuth();
 
 let configAtual = ConfigController.obter();
 
@@ -11,6 +12,15 @@ document.addEventListener("DOMContentLoaded", () => {
   ConfigController.aplicar(configAtual);
   if (window.NavbarController) NavbarController.init("settings");
   if (window.ThemeController) ThemeController.init();
+
+  // Oculta seções de admin para usuários sem permissão
+  const sessao = window.AuthService ? AuthService.obterSessao() : null;
+  if (sessao && sessao.role !== "admin") {
+    document.querySelectorAll("[data-admin-only]").forEach((el) => {
+      el.style.display = "none";
+    });
+  }
+
   carregarFormulario(configAtual);
   initEventos();
   renderizarModulos();
@@ -162,6 +172,45 @@ function initEventos() {
       carregarFormulario(configAtual);
       e.target.value = "";
     });
+  });
+
+  // ─── Alterar Senha ───────────────────────────────────────────────────────
+  document.querySelector("#btn-alterar-senha")?.addEventListener("click", async () => {
+    const senhaAtual = document.querySelector("#senha-atual").value;
+    const senhaNova = document.querySelector("#senha-nova").value;
+    const senhaConfirmar = document.querySelector("#senha-nova-confirmar").value;
+    const msgEl = document.querySelector("#msg-alterar-senha");
+
+    msgEl.textContent = "";
+    msgEl.className = "mt-2 small";
+
+    if (!senhaAtual) {
+      msgEl.textContent = "⚠️ Informe a senha atual.";
+      msgEl.classList.add("text-warning");
+      return;
+    }
+    if (!senhaNova || senhaNova.length < 4) {
+      msgEl.textContent = "⚠️ A nova senha deve ter pelo menos 4 caracteres.";
+      msgEl.classList.add("text-warning");
+      return;
+    }
+    if (senhaNova !== senhaConfirmar) {
+      msgEl.textContent = "⚠️ As senhas não coincidem.";
+      msgEl.classList.add("text-warning");
+      return;
+    }
+
+    const resultado = await AuthService.alterarSenha(senhaAtual, senhaNova);
+    if (resultado.ok) {
+      msgEl.textContent = "✅ Senha alterada com sucesso!";
+      msgEl.classList.add("text-success");
+      document.querySelector("#senha-atual").value = "";
+      document.querySelector("#senha-nova").value = "";
+      document.querySelector("#senha-nova-confirmar").value = "";
+    } else {
+      msgEl.textContent = `❌ ${resultado.erro}`;
+      msgEl.classList.add("text-danger");
+    }
   });
 }
 
