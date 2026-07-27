@@ -35,36 +35,26 @@ const PropostasStorage = {
 const _fmt = (v) => Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 let _itensAtuais = [];
 
-// ─── Modo Visualização/Edição ────────────────────────────────────────────────
+// ─── Helpers de modo visualização/edição ───────────────────────────────────
 
 function _propSetModo(modo) {
   const form = document.getElementById("form-proposta");
   const campos = form.querySelectorAll("input, select, textarea");
-  const btnSalvar = document.querySelector('button[form="form-proposta"].btn-success');
+  const btnSalvar = document.getElementById("btn-salvar-proposta");
   const btnEditar = document.getElementById("btn-editar-proposta");
   const btnAddItem = document.getElementById("btn-add-item");
 
   if (modo === "visualizacao") {
-    campos.forEach((c) => {
-      c.style.backgroundColor = "#e9ecef";
-      c.style.cursor = "not-allowed";
-      if (c.tagName === "SELECT") c.style.pointerEvents = "none";
-      else c.readOnly = true;
-    });
-    document.querySelectorAll("#prop-itens-lista .btn-outline-danger").forEach((b) => b.setAttribute("disabled", "disabled"));
+    campos.forEach((c) => c.setAttribute("disabled", "disabled"));
+    form.querySelectorAll(".btn-outline-danger").forEach((b) => b.setAttribute("disabled", "disabled"));
     btnSalvar?.classList.add("d-none");
     btnEditar?.classList.remove("d-none");
     btnAddItem?.classList.add("d-none");
     form.dataset.modoVisualizacao = "true";
     document.getElementById("titulo-modal-proposta").textContent = "👁️ Visualizar Proposta";
   } else {
-    campos.forEach((c) => {
-      c.style.backgroundColor = "";
-      c.style.cursor = "default";
-      c.style.pointerEvents = "auto";
-      c.readOnly = false;
-    });
-    document.querySelectorAll("#prop-itens-lista .btn-outline-danger").forEach((b) => b.removeAttribute("disabled"));
+    campos.forEach((c) => c.removeAttribute("disabled"));
+    form.querySelectorAll(".btn-outline-danger").forEach((b) => b.removeAttribute("disabled"));
     btnSalvar?.classList.remove("d-none");
     btnEditar?.classList.add("d-none");
     btnAddItem?.classList.remove("d-none");
@@ -80,15 +70,14 @@ document.addEventListener("DOMContentLoaded", () => {
   if (window.NavbarController) NavbarController.init("propostas");
   if (window.ThemeController) ThemeController.init();
 
-  const modal = new bootstrap.Modal(document.getElementById("modal-proposta"));
   const modalEl = document.getElementById("modal-proposta");
+  const modal = new bootstrap.Modal(modalEl);
   _preencherEmpresas();
   renderizarLista();
 
   document.getElementById("btn-nova-proposta").addEventListener("click", () => {
     _resetarForm();
     document.getElementById("titulo-modal-proposta").textContent = "📄 Nova Proposta";
-    // Número automático
     const total = PropostasStorage.buscarTodos().length + 1;
     document.getElementById("prop-numero").value = `${new Date().getFullYear()}-${String(total).padStart(3, "0")}`;
     _propSetModo("edicao");
@@ -97,6 +86,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("btn-editar-proposta")?.addEventListener("click", () => {
     _propSetModo("edicao");
+  });
+
+  modalEl.addEventListener("hide.bs.modal", (e) => {
+    const form = document.getElementById("form-proposta");
+    if (form.dataset.modoVisualizacao !== "true" && form.dataset.editId) {
+      if (!confirm("Deseja descartar as alterações?")) {
+        e.preventDefault();
+      }
+    }
   });
 
   document.getElementById("btn-add-item").addEventListener("click", () => {
@@ -139,11 +137,10 @@ function _preencherEmpresas() {
 
 function _resetarForm() {
   const f = document.getElementById("form-proposta");
-  f.reset(); delete f.dataset.editId;
+  f.reset(); delete f.dataset.editId; delete f.dataset.modoVisualizacao;
   _itensAtuais = [];
   document.getElementById("prop-itens-lista").innerHTML = "";
   _recalcularTotal();
-  // Adiciona uma linha de item em branco
   _adicionarLinhaItem();
 }
 
@@ -250,7 +247,7 @@ function renderizarLista() {
             <div class="fw-bold text-success mt-2">${_fmt(p.total || 0)}</div>
           </div>
           <div class="card-footer bg-transparent d-flex justify-content-between gap-2">
-            <button class="btn btn-xs btn-outline-primary flex-fill" onclick="visualizarProposta('${p.id}')">👁️ Ver</button>
+            <button class="btn btn-xs btn-outline-info flex-fill" onclick="visualizarProposta('${p.id}')">👁️ Ver</button>
             <button class="btn btn-xs btn-outline-secondary flex-fill" onclick="imprimirProposta('${p.id}')">🖨️ Imprimir</button>
             <button class="btn btn-xs btn-outline-danger" onclick="excluirProposta('${p.id}')">🗑️</button>
           </div>
@@ -259,24 +256,24 @@ function renderizarLista() {
   }).join("");
 }
 
-function visualizarProposta(id) {
-  const p = PropostasStorage.buscarTodos().find((x) => x.id === id);
-  if (!p) return;
-  document.getElementById("titulo-modal-proposta").textContent = "👁️ Visualizar Proposta";
+function _carregarProposta(p) {
   document.getElementById("prop-titulo").value = p.titulo || "";
   document.getElementById("prop-numero").value = p.numero || "";
   document.getElementById("prop-empresa").value = p.empresaId || "";
   document.getElementById("prop-validade").value = p.validade || "";
   document.getElementById("prop-status").value = p.status || "rascunho";
   document.getElementById("prop-obs").value = p.obs || "";
-  document.getElementById("form-proposta").dataset.editId = id;
-
-  // Carrega itens
+  document.getElementById("form-proposta").dataset.editId = p.id;
   document.getElementById("prop-itens-lista").innerHTML = "";
   (p.itens || []).forEach((item) => _adicionarLinhaItem(item));
   if (!p.itens || p.itens.length === 0) _adicionarLinhaItem();
   _recalcularTotal();
+}
 
+function visualizarProposta(id) {
+  const p = PropostasStorage.buscarTodos().find((x) => x.id === id);
+  if (!p) return;
+  _carregarProposta(p);
   _propSetModo("visualizacao");
   new bootstrap.Modal(document.getElementById("modal-proposta")).show();
 }
@@ -284,44 +281,22 @@ function visualizarProposta(id) {
 function editarProposta(id) {
   const p = PropostasStorage.buscarTodos().find((x) => x.id === id);
   if (!p) return;
-  document.getElementById("titulo-modal-proposta").textContent = "✏️ Editar Proposta";
-  document.getElementById("prop-titulo").value = p.titulo || "";
-  document.getElementById("prop-numero").value = p.numero || "";
-  document.getElementById("prop-empresa").value = p.empresaId || "";
-  document.getElementById("prop-validade").value = p.validade || "";
-  document.getElementById("prop-status").value = p.status || "rascunho";
-  document.getElementById("prop-obs").value = p.obs || "";
-  document.getElementById("form-proposta").dataset.editId = id;
-
-  // Carrega itens
-  document.getElementById("prop-itens-lista").innerHTML = "";
-  (p.itens || []).forEach((item) => _adicionarLinhaItem(item));
-  if (!p.itens || p.itens.length === 0) _adicionarLinhaItem();
-  _recalcularTotal();
-
+  _carregarProposta(p);
   _propSetModo("edicao");
   new bootstrap.Modal(document.getElementById("modal-proposta")).show();
+}
+
+function imprimirProposta(id) {
+  const p = PropostasStorage.buscarTodos().find((x) => x.id === id);
+  if (!p) return;
+  _carregarProposta(p);
+  setTimeout(() => _imprimirProposta(), 300);
 }
 
 function excluirProposta(id) {
   if (!confirm("Remover esta proposta?")) return;
   PropostasStorage.excluir(id);
   renderizarLista();
-}
-
-function imprimirProposta(id) {
-  const p = PropostasStorage.buscarTodos().find((x) => x.id === id);
-  if (!p) return;
-  // Carrega os dados no form temporariamente para impressão
-  document.getElementById("prop-titulo").value = p.titulo || "";
-  document.getElementById("prop-numero").value = p.numero || "";
-  document.getElementById("prop-empresa").value = p.empresaId || "";
-  document.getElementById("prop-validade").value = p.validade || "";
-  document.getElementById("prop-obs").value = p.obs || "";
-  document.getElementById("prop-itens-lista").innerHTML = "";
-  (p.itens || []).forEach((item) => _adicionarLinhaItem(item));
-  _recalcularTotal();
-  _imprimirProposta();
 }
 
 function _imprimirProposta() {

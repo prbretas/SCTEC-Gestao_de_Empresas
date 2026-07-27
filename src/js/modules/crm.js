@@ -55,7 +55,7 @@ const ETAPAS = [
   { id: "perdido",    label: "Perdido",       col: "col-perdido",    cor: "#dc3545" },
 ];
 
-// ─── Modo Visualização/Edição ────────────────────────────────────────────────
+// ─── Helpers de modo visualização/edição ───────────────────────────────────
 
 function _crmSetModo(modo) {
   const form = document.getElementById("form-oportunidade");
@@ -64,23 +64,13 @@ function _crmSetModo(modo) {
   const btnEditar = document.getElementById("btn-editar-oportunidade");
 
   if (modo === "visualizacao") {
-    campos.forEach((c) => {
-      c.style.backgroundColor = "#e9ecef";
-      c.style.cursor = "not-allowed";
-      if (c.tagName === "SELECT") c.style.pointerEvents = "none";
-      else c.readOnly = true;
-    });
+    campos.forEach((c) => c.setAttribute("disabled", "disabled"));
     btnSalvar?.classList.add("d-none");
     btnEditar?.classList.remove("d-none");
     form.dataset.modoVisualizacao = "true";
     document.getElementById("titulo-modal-oportunidade").textContent = "👁️ Visualizar Oportunidade";
   } else {
-    campos.forEach((c) => {
-      c.style.backgroundColor = "";
-      c.style.cursor = "default";
-      c.style.pointerEvents = "auto";
-      c.readOnly = false;
-    });
+    campos.forEach((c) => c.removeAttribute("disabled"));
     btnSalvar?.classList.remove("d-none");
     btnEditar?.classList.add("d-none");
     form.dataset.modoVisualizacao = "";
@@ -98,8 +88,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (window.NavbarController) NavbarController.init("crm");
   if (window.ThemeController) ThemeController.init();
 
-  const modal = new bootstrap.Modal(document.getElementById("modal-oportunidade"));
   const modalEl = document.getElementById("modal-oportunidade");
+  const modal = new bootstrap.Modal(modalEl);
 
   _preencherEmpresas();
   renderizarKanban();
@@ -114,6 +104,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("btn-editar-oportunidade")?.addEventListener("click", () => {
     _crmSetModo("edicao");
+  });
+
+  modalEl.addEventListener("hide.bs.modal", (e) => {
+    const form = document.getElementById("form-oportunidade");
+    if (form.dataset.modoVisualizacao !== "true" && form.dataset.editId) {
+      if (!confirm("Deseja descartar as alterações?")) {
+        e.preventDefault();
+      }
+    }
   });
 
   document.getElementById("form-oportunidade").addEventListener("submit", (e) => {
@@ -157,6 +156,7 @@ function _resetarForm() {
   const form = document.getElementById("form-oportunidade");
   form.reset();
   delete form.dataset.editId;
+  delete form.dataset.modoVisualizacao;
 }
 
 function _coletarForm() {
@@ -203,23 +203,22 @@ function renderizarKanban() {
         : "";
 
       return `
-        <div class="kanban-card" style="border-left-color:${etapa.cor};"
+        <div class="kanban-card" style="border-left-color:${etapa.cor};cursor:pointer;"
              onclick="visualizarOportunidade('${o.id}')">
           <div class="fw-bold small mb-1">${o.titulo}</div>
           <div class="text-muted" style="font-size:.75rem;">${nomeEmp}</div>
           ${valorFmt ? `<div class="text-success fw-bold" style="font-size:.78rem;">${valorFmt}</div>` : ""}
           ${previsaoFmt ? `<div class="text-muted" style="font-size:.72rem;">📅 ${previsaoFmt}</div>` : ""}
           ${o.responsavel ? `<div class="text-muted" style="font-size:.72rem;">👤 ${o.responsavel}</div>` : ""}
-          <div class="mt-2 d-flex justify-content-between">
+          <div class="mt-2 d-flex justify-content-between" onclick="event.stopPropagation()">
             <select class="form-select form-select-sm" style="font-size:.7rem;padding:2px 4px;"
-              onclick="event.stopPropagation()"
               onchange="moverEtapa('${o.id}', this.value)">
               ${ETAPAS.map((et) =>
                 `<option value="${et.id}" ${et.id === o.etapa ? "selected" : ""}>${et.label}</option>`
               ).join("")}
             </select>
             <button class="btn btn-xs btn-outline-danger ms-1"
-              onclick="event.stopPropagation(); excluirOportunidade('${o.id}')">🗑️</button>
+              onclick="excluirOportunidade('${o.id}')">🗑️</button>
           </div>
         </div>`;
     }).join("");
@@ -243,7 +242,6 @@ function visualizarOportunidade(id) {
   new bootstrap.Modal(document.getElementById("modal-oportunidade")).show();
 }
 
-// Alias para compatibilidade
 function abrirEdicao(id) {
   visualizarOportunidade(id);
 }
