@@ -55,6 +55,29 @@ const ETAPAS = [
   { id: "perdido",    label: "Perdido",       col: "col-perdido",    cor: "#dc3545" },
 ];
 
+// ─── Helpers de modo visualização/edição ───────────────────────────────────
+
+function _crmSetModo(modo) {
+  const form = document.getElementById("form-oportunidade");
+  const campos = form.querySelectorAll("input, select, textarea");
+  const btnSalvar = document.getElementById("btn-salvar-oportunidade");
+  const btnEditar = document.getElementById("btn-editar-oportunidade");
+
+  if (modo === "visualizacao") {
+    campos.forEach((c) => c.setAttribute("disabled", "disabled"));
+    btnSalvar?.classList.add("d-none");
+    btnEditar?.classList.remove("d-none");
+    form.dataset.modoVisualizacao = "true";
+    document.getElementById("titulo-modal-oportunidade").textContent = "👁️ Visualizar Oportunidade";
+  } else {
+    campos.forEach((c) => c.removeAttribute("disabled"));
+    btnSalvar?.classList.remove("d-none");
+    btnEditar?.classList.add("d-none");
+    form.dataset.modoVisualizacao = "";
+    document.getElementById("titulo-modal-oportunidade").textContent = "✏️ Editar Oportunidade";
+  }
+}
+
 // ─── Inicialização ──────────────────────────────────────────────────────────
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -65,7 +88,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (window.NavbarController) NavbarController.init("crm");
   if (window.ThemeController) ThemeController.init();
 
-  const modal = new bootstrap.Modal(document.getElementById("modal-oportunidade"));
+  const modalEl = document.getElementById("modal-oportunidade");
+  const modal = new bootstrap.Modal(modalEl);
 
   _preencherEmpresas();
   renderizarKanban();
@@ -74,7 +98,21 @@ document.addEventListener("DOMContentLoaded", () => {
     _resetarForm();
     document.getElementById("titulo-modal-oportunidade").textContent = "🎯 Nova Oportunidade";
     document.getElementById("op-previsao").value = new Date().toISOString().split("T")[0];
+    _crmSetModo("edicao");
     modal.show();
+  });
+
+  document.getElementById("btn-editar-oportunidade")?.addEventListener("click", () => {
+    _crmSetModo("edicao");
+  });
+
+  modalEl.addEventListener("hide.bs.modal", (e) => {
+    const form = document.getElementById("form-oportunidade");
+    if (form.dataset.modoVisualizacao !== "true" && form.dataset.editId) {
+      if (!confirm("Deseja descartar as alterações?")) {
+        e.preventDefault();
+      }
+    }
   });
 
   document.getElementById("form-oportunidade").addEventListener("submit", (e) => {
@@ -90,6 +128,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     modal.hide();
     renderizarKanban();
+  });
+
+  modalEl.addEventListener("hide.bs.modal", (e) => {
+    const form = document.getElementById("form-oportunidade");
+    if (form.dataset.modoVisualizacao !== "true" && form.dataset.editId) {
+      if (!confirm("Deseja descartar as alterações?")) {
+        e.preventDefault();
+      }
+    }
   });
 });
 
@@ -109,6 +156,7 @@ function _resetarForm() {
   const form = document.getElementById("form-oportunidade");
   form.reset();
   delete form.dataset.editId;
+  delete form.dataset.modoVisualizacao;
 }
 
 function _coletarForm() {
@@ -155,34 +203,32 @@ function renderizarKanban() {
         : "";
 
       return `
-        <div class="kanban-card" style="border-left-color:${etapa.cor};"
-             onclick="abrirEdicao('${o.id}')">
+        <div class="kanban-card" style="border-left-color:${etapa.cor};cursor:pointer;"
+             onclick="visualizarOportunidade('${o.id}')">
           <div class="fw-bold small mb-1">${o.titulo}</div>
           <div class="text-muted" style="font-size:.75rem;">${nomeEmp}</div>
           ${valorFmt ? `<div class="text-success fw-bold" style="font-size:.78rem;">${valorFmt}</div>` : ""}
           ${previsaoFmt ? `<div class="text-muted" style="font-size:.72rem;">📅 ${previsaoFmt}</div>` : ""}
           ${o.responsavel ? `<div class="text-muted" style="font-size:.72rem;">👤 ${o.responsavel}</div>` : ""}
-          <div class="mt-2 d-flex justify-content-between">
+          <div class="mt-2 d-flex justify-content-between" onclick="event.stopPropagation()">
             <select class="form-select form-select-sm" style="font-size:.7rem;padding:2px 4px;"
-              onclick="event.stopPropagation()"
               onchange="moverEtapa('${o.id}', this.value)">
               ${ETAPAS.map((et) =>
                 `<option value="${et.id}" ${et.id === o.etapa ? "selected" : ""}>${et.label}</option>`
               ).join("")}
             </select>
             <button class="btn btn-xs btn-outline-danger ms-1"
-              onclick="event.stopPropagation(); excluirOportunidade('${o.id}')">🗑️</button>
+              onclick="excluirOportunidade('${o.id}')">🗑️</button>
           </div>
         </div>`;
     }).join("");
   });
 }
 
-function abrirEdicao(id) {
+function visualizarOportunidade(id) {
   const op = CrmStorage.buscarTodos().find((o) => o.id === id);
   if (!op) return;
 
-  document.getElementById("titulo-modal-oportunidade").textContent = "✏️ Editar Oportunidade";
   document.getElementById("op-titulo").value = op.titulo || "";
   document.getElementById("op-empresa").value = op.empresaId || "";
   document.getElementById("op-valor").value = op.valor || "";
@@ -192,7 +238,12 @@ function abrirEdicao(id) {
   document.getElementById("op-observacoes").value = op.observacoes || "";
   document.getElementById("form-oportunidade").dataset.editId = id;
 
+  _crmSetModo("visualizacao");
   new bootstrap.Modal(document.getElementById("modal-oportunidade")).show();
+}
+
+function abrirEdicao(id) {
+  visualizarOportunidade(id);
 }
 
 function moverEtapa(id, novaEtapa) {

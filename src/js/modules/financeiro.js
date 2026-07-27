@@ -33,6 +33,28 @@ const FinanceiroStorage = {
 
 const _fmt = (v) => Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+// ─── Helpers de modo visualização/edição ───────────────────────────────────
+
+function _finSetModo(modo) {
+  const form = document.getElementById("form-transacao");
+  const campos = form.querySelectorAll("input, select, textarea");
+  const btnSalvar = document.getElementById("btn-salvar-transacao");
+  const btnEditar = document.getElementById("btn-editar-transacao");
+
+  if (modo === "visualizacao") {
+    campos.forEach((c) => c.setAttribute("disabled", "disabled"));
+    btnSalvar?.classList.add("d-none");
+    btnEditar?.classList.remove("d-none");
+    form.dataset.modoVisualizacao = "true";
+    document.getElementById("titulo-modal-transacao").textContent = "👁️ Visualizar Transação";
+  } else {
+    campos.forEach((c) => c.removeAttribute("disabled"));
+    btnSalvar?.classList.remove("d-none");
+    btnEditar?.classList.add("d-none");
+    form.dataset.modoVisualizacao = "";
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const sessao = AuthService.requireAuth();
   if (!sessao) return;
@@ -40,7 +62,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (window.NavbarController) NavbarController.init("financeiro");
   if (window.ThemeController) ThemeController.init();
 
-  const modal = new bootstrap.Modal(document.getElementById("modal-transacao"));
+  const modalEl = document.getElementById("modal-transacao");
+  const modal = new bootstrap.Modal(modalEl);
   _preencherEmpresas();
 
   const hoje = new Date();
@@ -53,7 +76,22 @@ document.addEventListener("DOMContentLoaded", () => {
     _resetarForm();
     document.getElementById("titulo-modal-transacao").textContent = "💰 Nova Transação";
     document.getElementById("trans-data").value = new Date().toISOString().split("T")[0];
+    _finSetModo("edicao");
     modal.show();
+  });
+
+  document.getElementById("btn-editar-transacao")?.addEventListener("click", () => {
+    _finSetModo("edicao");
+    document.getElementById("titulo-modal-transacao").textContent = "✏️ Editar Transação";
+  });
+
+  modalEl.addEventListener("hide.bs.modal", (e) => {
+    const form = document.getElementById("form-transacao");
+    if (form.dataset.modoVisualizacao !== "true" && form.dataset.editId) {
+      if (!confirm("Deseja descartar as alterações?")) {
+        e.preventDefault();
+      }
+    }
   });
 
   document.getElementById("form-transacao").addEventListener("submit", (e) => {
@@ -64,6 +102,15 @@ document.addEventListener("DOMContentLoaded", () => {
     id ? FinanceiroStorage.atualizar(id, dados) : FinanceiroStorage.adicionar(dados);
     modal.hide();
     renderizar();
+  });
+
+  modalEl.addEventListener("hide.bs.modal", (e) => {
+    const form = document.getElementById("form-transacao");
+    if (form.dataset.modoVisualizacao !== "true" && form.dataset.editId) {
+      if (!confirm("Deseja descartar as alterações?")) {
+        e.preventDefault();
+      }
+    }
   });
 
   ["filtro-mes","filtro-tipo","filtro-busca"].forEach((id) => {
@@ -91,7 +138,7 @@ function _preencherEmpresas() {
 
 function _resetarForm() {
   const f = document.getElementById("form-transacao");
-  f.reset(); delete f.dataset.editId;
+  f.reset(); delete f.dataset.editId; delete f.dataset.modoVisualizacao;
   document.getElementById("tipo-entrada").checked = true;
 }
 
@@ -161,17 +208,16 @@ function renderizar() {
           ${isEntrada ? "+" : "-"}${_fmt(t.valor)}
         </td>
         <td class="text-center">
-          <button class="btn btn-xs btn-outline-warning me-1" onclick="editarTransacao('${t.id}')">✏️</button>
+          <button class="btn btn-xs btn-outline-warning me-1" onclick="visualizarTransacao('${t.id}')">👁️</button>
           <button class="btn btn-xs btn-outline-danger" onclick="excluirTransacao('${t.id}')">🗑️</button>
         </td>
       </tr>`;
   }).join("");
 }
 
-function editarTransacao(id) {
+function visualizarTransacao(id) {
   const t = FinanceiroStorage.buscarTodos().find((x) => x.id === id);
   if (!t) return;
-  document.getElementById("titulo-modal-transacao").textContent = "✏️ Editar Transação";
   document.querySelector(`input[name="trans-tipo"][value="${t.tipo}"]`).checked = true;
   document.getElementById("trans-descricao").value = t.descricao || "";
   document.getElementById("trans-valor").value = t.valor || "";
@@ -180,7 +226,12 @@ function editarTransacao(id) {
   document.getElementById("trans-empresa").value = t.empresaId || "";
   document.getElementById("trans-obs").value = t.obs || "";
   document.getElementById("form-transacao").dataset.editId = id;
+  _finSetModo("visualizacao");
   new bootstrap.Modal(document.getElementById("modal-transacao")).show();
+}
+
+function editarTransacao(id) {
+  visualizarTransacao(id);
 }
 
 function excluirTransacao(id) {

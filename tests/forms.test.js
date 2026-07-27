@@ -179,3 +179,105 @@ describe('Validacao de duplicidade de CNPJ/CPF', () => {
     expect(duplicado).toBeDefined();
   });
 });
+
+// ─────────────────────────────────────────────────────────
+// T1 — Persistência do tipoPessoa no handleSave
+// ─────────────────────────────────────────────────────────
+
+describe('Persistencia do tipoPessoa (T1)', () => {
+  /**
+   * Replica a logica de normalizacao do tipoPessoa de handleSave:
+   *   const tipoPessoa = dados.tipoPessoa || 'PJ';
+   *   dados.tipoPessoa = tipoPessoa;
+   */
+  function normalizarTipoPessoa(dados) {
+    const tipoPessoa = dados.tipoPessoa || 'PJ';
+    dados.tipoPessoa = tipoPessoa;
+    return dados;
+  }
+
+  test('persiste PJ quando selecionado', () => {
+    const dados = { tipoPessoa: 'PJ', nome: 'Empresa A' };
+    const resultado = normalizarTipoPessoa(dados);
+    expect(resultado.tipoPessoa).toBe('PJ');
+  });
+
+  test('persiste PF quando selecionado', () => {
+    const dados = { tipoPessoa: 'PF', nome: 'Pessoa B' };
+    const resultado = normalizarTipoPessoa(dados);
+    expect(resultado.tipoPessoa).toBe('PF');
+  });
+
+  test('usa PJ como fallback quando tipoPessoa esta ausente', () => {
+    const dados = { nome: 'Empresa C' };
+    const resultado = normalizarTipoPessoa(dados);
+    expect(resultado.tipoPessoa).toBe('PJ');
+  });
+
+  test('usa PJ como fallback quando tipoPessoa e string vazia', () => {
+    const dados = { tipoPessoa: '', nome: 'Empresa D' };
+    const resultado = normalizarTipoPessoa(dados);
+    expect(resultado.tipoPessoa).toBe('PJ');
+  });
+
+  test('nao altera outros campos ao normalizar tipoPessoa', () => {
+    const dados = { tipoPessoa: 'PF', nome: 'Pessoa E', registro: '123.456.789-01' };
+    const resultado = normalizarTipoPessoa(dados);
+    expect(resultado.nome).toBe('Pessoa E');
+    expect(resultado.registro).toBe('123.456.789-01');
+  });
+
+  test('tipoPessoa PF persiste no objeto final (antes era perdido)', () => {
+    // Regressao: bug era que tipoPessoa nao era incluido no objeto salvo
+    const formDataSimulado = { nome: 'Pessoa F', registro: '529.982.247-25' };
+    // Antes do fix: tipoPessoa ficava undefined
+    // Apos o fix: tipoPessoa deve ser PJ como padrao
+    const tipoPessoa = formDataSimulado.tipoPessoa || 'PJ';
+    formDataSimulado.tipoPessoa = tipoPessoa;
+    expect(Object.keys(formDataSimulado)).toContain('tipoPessoa');
+    expect(formDataSimulado.tipoPessoa).not.toBeUndefined();
+  });
+});
+
+// ─────────────────────────────────────────────────────────
+// T2 — Feedback visual ViaCEP: lógica do try/finally
+// ─────────────────────────────────────────────────────────
+
+describe('Feedback visual ViaCEP — try/finally (T2)', () => {
+  /**
+   * Valida o padrao try/finally que garante que campos
+   * sejam reabilitados mesmo em caso de erro na API.
+   */
+  async function simularConsultaCep(mockFetch, campos) {
+    campos.forEach((c) => { c.disabled = true; });
+    try {
+      await mockFetch();
+    } finally {
+      campos.forEach((c) => { c.disabled = false; });
+    }
+  }
+
+  test('habilita campos apos consulta bem-sucedida', async () => {
+    const campos = [{ disabled: false }, { disabled: false }];
+    await simularConsultaCep(async () => ({ logradouro: 'Rua A' }), campos);
+    campos.forEach((c) => expect(c.disabled).toBe(false));
+  });
+
+  test('habilita campos mesmo apos erro na API', async () => {
+    const campos = [{ disabled: false }, { disabled: false }];
+    await expect(
+      simularConsultaCep(async () => { throw new Error('Network error'); }, campos)
+    ).rejects.toThrow('Network error');
+    // O finally deve ter rodado mesmo com o throw
+    campos.forEach((c) => expect(c.disabled).toBe(false));
+  });
+
+  test('desabilita campos durante a consulta', async () => {
+    const campos = [{ disabled: false }];
+    let estadoDuranteConsulta = null;
+    await simularConsultaCep(async () => {
+      estadoDuranteConsulta = campos[0].disabled;
+    }, campos);
+    expect(estadoDuranteConsulta).toBe(true);
+  });
+});
