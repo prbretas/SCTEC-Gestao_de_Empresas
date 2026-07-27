@@ -198,7 +198,7 @@ const AuthService = {
    * @param {string} senha
    * @param {string} perguntaSecreta
    * @param {string} respostaSecreta
-   * @param {string} [codigoConvite] - se informado, vincula à organização existente
+   * @param {string} [codigoConvite] - se informado, vincula à organização existente (pode ser código de org ou código de papel)
    * @returns {Promise<{ok: boolean, erro?: string, usuario?: Object, org?: Object}>}
    */
   async cadastrar(nome, senha, perguntaSecreta, respostaSecreta, codigoConvite = "") {
@@ -228,15 +228,36 @@ const AuthService = {
     let orgId = null;
     let role = "user";
     let org = null;
+    let papelId = null;
 
     if (codigoConvite && codigoConvite.trim() !== "") {
-      // Usuário sendo convidado — vincula à organização existente
-      org = this.buscarOrgPorCodigo(codigoConvite);
-      if (!org) {
-        return { ok: false, erro: "Código de convite inválido. Verifique e tente novamente." };
+      const codigoNorm = codigoConvite.toUpperCase().trim();
+
+      // Tenta primeiro como código de papel (formato SCTEC-ORG-XXXXX-XX)
+      if (window.RolesController) {
+        const todasOrgs = this.obterOrgs();
+        for (const o of todasOrgs) {
+          const papeis = RolesController.obterPorOrg(o.id);
+          const papel = papeis.find((p) => p.codigoConvite === codigoNorm);
+          if (papel) {
+            org = o;
+            orgId = o.id;
+            papelId = papel.id;
+            role = "user";
+            break;
+          }
+        }
       }
-      orgId = org.id;
-      role = "user";
+
+      // Se não encontrou como código de papel, tenta como código de org
+      if (!org) {
+        org = this.buscarOrgPorCodigo(codigoConvite);
+        if (!org) {
+          return { ok: false, erro: "Código de convite inválido. Verifique e tente novamente." };
+        }
+        orgId = org.id;
+        role = "user";
+      }
     } else {
       // Primeiro usuário sem código — cria nova organização e torna-se Admin
       role = "admin";
@@ -261,6 +282,7 @@ const AuthService = {
       respostaHash,
       role,
       orgId,
+      papelId,
       dataCadastro: new Date().toISOString(),
     };
 
