@@ -74,16 +74,26 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
     inputCep?.addEventListener("blur", async () => {
       const cep = inputCep.value.replace(/\D/g, "");
       if (cep.length === 8) {
-        const dados = await ApiService.buscarCep(cep);
-        if (dados) {
-          document.querySelector("#endereco").value =
-            `${dados.logradouro}, ${dados.bairro}`;
-          document.querySelector("#municipio").value = dados.localidade;
-          // Preenche o Estado (UF) retornado pelo ViaCEP
-          const selectEstado = document.querySelector("#estado");
-          if (selectEstado && dados.uf) {
-            selectEstado.value = dados.uf;
+        const camposEndereco = [
+          document.querySelector("#cep"),
+          document.querySelector("#endereco"),
+          document.querySelector("#municipio"),
+          document.querySelector("#estado"),
+        ].filter(Boolean);
+        camposEndereco.forEach((c) => { c.disabled = true; });
+        try {
+          const dados = await ApiService.buscarCep(cep);
+          if (dados) {
+            document.querySelector("#endereco").value =
+              `${dados.logradouro}, ${dados.bairro}`;
+            document.querySelector("#municipio").value = dados.localidade;
+            const selectEstado = document.querySelector("#estado");
+            if (selectEstado && dados.uf) {
+              selectEstado.value = dados.uf;
+            }
           }
+        } finally {
+          camposEndereco.forEach((c) => { c.disabled = false; });
         }
       }
     });
@@ -294,6 +304,7 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
     }
 
     const tipoPessoa = dados.tipoPessoa || "PJ";
+    dados.tipoPessoa = tipoPessoa;
     const registroLimpoNovo = dados.registro.replace(/\D/g, "");
 
     if (tipoPessoa === "PJ" && !Utils.validarCNPJ(registroLimpoNovo)) {
@@ -388,6 +399,9 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
     document.querySelector("#segmento").value = emp.segmento || "Outros";
     document.querySelector("#status").value = emp.status || "Ativo";
     document.querySelector("#observacoes").value = emp.observacoes || "";
+
+    const selectTipo = document.querySelector("#tipo-pessoa");
+    if (selectTipo) selectTipo.value = emp.tipoPessoa || "PJ";
 
     // Restaura sócios salvos (se houver)
     const socios = emp.socios && emp.socios.length > 0 ? emp.socios : [];

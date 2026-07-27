@@ -46,6 +46,29 @@ const AgendaStorage = {
   },
 };
 
+// ─── Helpers de modo visualização/edição ───────────────────────────────────
+
+function _agendaSetModo(modo) {
+  const form = document.getElementById("form-compromisso");
+  const campos = form.querySelectorAll("input, select, textarea");
+  const btnSalvar = document.getElementById("btn-salvar-compromisso");
+  const btnEditar = document.getElementById("btn-editar-compromisso");
+
+  if (modo === "visualizacao") {
+    campos.forEach((c) => c.setAttribute("disabled", "disabled"));
+    btnSalvar?.classList.add("d-none");
+    btnEditar?.classList.remove("d-none");
+    form.dataset.modoVisualizacao = "true";
+    document.getElementById("titulo-modal-compromisso").textContent = "👁️ Visualizar Compromisso";
+  } else {
+    campos.forEach((c) => c.removeAttribute("disabled"));
+    btnSalvar?.classList.remove("d-none");
+    btnEditar?.classList.add("d-none");
+    form.dataset.modoVisualizacao = "";
+    document.getElementById("titulo-modal-compromisso").textContent = "✏️ Editar Compromisso";
+  }
+}
+
 // ─── Inicialização ─────────────────────────────────────────────────────────
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -56,26 +79,41 @@ document.addEventListener("DOMContentLoaded", () => {
   if (window.NavbarController) NavbarController.init("agenda");
   if (window.ThemeController) ThemeController.init();
 
-  const modal = new bootstrap.Modal(document.getElementById("modal-compromisso"));
+  const modalEl = document.getElementById("modal-compromisso");
+  const modal = new bootstrap.Modal(modalEl);
 
-  // Preenche o select de empresas com dados do storage
   _preencherEmpresas();
 
-  // Define o mês atual no filtro
   const hoje = new Date();
   document.getElementById("filtro-mes").value = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}`;
 
   renderizarLista();
 
-  // Eventos
+  // Botão Novo
   document.getElementById("btn-novo-compromisso").addEventListener("click", () => {
     _resetarForm();
     document.getElementById("titulo-modal-compromisso").textContent = "📅 Novo Compromisso";
-    // Pré-preenche a data com hoje
     document.getElementById("comp-data").value = new Date().toISOString().split("T")[0];
+    _agendaSetModo("edicao");
     modal.show();
   });
 
+  // Botão Editar dentro do modal (modo visualização → edição)
+  document.getElementById("btn-editar-compromisso")?.addEventListener("click", () => {
+    _agendaSetModo("edicao");
+  });
+
+  // Botão Fechar — confirmação só no modo edição
+  modalEl.addEventListener("hide.bs.modal", (e) => {
+    const form = document.getElementById("form-compromisso");
+    if (form.dataset.modoVisualizacao !== "true" && form.dataset.editId) {
+      if (!confirm("Deseja descartar as alterações?")) {
+        e.preventDefault();
+      }
+    }
+  });
+
+  // Submit
   document.getElementById("form-compromisso").addEventListener("submit", (e) => {
     e.preventDefault();
     const id = document.getElementById("form-compromisso").dataset.editId;
@@ -122,6 +160,7 @@ function _resetarForm() {
   const form = document.getElementById("form-compromisso");
   form.reset();
   delete form.dataset.editId;
+  delete form.dataset.modoVisualizacao;
 }
 
 function _coletarForm() {
@@ -151,17 +190,11 @@ function renderizarLista() {
   let dados = AgendaStorage.buscarTodos()
     .sort((a, b) => a.data.localeCompare(b.data) || (a.hora || "").localeCompare(b.hora || ""));
 
-  if (mesFiltro) {
-    dados = dados.filter((c) => c.data && c.data.startsWith(mesFiltro));
-  }
-  if (tipoFiltro) {
-    dados = dados.filter((c) => c.tipo === tipoFiltro);
-  }
-  if (busca) {
-    dados = dados.filter((c) =>
-      c.titulo?.toLowerCase().includes(busca) || c.descricao?.toLowerCase().includes(busca)
-    );
-  }
+  if (mesFiltro) dados = dados.filter((c) => c.data && c.data.startsWith(mesFiltro));
+  if (tipoFiltro) dados = dados.filter((c) => c.tipo === tipoFiltro);
+  if (busca) dados = dados.filter((c) =>
+    c.titulo?.toLowerCase().includes(busca) || c.descricao?.toLowerCase().includes(busca)
+  );
 
   if (dados.length === 0) {
     container.innerHTML = "";
@@ -189,7 +222,7 @@ function renderizarLista() {
     const sc = statusConfig[c.status] || statusConfig.pendente;
     const dataFmt = c.data ? new Date(c.data + "T12:00:00").toLocaleDateString("pt-BR") : "";
     return `
-      <div class="card shadow-sm border-0 mb-3">
+      <div class="card shadow-sm border-0 mb-3" style="cursor:pointer;" onclick="visualizarCompromisso('${c.id}')">
         <div class="card-body p-3 d-flex align-items-start gap-3">
           <div style="font-size:2rem;line-height:1;">${tc.icon}</div>
           <div class="flex-grow-1">
@@ -205,8 +238,7 @@ function renderizarLista() {
               ${c.descricao ? `<br>📝 ${c.descricao}` : ""}
             </div>
           </div>
-          <div class="d-flex flex-column gap-1">
-            <button class="btn btn-xs btn-outline-warning" onclick="editarCompromisso('${c.id}')">✏️</button>
+          <div class="d-flex flex-column gap-1" onclick="event.stopPropagation()">
             <button class="btn btn-xs btn-outline-danger" onclick="excluirCompromisso('${c.id}')">🗑️</button>
           </div>
         </div>
@@ -214,11 +246,10 @@ function renderizarLista() {
   }).join("");
 }
 
-function editarCompromisso(id) {
+function visualizarCompromisso(id) {
   const comp = AgendaStorage.buscarTodos().find((c) => c.id === id);
   if (!comp) return;
 
-  document.getElementById("titulo-modal-compromisso").textContent = "✏️ Editar Compromisso";
   document.getElementById("comp-titulo").value = comp.titulo || "";
   document.getElementById("comp-data").value = comp.data || "";
   document.getElementById("comp-hora").value = comp.hora || "";
@@ -228,6 +259,7 @@ function editarCompromisso(id) {
   document.getElementById("comp-status").value = comp.status || "pendente";
   document.getElementById("form-compromisso").dataset.editId = id;
 
+  _agendaSetModo("visualizacao");
   new bootstrap.Modal(document.getElementById("modal-compromisso")).show();
 }
 
