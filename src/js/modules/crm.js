@@ -4,6 +4,27 @@
  * Dados armazenados em: SCTEC_CRM_{orgId|userId}
  */
 
+function _obterIdentidadeSessao() {
+  if (window.AuthService) {
+    const sessao = AuthService.obterSessao();
+    if (sessao) return sessao.identidade || `${sessao.nome}#${sessao.id}`;
+  }
+  return "sistema";
+}
+
+function _formatarAuditoria(registro) {
+  if (!registro || !registro.criadoEm) return "";
+  const criacao = new Date(registro.criadoEm).toLocaleString("pt-BR");
+  const criador = registro.criadoPor || "N/D";
+  let texto = `Criado por: ${criador} em ${criacao}`;
+  if (registro.atualizadoEm) {
+    const atualizacao = new Date(registro.atualizadoEm).toLocaleString("pt-BR");
+    const atualizador = registro.atualizadoPor || "N/D";
+    texto += ` | Última alteração: ${atualizador} em ${atualizacao}`;
+  }
+  return texto;
+}
+
 const CrmStorage = {
   _obterChave() {
     if (window.AuthService) {
@@ -25,6 +46,7 @@ const CrmStorage = {
   adicionar(op) {
     const lista = this.buscarTodos();
     op.id = Date.now().toString();
+    op.criadoPor = _obterIdentidadeSessao();
     op.criadoEm = new Date().toISOString();
     lista.push(op);
     this.salvarTodos(lista);
@@ -35,7 +57,15 @@ const CrmStorage = {
     const lista = this.buscarTodos();
     const idx = lista.findIndex((o) => o.id === id);
     if (idx !== -1) {
-      lista[idx] = { ...lista[idx], ...dados, id };
+      lista[idx] = {
+        ...lista[idx],
+        ...dados,
+        id,
+        atualizadoPor: _obterIdentidadeSessao(),
+        atualizadoEm: new Date().toISOString(),
+        criadoPor: lista[idx].criadoPor,
+        criadoEm: lista[idx].criadoEm,
+      };
       this.salvarTodos(lista);
     }
   },
@@ -117,7 +147,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("form-oportunidade").addEventListener("submit", (e) => {
     e.preventDefault();
-    const id = document.getElementById("form-oportunidade").dataset.editId;
+    const form = document.getElementById("form-oportunidade");
+    const id = form.dataset.editId;
     const dados = _coletarForm();
     if (!dados) return;
 
@@ -126,17 +157,10 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       CrmStorage.adicionar(dados);
     }
+    // Marca como visualização para que o hide.bs.modal não pergunte sobre descartar
+    form.dataset.modoVisualizacao = "true";
     modal.hide();
     renderizarKanban();
-  });
-
-  modalEl.addEventListener("hide.bs.modal", (e) => {
-    const form = document.getElementById("form-oportunidade");
-    if (form.dataset.modoVisualizacao !== "true" && form.dataset.editId) {
-      if (!confirm("Deseja descartar as alterações?")) {
-        e.preventDefault();
-      }
-    }
   });
 });
 
@@ -237,6 +261,10 @@ function visualizarOportunidade(id) {
   document.getElementById("op-responsavel").value = op.responsavel || "";
   document.getElementById("op-observacoes").value = op.observacoes || "";
   document.getElementById("form-oportunidade").dataset.editId = id;
+
+  // Exibe auditoria no footer
+  const auditoriaEl = document.getElementById("auditoria-crm");
+  if (auditoriaEl) auditoriaEl.textContent = _formatarAuditoria(op);
 
   _crmSetModo("visualizacao");
   new bootstrap.Modal(document.getElementById("modal-oportunidade")).show();
