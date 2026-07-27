@@ -3,6 +3,27 @@
  * Storage: SCTEC_FINANCEIRO_{orgId|userId}
  */
 
+function _obterIdentidadeSessao() {
+  if (window.AuthService) {
+    const sessao = AuthService.obterSessao();
+    if (sessao) return sessao.identidade || `${sessao.nome}#${sessao.id}`;
+  }
+  return "sistema";
+}
+
+function _formatarAuditoria(registro) {
+  if (!registro || !registro.criadoEm) return "";
+  const criacao = new Date(registro.criadoEm).toLocaleString("pt-BR");
+  const criador = registro.criadoPor || "N/D";
+  let texto = `Criado por: ${criador} em ${criacao}`;
+  if (registro.atualizadoEm) {
+    const atualizacao = new Date(registro.atualizadoEm).toLocaleString("pt-BR");
+    const atualizador = registro.atualizadoPor || "N/D";
+    texto += ` | Última alteração: ${atualizador} em ${atualizacao}`;
+  }
+  return texto;
+}
+
 const FinanceiroStorage = {
   _obterChave() {
     if (window.AuthService) {
@@ -18,6 +39,7 @@ const FinanceiroStorage = {
   adicionar(t) {
     const lista = this.buscarTodos();
     t.id = Date.now().toString();
+    t.criadoPor = _obterIdentidadeSessao();
     t.criadoEm = new Date().toISOString();
     lista.push(t);
     this.salvarTodos(lista);
@@ -26,7 +48,18 @@ const FinanceiroStorage = {
   atualizar(id, dados) {
     const lista = this.buscarTodos();
     const idx = lista.findIndex((t) => t.id === id);
-    if (idx !== -1) { lista[idx] = { ...lista[idx], ...dados, id }; this.salvarTodos(lista); }
+    if (idx !== -1) {
+      lista[idx] = {
+        ...lista[idx],
+        ...dados,
+        id,
+        atualizadoPor: _obterIdentidadeSessao(),
+        atualizadoEm: new Date().toISOString(),
+        criadoPor: lista[idx].criadoPor,
+        criadoEm: lista[idx].criadoEm,
+      };
+      this.salvarTodos(lista);
+    }
   },
   excluir(id) { this.salvarTodos(this.buscarTodos().filter((t) => t.id !== id)); },
 };
@@ -96,21 +129,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("form-transacao").addEventListener("submit", (e) => {
     e.preventDefault();
-    const id = document.getElementById("form-transacao").dataset.editId;
+    const form = document.getElementById("form-transacao");
+    const id = form.dataset.editId;
     const dados = _coletar();
     if (!dados) return;
     id ? FinanceiroStorage.atualizar(id, dados) : FinanceiroStorage.adicionar(dados);
+    // Marca como visualização para que o hide.bs.modal não pergunte sobre descartar
+    form.dataset.modoVisualizacao = "true";
     modal.hide();
     renderizar();
-  });
-
-  modalEl.addEventListener("hide.bs.modal", (e) => {
-    const form = document.getElementById("form-transacao");
-    if (form.dataset.modoVisualizacao !== "true" && form.dataset.editId) {
-      if (!confirm("Deseja descartar as alterações?")) {
-        e.preventDefault();
-      }
-    }
   });
 
   ["filtro-mes","filtro-tipo","filtro-busca"].forEach((id) => {
@@ -226,6 +253,11 @@ function visualizarTransacao(id) {
   document.getElementById("trans-empresa").value = t.empresaId || "";
   document.getElementById("trans-obs").value = t.obs || "";
   document.getElementById("form-transacao").dataset.editId = id;
+
+  // Exibe auditoria no footer
+  const auditoriaEl = document.getElementById("auditoria-fin");
+  if (auditoriaEl) auditoriaEl.textContent = _formatarAuditoria(t);
+
   _finSetModo("visualizacao");
   new bootstrap.Modal(document.getElementById("modal-transacao")).show();
 }

@@ -4,6 +4,27 @@
  * Storage: SCTEC_PROPOSTAS_{orgId|userId}
  */
 
+function _obterIdentidadeSessao() {
+  if (window.AuthService) {
+    const sessao = AuthService.obterSessao();
+    if (sessao) return sessao.identidade || `${sessao.nome}#${sessao.id}`;
+  }
+  return "sistema";
+}
+
+function _formatarAuditoria(registro) {
+  if (!registro || !registro.criadoEm) return "";
+  const criacao = new Date(registro.criadoEm).toLocaleString("pt-BR");
+  const criador = registro.criadoPor || "N/D";
+  let texto = `Criado por: ${criador} em ${criacao}`;
+  if (registro.atualizadoEm) {
+    const atualizacao = new Date(registro.atualizadoEm).toLocaleString("pt-BR");
+    const atualizador = registro.atualizadoPor || "N/D";
+    texto += ` | Última alteração: ${atualizador} em ${atualizacao}`;
+  }
+  return texto;
+}
+
 const PropostasStorage = {
   _obterChave() {
     if (window.AuthService) {
@@ -19,6 +40,7 @@ const PropostasStorage = {
   adicionar(p) {
     const lista = this.buscarTodos();
     p.id = Date.now().toString();
+    p.criadoPor = _obterIdentidadeSessao();
     p.criadoEm = new Date().toISOString();
     lista.push(p);
     this.salvarTodos(lista);
@@ -27,7 +49,18 @@ const PropostasStorage = {
   atualizar(id, dados) {
     const lista = this.buscarTodos();
     const idx = lista.findIndex((p) => p.id === id);
-    if (idx !== -1) { lista[idx] = { ...lista[idx], ...dados, id }; this.salvarTodos(lista); }
+    if (idx !== -1) {
+      lista[idx] = {
+        ...lista[idx],
+        ...dados,
+        id,
+        atualizadoPor: _obterIdentidadeSessao(),
+        atualizadoEm: new Date().toISOString(),
+        criadoPor: lista[idx].criadoPor,
+        criadoEm: lista[idx].criadoEm,
+      };
+      this.salvarTodos(lista);
+    }
   },
   excluir(id) { this.salvarTodos(this.buscarTodos().filter((p) => p.id !== id)); },
 };
@@ -104,21 +137,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("form-proposta").addEventListener("submit", (e) => {
     e.preventDefault();
-    const id = document.getElementById("form-proposta").dataset.editId;
+    const form = document.getElementById("form-proposta");
+    const id = form.dataset.editId;
     const dados = _coletar();
     if (!dados) return;
     id ? PropostasStorage.atualizar(id, dados) : PropostasStorage.adicionar(dados);
+    // Marca como visualização para que o hide.bs.modal não pergunte sobre descartar
+    form.dataset.modoVisualizacao = "true";
     modal.hide();
     renderizarLista();
-  });
-
-  modalEl.addEventListener("hide.bs.modal", (e) => {
-    const form = document.getElementById("form-proposta");
-    if (form.dataset.modoVisualizacao !== "true" && form.dataset.editId) {
-      if (!confirm("Deseja descartar as alterações?")) {
-        e.preventDefault();
-      }
-    }
   });
 
   document.getElementById("btn-imprimir-proposta").addEventListener("click", () => {
@@ -274,6 +301,11 @@ function visualizarProposta(id) {
   const p = PropostasStorage.buscarTodos().find((x) => x.id === id);
   if (!p) return;
   _carregarProposta(p);
+
+  // Exibe auditoria no footer
+  const auditoriaEl = document.getElementById("auditoria-prop");
+  if (auditoriaEl) auditoriaEl.textContent = _formatarAuditoria(p);
+
   _propSetModo("visualizacao");
   new bootstrap.Modal(document.getElementById("modal-proposta")).show();
 }

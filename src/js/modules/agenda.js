@@ -4,6 +4,27 @@
  * Chave dedicada: SCTEC_AGENDA_{orgId|userId}
  */
 
+function _obterIdentidadeSessao() {
+  if (window.AuthService) {
+    const sessao = AuthService.obterSessao();
+    if (sessao) return sessao.identidade || `${sessao.nome}#${sessao.id}`;
+  }
+  return "sistema";
+}
+
+function _formatarAuditoria(registro) {
+  if (!registro || !registro.criadoEm) return "";
+  const criacao = new Date(registro.criadoEm).toLocaleString("pt-BR");
+  const criador = registro.criadoPor || "N/D";
+  let texto = `Criado por: ${criador} em ${criacao}`;
+  if (registro.atualizadoEm) {
+    const atualizacao = new Date(registro.atualizadoEm).toLocaleString("pt-BR");
+    const atualizador = registro.atualizadoPor || "N/D";
+    texto += ` | Última alteração: ${atualizador} em ${atualizacao}`;
+  }
+  return texto;
+}
+
 const AgendaStorage = {
   _obterChave() {
     if (window.AuthService) {
@@ -26,6 +47,7 @@ const AgendaStorage = {
   adicionar(comp) {
     const lista = this.buscarTodos();
     comp.id = Date.now().toString();
+    comp.criadoPor = _obterIdentidadeSessao();
     comp.criadoEm = new Date().toISOString();
     lista.push(comp);
     this.salvarTodos(lista);
@@ -36,7 +58,15 @@ const AgendaStorage = {
     const lista = this.buscarTodos();
     const idx = lista.findIndex((c) => c.id === id);
     if (idx !== -1) {
-      lista[idx] = { ...lista[idx], ...dados, id };
+      lista[idx] = {
+        ...lista[idx],
+        ...dados,
+        id,
+        atualizadoPor: _obterIdentidadeSessao(),
+        atualizadoEm: new Date().toISOString(),
+        criadoPor: lista[idx].criadoPor,
+        criadoEm: lista[idx].criadoEm,
+      };
       this.salvarTodos(lista);
     }
   },
@@ -116,7 +146,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Submit
   document.getElementById("form-compromisso").addEventListener("submit", (e) => {
     e.preventDefault();
-    const id = document.getElementById("form-compromisso").dataset.editId;
+    const form = document.getElementById("form-compromisso");
+    const id = form.dataset.editId;
     const dados = _coletarForm();
     if (!dados) return;
 
@@ -125,18 +156,10 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       AgendaStorage.adicionar(dados);
     }
-
+    // Marca como visualização para que o hide.bs.modal não pergunte sobre descartar
+    form.dataset.modoVisualizacao = "true";
     modal.hide();
     renderizarLista();
-  });
-
-  modalEl.addEventListener("hide.bs.modal", (e) => {
-    const form = document.getElementById("form-compromisso");
-    if (form.dataset.modoVisualizacao !== "true" && form.dataset.editId) {
-      if (!confirm("Deseja descartar as alterações?")) {
-        e.preventDefault();
-      }
-    }
   });
 
   ["filtro-mes", "filtro-tipo", "filtro-busca"].forEach((id) => {
@@ -267,6 +290,10 @@ function visualizarCompromisso(id) {
   document.getElementById("comp-descricao").value = comp.descricao || "";
   document.getElementById("comp-status").value = comp.status || "pendente";
   document.getElementById("form-compromisso").dataset.editId = id;
+
+  // Exibe auditoria no footer
+  const auditoriaEl = document.getElementById("auditoria-agenda");
+  if (auditoriaEl) auditoriaEl.textContent = _formatarAuditoria(comp);
 
   _agendaSetModo("visualizacao");
   new bootstrap.Modal(document.getElementById("modal-compromisso")).show();
