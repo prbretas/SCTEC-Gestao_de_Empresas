@@ -104,6 +104,15 @@ document.addEventListener("DOMContentLoaded", () => {
     renderizar();
   });
 
+  modalEl.addEventListener("hide.bs.modal", (e) => {
+    const form = document.getElementById("form-transacao");
+    if (form.dataset.modoVisualizacao !== "true" && form.dataset.editId) {
+      if (!confirm("Deseja descartar as alterações?")) {
+        e.preventDefault();
+      }
+    }
+  });
+
   ["filtro-mes","filtro-tipo","filtro-busca"].forEach((id) => {
     document.getElementById(id)?.addEventListener("input", renderizar);
     document.getElementById(id)?.addEventListener("change", renderizar);

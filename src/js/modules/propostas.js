@@ -112,6 +112,15 @@ document.addEventListener("DOMContentLoaded", () => {
     renderizarLista();
   });
 
+  modalEl.addEventListener("hide.bs.modal", (e) => {
+    const form = document.getElementById("form-proposta");
+    if (form.dataset.modoVisualizacao !== "true" && form.dataset.editId) {
+      if (!confirm("Deseja descartar as alterações?")) {
+        e.preventDefault();
+      }
+    }
+  });
+
   document.getElementById("btn-imprimir-proposta").addEventListener("click", () => {
     _imprimirProposta();
   });

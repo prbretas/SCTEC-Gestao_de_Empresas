@@ -130,6 +130,15 @@ document.addEventListener("DOMContentLoaded", () => {
     renderizarLista();
   });
 
+  modalEl.addEventListener("hide.bs.modal", (e) => {
+    const form = document.getElementById("form-compromisso");
+    if (form.dataset.modoVisualizacao !== "true" && form.dataset.editId) {
+      if (!confirm("Deseja descartar as alterações?")) {
+        e.preventDefault();
+      }
+    }
+  });
+
   ["filtro-mes", "filtro-tipo", "filtro-busca"].forEach((id) => {
     document.getElementById(id)?.addEventListener("input", renderizarLista);
     document.getElementById(id)?.addEventListener("change", renderizarLista);
@@ -225,7 +234,7 @@ function renderizarLista() {
       <div class="card shadow-sm border-0 mb-3" style="cursor:pointer;" onclick="visualizarCompromisso('${c.id}')">
         <div class="card-body p-3 d-flex align-items-start gap-3">
           <div style="font-size:2rem;line-height:1;">${tc.icon}</div>
-          <div class="flex-grow-1">
+          <div class="flex-grow-1" onclick="visualizarCompromisso('${c.id}')" style="cursor:pointer;">
             <div class="d-flex justify-content-between align-items-start">
               <h6 class="fw-bold mb-1">${c.titulo}</h6>
               <div class="d-flex gap-1">
@@ -261,6 +270,11 @@ function visualizarCompromisso(id) {
 
   _agendaSetModo("visualizacao");
   new bootstrap.Modal(document.getElementById("modal-compromisso")).show();
+}
+
+// Alias para compatibilidade
+function editarCompromisso(id) {
+  visualizarCompromisso(id);
 }
 
 function excluirCompromisso(id) {
