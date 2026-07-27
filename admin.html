@@ -51,6 +51,7 @@
               <tr>
                 <th>Usuário</th>
                 <th>Perfil</th>
+                <th>Papel de Trabalho</th>
                 <th>Cadastrado em</th>
                 <th>Status</th>
                 <th class="text-center">Ações</th>
@@ -60,11 +61,54 @@
           </table>
         </div>
       </div>
+
+      <!-- SEÇÃO DE PAPÉIS DE TRABALHO -->
+      <div class="d-flex justify-content-between align-items-center mt-5 mb-3">
+        <h2 class="h5 mb-0">🏷️ Papéis de Trabalho</h2>
+        <button class="btn btn-sm btn-primary" id="btn-novo-papel">➕ Novo Papel</button>
+      </div>
+
+      <!-- FORMULÁRIO CRIAR/EDITAR PAPEL (oculto por padrão) -->
+      <div class="card shadow-sm border-0 mb-3 d-none" id="card-form-papel">
+        <div class="card-body">
+          <h6 id="form-papel-titulo" class="mb-3">Novo Papel</h6>
+          <div class="d-flex gap-2 align-items-end">
+            <div class="flex-grow-1">
+              <label for="input-nome-papel" class="form-label small mb-1">Nome do Papel</label>
+              <input type="text" id="input-nome-papel" class="form-control form-control-sm"
+                placeholder="Ex: Vendedor, Analista, Gerente..." maxlength="40" />
+            </div>
+            <div>
+              <input type="hidden" id="input-papel-id" value="" />
+              <button class="btn btn-sm btn-success" id="btn-salvar-papel">💾 Salvar</button>
+              <button class="btn btn-sm btn-outline-secondary ms-1" id="btn-cancelar-papel">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABELA DE PAPÉIS -->
+      <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="thead-sctec">
+              <tr>
+                <th>Papel</th>
+                <th>Código de Convite</th>
+                <th class="text-center">Usuários</th>
+                <th class="text-center">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="admin-papeis-lista"></tbody>
+          </table>
+        </div>
+      </div>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="./src/js/core/config.js"></script>
     <script src="./src/js/core/auth.js"></script>
+    <script src="./src/js/core/roles.js"></script>
     <script src="./src/js/core/modules.js"></script>
     <script src="./src/js/core/theme.js"></script>
     <script src="./src/js/core/navbar.js"></script>

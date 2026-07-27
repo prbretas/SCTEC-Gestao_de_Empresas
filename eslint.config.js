@@ -66,6 +66,7 @@ module.exports = [
         FinanceiroStorage: 'readonly',
         PropostasStorage: 'readonly',
         ETAPAS: 'readonly',
+        RolesController: 'readonly',
         // ── APIs do browser nao declaradas anteriormente ─────────────────────
         TextEncoder: 'readonly',
         crypto: 'readonly',
