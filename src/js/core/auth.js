@@ -321,6 +321,35 @@ const AuthService = {
     }
   },
 
+  /**
+   * Altera a senha do usuário logado.
+   * Verifica a senha atual antes de aceitar a nova.
+   * @param {string} senhaAtual
+   * @param {string} novaSenha
+   * @returns {Promise<{ok: boolean, erro?: string}>}
+   */
+  async alterarSenha(senhaAtual, novaSenha) {
+    const sessao = this.obterSessao();
+    if (!sessao) return { ok: false, erro: "Sessão expirada. Faça login novamente." };
+
+    const usuarios = this.obterUsuarios();
+    const idx = usuarios.findIndex((u) => u.id === sessao.id);
+    if (idx === -1) return { ok: false, erro: "Usuário não encontrado." };
+
+    const hashAtual = await this.hashSenha(senhaAtual);
+    if (hashAtual !== usuarios[idx].senhaHash) {
+      return { ok: false, erro: "Senha atual incorreta." };
+    }
+
+    if (!novaSenha || novaSenha.length < 4) {
+      return { ok: false, erro: "A nova senha deve ter pelo menos 4 caracteres." };
+    }
+
+    usuarios[idx].senhaHash = await this.hashSenha(novaSenha);
+    this.salvarUsuarios(usuarios);
+    return { ok: true };
+  },
+
   // ─── Recuperação de Senha ───────────────────────────────────────────────
 
   /**

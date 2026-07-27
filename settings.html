@@ -31,7 +31,7 @@
       <h1 id="rotinaTitle">⚙️ Configurações do Sistema</h1>
 
       <!-- IDENTIDADE VISUAL -->
-      <div class="card shadow-sm border-0 mb-4">
+      <div class="card shadow-sm border-0 mb-4" data-admin-only="true">
         <div class="card-body p-4">
           <h5 class="fw-bold mb-3">🎨 Identidade Visual</h5>
           <div class="row g-3">
@@ -164,7 +164,7 @@
       </div>
 
       <!-- SEGMENTOS -->
-      <div class="card shadow-sm border-0 mb-4">
+      <div class="card shadow-sm border-0 mb-4" data-admin-only="true">
         <div class="card-body p-4">
           <h5 class="fw-bold mb-3">🏷️ Segmentos</h5>
           <p class="text-muted small">
@@ -188,7 +188,7 @@
       </div>
 
       <!-- MÓDULOS -->
-      <div class="card shadow-sm border-0 mb-4">
+      <div class="card shadow-sm border-0 mb-4" data-admin-only="true">
         <div class="card-body p-4">
           <h5 class="fw-bold mb-1">🧩 Módulos do Sistema</h5>
           <p class="text-muted small mb-3">Ative ou desative rotinas para a sua organização. Módulos inativos ficam ocultos na tela inicial.</p>
@@ -196,8 +196,34 @@
         </div>
       </div>
 
+      <!-- SEGURANÇA DA CONTA -->
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-3">🔒 Segurança da Conta</h5>
+          <p class="text-muted small">Altere sua senha de acesso. A senha atual é obrigatória para confirmar a mudança.</p>
+          <div class="row g-3" style="max-width: 480px;">
+            <div class="col-12">
+              <label class="form-label fw-bold">Senha Atual</label>
+              <input type="password" id="senha-atual" class="form-control" placeholder="Digite sua senha atual" autocomplete="current-password" />
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-bold">Nova Senha</label>
+              <input type="password" id="senha-nova" class="form-control" placeholder="Mínimo 4 caracteres" autocomplete="new-password" />
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-bold">Confirmar Nova Senha</label>
+              <input type="password" id="senha-nova-confirmar" class="form-control" placeholder="Repita a nova senha" autocomplete="new-password" />
+            </div>
+            <div class="col-12">
+              <button class="btn btn-warning fw-bold" id="btn-alterar-senha">🔑 Alterar Senha</button>
+              <div id="msg-alterar-senha" class="mt-2 small"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- AÇÕES -->
-      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2" data-admin-only="true">
         <div class="d-flex gap-2">
           <button class="btn btn-outline-secondary" id="btn-restaurar-padrao">
             🔄 Restaurar Padrão
