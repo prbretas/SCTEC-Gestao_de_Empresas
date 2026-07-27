@@ -35,6 +35,44 @@ const PropostasStorage = {
 const _fmt = (v) => Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 let _itensAtuais = [];
 
+// ─── Modo Visualização/Edição ────────────────────────────────────────────────
+
+function _propSetModo(modo) {
+  const form = document.getElementById("form-proposta");
+  const campos = form.querySelectorAll("input, select, textarea");
+  const btnSalvar = document.querySelector('button[form="form-proposta"].btn-success');
+  const btnEditar = document.getElementById("btn-editar-proposta");
+  const btnAddItem = document.getElementById("btn-add-item");
+
+  if (modo === "visualizacao") {
+    campos.forEach((c) => {
+      c.style.backgroundColor = "#e9ecef";
+      c.style.cursor = "not-allowed";
+      if (c.tagName === "SELECT") c.style.pointerEvents = "none";
+      else c.readOnly = true;
+    });
+    document.querySelectorAll("#prop-itens-lista .btn-outline-danger").forEach((b) => b.setAttribute("disabled", "disabled"));
+    btnSalvar?.classList.add("d-none");
+    btnEditar?.classList.remove("d-none");
+    btnAddItem?.classList.add("d-none");
+    form.dataset.modoVisualizacao = "true";
+    document.getElementById("titulo-modal-proposta").textContent = "👁️ Visualizar Proposta";
+  } else {
+    campos.forEach((c) => {
+      c.style.backgroundColor = "";
+      c.style.cursor = "default";
+      c.style.pointerEvents = "auto";
+      c.readOnly = false;
+    });
+    document.querySelectorAll("#prop-itens-lista .btn-outline-danger").forEach((b) => b.removeAttribute("disabled"));
+    btnSalvar?.classList.remove("d-none");
+    btnEditar?.classList.add("d-none");
+    btnAddItem?.classList.remove("d-none");
+    form.dataset.modoVisualizacao = "";
+    document.getElementById("titulo-modal-proposta").textContent = "✏️ Editar Proposta";
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const sessao = AuthService.requireAuth();
   if (!sessao) return;
@@ -43,6 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (window.ThemeController) ThemeController.init();
 
   const modal = new bootstrap.Modal(document.getElementById("modal-proposta"));
+  const modalEl = document.getElementById("modal-proposta");
   _preencherEmpresas();
   renderizarLista();
 
@@ -52,7 +91,12 @@ document.addEventListener("DOMContentLoaded", () => {
     // Número automático
     const total = PropostasStorage.buscarTodos().length + 1;
     document.getElementById("prop-numero").value = `${new Date().getFullYear()}-${String(total).padStart(3, "0")}`;
+    _propSetModo("edicao");
     modal.show();
+  });
+
+  document.getElementById("btn-editar-proposta")?.addEventListener("click", () => {
+    _propSetModo("edicao");
   });
 
   document.getElementById("btn-add-item").addEventListener("click", () => {
@@ -68,6 +112,15 @@ document.addEventListener("DOMContentLoaded", () => {
     id ? PropostasStorage.atualizar(id, dados) : PropostasStorage.adicionar(dados);
     modal.hide();
     renderizarLista();
+  });
+
+  modalEl.addEventListener("hide.bs.modal", (e) => {
+    const form = document.getElementById("form-proposta");
+    if (form.dataset.modoVisualizacao !== "true" && form.dataset.editId) {
+      if (!confirm("Deseja descartar as alterações?")) {
+        e.preventDefault();
+      }
+    }
   });
 
   document.getElementById("btn-imprimir-proposta").addEventListener("click", () => {
@@ -197,13 +250,35 @@ function renderizarLista() {
             <div class="fw-bold text-success mt-2">${_fmt(p.total || 0)}</div>
           </div>
           <div class="card-footer bg-transparent d-flex justify-content-between gap-2">
-            <button class="btn btn-xs btn-outline-primary flex-fill" onclick="editarProposta('${p.id}')">✏️ Editar</button>
-            <button class="btn btn-xs btn-outline-secondary flex-fill" onclick="visualizarProposta('${p.id}')">🖨️ Imprimir</button>
+            <button class="btn btn-xs btn-outline-primary flex-fill" onclick="visualizarProposta('${p.id}')">👁️ Ver</button>
+            <button class="btn btn-xs btn-outline-secondary flex-fill" onclick="imprimirProposta('${p.id}')">🖨️ Imprimir</button>
             <button class="btn btn-xs btn-outline-danger" onclick="excluirProposta('${p.id}')">🗑️</button>
           </div>
         </div>
       </div>`;
   }).join("");
+}
+
+function visualizarProposta(id) {
+  const p = PropostasStorage.buscarTodos().find((x) => x.id === id);
+  if (!p) return;
+  document.getElementById("titulo-modal-proposta").textContent = "👁️ Visualizar Proposta";
+  document.getElementById("prop-titulo").value = p.titulo || "";
+  document.getElementById("prop-numero").value = p.numero || "";
+  document.getElementById("prop-empresa").value = p.empresaId || "";
+  document.getElementById("prop-validade").value = p.validade || "";
+  document.getElementById("prop-status").value = p.status || "rascunho";
+  document.getElementById("prop-obs").value = p.obs || "";
+  document.getElementById("form-proposta").dataset.editId = id;
+
+  // Carrega itens
+  document.getElementById("prop-itens-lista").innerHTML = "";
+  (p.itens || []).forEach((item) => _adicionarLinhaItem(item));
+  if (!p.itens || p.itens.length === 0) _adicionarLinhaItem();
+  _recalcularTotal();
+
+  _propSetModo("visualizacao");
+  new bootstrap.Modal(document.getElementById("modal-proposta")).show();
 }
 
 function editarProposta(id) {
@@ -224,6 +299,7 @@ function editarProposta(id) {
   if (!p.itens || p.itens.length === 0) _adicionarLinhaItem();
   _recalcularTotal();
 
+  _propSetModo("edicao");
   new bootstrap.Modal(document.getElementById("modal-proposta")).show();
 }
 
@@ -233,9 +309,19 @@ function excluirProposta(id) {
   renderizarLista();
 }
 
-function visualizarProposta(id) {
-  editarProposta(id);
-  setTimeout(() => _imprimirProposta(), 600);
+function imprimirProposta(id) {
+  const p = PropostasStorage.buscarTodos().find((x) => x.id === id);
+  if (!p) return;
+  // Carrega os dados no form temporariamente para impressão
+  document.getElementById("prop-titulo").value = p.titulo || "";
+  document.getElementById("prop-numero").value = p.numero || "";
+  document.getElementById("prop-empresa").value = p.empresaId || "";
+  document.getElementById("prop-validade").value = p.validade || "";
+  document.getElementById("prop-obs").value = p.obs || "";
+  document.getElementById("prop-itens-lista").innerHTML = "";
+  (p.itens || []).forEach((item) => _adicionarLinhaItem(item));
+  _recalcularTotal();
+  _imprimirProposta();
 }
 
 function _imprimirProposta() {

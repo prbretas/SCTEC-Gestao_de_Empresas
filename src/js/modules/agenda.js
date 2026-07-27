@@ -46,6 +46,39 @@ const AgendaStorage = {
   },
 };
 
+// ─── Modo Visualização/Edição ────────────────────────────────────────────────
+
+function _agendaSetModo(modo) {
+  const form = document.getElementById("form-compromisso");
+  const campos = form.querySelectorAll("input, select, textarea");
+  const btnSalvar = document.getElementById("btn-salvar-compromisso");
+  const btnEditar = document.getElementById("btn-editar-compromisso");
+
+  if (modo === "visualizacao") {
+    campos.forEach((c) => {
+      c.style.backgroundColor = "#e9ecef";
+      c.style.cursor = "not-allowed";
+      if (c.tagName === "SELECT") c.style.pointerEvents = "none";
+      else c.readOnly = true;
+    });
+    btnSalvar?.classList.add("d-none");
+    btnEditar?.classList.remove("d-none");
+    form.dataset.modoVisualizacao = "true";
+    document.getElementById("titulo-modal-compromisso").textContent = "👁️ Visualizar Compromisso";
+  } else {
+    campos.forEach((c) => {
+      c.style.backgroundColor = "";
+      c.style.cursor = "default";
+      c.style.pointerEvents = "auto";
+      c.readOnly = false;
+    });
+    btnSalvar?.classList.remove("d-none");
+    btnEditar?.classList.add("d-none");
+    form.dataset.modoVisualizacao = "";
+    document.getElementById("titulo-modal-compromisso").textContent = "✏️ Editar Compromisso";
+  }
+}
+
 // ─── Inicialização ─────────────────────────────────────────────────────────
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -57,6 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (window.ThemeController) ThemeController.init();
 
   const modal = new bootstrap.Modal(document.getElementById("modal-compromisso"));
+  const modalEl = document.getElementById("modal-compromisso");
 
   // Preenche o select de empresas com dados do storage
   _preencherEmpresas();
@@ -73,7 +107,12 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("titulo-modal-compromisso").textContent = "📅 Novo Compromisso";
     // Pré-preenche a data com hoje
     document.getElementById("comp-data").value = new Date().toISOString().split("T")[0];
+    _agendaSetModo("edicao");
     modal.show();
+  });
+
+  document.getElementById("btn-editar-compromisso")?.addEventListener("click", () => {
+    _agendaSetModo("edicao");
   });
 
   document.getElementById("form-compromisso").addEventListener("submit", (e) => {
@@ -90,6 +129,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     modal.hide();
     renderizarLista();
+  });
+
+  modalEl.addEventListener("hide.bs.modal", (e) => {
+    const form = document.getElementById("form-compromisso");
+    if (form.dataset.modoVisualizacao !== "true" && form.dataset.editId) {
+      if (!confirm("Deseja descartar as alterações?")) {
+        e.preventDefault();
+      }
+    }
   });
 
   ["filtro-mes", "filtro-tipo", "filtro-busca"].forEach((id) => {
@@ -192,7 +240,7 @@ function renderizarLista() {
       <div class="card shadow-sm border-0 mb-3">
         <div class="card-body p-3 d-flex align-items-start gap-3">
           <div style="font-size:2rem;line-height:1;">${tc.icon}</div>
-          <div class="flex-grow-1">
+          <div class="flex-grow-1" onclick="visualizarCompromisso('${c.id}')" style="cursor:pointer;">
             <div class="d-flex justify-content-between align-items-start">
               <h6 class="fw-bold mb-1">${c.titulo}</h6>
               <div class="d-flex gap-1">
@@ -206,7 +254,6 @@ function renderizarLista() {
             </div>
           </div>
           <div class="d-flex flex-column gap-1">
-            <button class="btn btn-xs btn-outline-warning" onclick="editarCompromisso('${c.id}')">✏️</button>
             <button class="btn btn-xs btn-outline-danger" onclick="excluirCompromisso('${c.id}')">🗑️</button>
           </div>
         </div>
@@ -214,11 +261,10 @@ function renderizarLista() {
   }).join("");
 }
 
-function editarCompromisso(id) {
+function visualizarCompromisso(id) {
   const comp = AgendaStorage.buscarTodos().find((c) => c.id === id);
   if (!comp) return;
 
-  document.getElementById("titulo-modal-compromisso").textContent = "✏️ Editar Compromisso";
   document.getElementById("comp-titulo").value = comp.titulo || "";
   document.getElementById("comp-data").value = comp.data || "";
   document.getElementById("comp-hora").value = comp.hora || "";
@@ -228,7 +274,13 @@ function editarCompromisso(id) {
   document.getElementById("comp-status").value = comp.status || "pendente";
   document.getElementById("form-compromisso").dataset.editId = id;
 
+  _agendaSetModo("visualizacao");
   new bootstrap.Modal(document.getElementById("modal-compromisso")).show();
+}
+
+// Alias para compatibilidade
+function editarCompromisso(id) {
+  visualizarCompromisso(id);
 }
 
 function excluirCompromisso(id) {

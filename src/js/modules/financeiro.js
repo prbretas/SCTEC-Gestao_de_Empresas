@@ -33,6 +33,39 @@ const FinanceiroStorage = {
 
 const _fmt = (v) => Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+// ─── Modo Visualização/Edição ────────────────────────────────────────────────
+
+function _finSetModo(modo) {
+  const form = document.getElementById("form-transacao");
+  const campos = form.querySelectorAll("input, select, textarea");
+  const btnSalvar = document.getElementById("btn-salvar-transacao");
+  const btnEditar = document.getElementById("btn-editar-transacao");
+
+  if (modo === "visualizacao") {
+    campos.forEach((c) => {
+      c.style.backgroundColor = "#e9ecef";
+      c.style.cursor = "not-allowed";
+      if (c.tagName === "SELECT") c.style.pointerEvents = "none";
+      else c.readOnly = true;
+    });
+    btnSalvar?.classList.add("d-none");
+    btnEditar?.classList.remove("d-none");
+    form.dataset.modoVisualizacao = "true";
+    document.getElementById("titulo-modal-transacao").textContent = "👁️ Visualizar Transação";
+  } else {
+    campos.forEach((c) => {
+      c.style.backgroundColor = "";
+      c.style.cursor = "default";
+      c.style.pointerEvents = "auto";
+      c.readOnly = false;
+    });
+    btnSalvar?.classList.remove("d-none");
+    btnEditar?.classList.add("d-none");
+    form.dataset.modoVisualizacao = "";
+    document.getElementById("titulo-modal-transacao").textContent = "✏️ Editar Transação";
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const sessao = AuthService.requireAuth();
   if (!sessao) return;
@@ -41,6 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (window.ThemeController) ThemeController.init();
 
   const modal = new bootstrap.Modal(document.getElementById("modal-transacao"));
+  const modalEl = document.getElementById("modal-transacao");
   _preencherEmpresas();
 
   const hoje = new Date();
@@ -53,7 +87,12 @@ document.addEventListener("DOMContentLoaded", () => {
     _resetarForm();
     document.getElementById("titulo-modal-transacao").textContent = "💰 Nova Transação";
     document.getElementById("trans-data").value = new Date().toISOString().split("T")[0];
+    _finSetModo("edicao");
     modal.show();
+  });
+
+  document.getElementById("btn-editar-transacao")?.addEventListener("click", () => {
+    _finSetModo("edicao");
   });
 
   document.getElementById("form-transacao").addEventListener("submit", (e) => {
@@ -64,6 +103,15 @@ document.addEventListener("DOMContentLoaded", () => {
     id ? FinanceiroStorage.atualizar(id, dados) : FinanceiroStorage.adicionar(dados);
     modal.hide();
     renderizar();
+  });
+
+  modalEl.addEventListener("hide.bs.modal", (e) => {
+    const form = document.getElementById("form-transacao");
+    if (form.dataset.modoVisualizacao !== "true" && form.dataset.editId) {
+      if (!confirm("Deseja descartar as alterações?")) {
+        e.preventDefault();
+      }
+    }
   });
 
   ["filtro-mes","filtro-tipo","filtro-busca"].forEach((id) => {
@@ -161,17 +209,16 @@ function renderizar() {
           ${isEntrada ? "+" : "-"}${_fmt(t.valor)}
         </td>
         <td class="text-center">
-          <button class="btn btn-xs btn-outline-warning me-1" onclick="editarTransacao('${t.id}')">✏️</button>
+          <button class="btn btn-xs btn-outline-secondary me-1" onclick="visualizarTransacao('${t.id}')">👁️</button>
           <button class="btn btn-xs btn-outline-danger" onclick="excluirTransacao('${t.id}')">🗑️</button>
         </td>
       </tr>`;
   }).join("");
 }
 
-function editarTransacao(id) {
+function visualizarTransacao(id) {
   const t = FinanceiroStorage.buscarTodos().find((x) => x.id === id);
   if (!t) return;
-  document.getElementById("titulo-modal-transacao").textContent = "✏️ Editar Transação";
   document.querySelector(`input[name="trans-tipo"][value="${t.tipo}"]`).checked = true;
   document.getElementById("trans-descricao").value = t.descricao || "";
   document.getElementById("trans-valor").value = t.valor || "";
@@ -180,7 +227,13 @@ function editarTransacao(id) {
   document.getElementById("trans-empresa").value = t.empresaId || "";
   document.getElementById("trans-obs").value = t.obs || "";
   document.getElementById("form-transacao").dataset.editId = id;
+  _finSetModo("visualizacao");
   new bootstrap.Modal(document.getElementById("modal-transacao")).show();
+}
+
+// Alias para compatibilidade
+function editarTransacao(id) {
+  visualizarTransacao(id);
 }
 
 function excluirTransacao(id) {

@@ -55,6 +55,39 @@ const ETAPAS = [
   { id: "perdido",    label: "Perdido",       col: "col-perdido",    cor: "#dc3545" },
 ];
 
+// ─── Modo Visualização/Edição ────────────────────────────────────────────────
+
+function _crmSetModo(modo) {
+  const form = document.getElementById("form-oportunidade");
+  const campos = form.querySelectorAll("input, select, textarea");
+  const btnSalvar = document.getElementById("btn-salvar-oportunidade");
+  const btnEditar = document.getElementById("btn-editar-oportunidade");
+
+  if (modo === "visualizacao") {
+    campos.forEach((c) => {
+      c.style.backgroundColor = "#e9ecef";
+      c.style.cursor = "not-allowed";
+      if (c.tagName === "SELECT") c.style.pointerEvents = "none";
+      else c.readOnly = true;
+    });
+    btnSalvar?.classList.add("d-none");
+    btnEditar?.classList.remove("d-none");
+    form.dataset.modoVisualizacao = "true";
+    document.getElementById("titulo-modal-oportunidade").textContent = "👁️ Visualizar Oportunidade";
+  } else {
+    campos.forEach((c) => {
+      c.style.backgroundColor = "";
+      c.style.cursor = "default";
+      c.style.pointerEvents = "auto";
+      c.readOnly = false;
+    });
+    btnSalvar?.classList.remove("d-none");
+    btnEditar?.classList.add("d-none");
+    form.dataset.modoVisualizacao = "";
+    document.getElementById("titulo-modal-oportunidade").textContent = "✏️ Editar Oportunidade";
+  }
+}
+
 // ─── Inicialização ──────────────────────────────────────────────────────────
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -66,6 +99,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (window.ThemeController) ThemeController.init();
 
   const modal = new bootstrap.Modal(document.getElementById("modal-oportunidade"));
+  const modalEl = document.getElementById("modal-oportunidade");
 
   _preencherEmpresas();
   renderizarKanban();
@@ -74,7 +108,12 @@ document.addEventListener("DOMContentLoaded", () => {
     _resetarForm();
     document.getElementById("titulo-modal-oportunidade").textContent = "🎯 Nova Oportunidade";
     document.getElementById("op-previsao").value = new Date().toISOString().split("T")[0];
+    _crmSetModo("edicao");
     modal.show();
+  });
+
+  document.getElementById("btn-editar-oportunidade")?.addEventListener("click", () => {
+    _crmSetModo("edicao");
   });
 
   document.getElementById("form-oportunidade").addEventListener("submit", (e) => {
@@ -90,6 +129,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     modal.hide();
     renderizarKanban();
+  });
+
+  modalEl.addEventListener("hide.bs.modal", (e) => {
+    const form = document.getElementById("form-oportunidade");
+    if (form.dataset.modoVisualizacao !== "true" && form.dataset.editId) {
+      if (!confirm("Deseja descartar as alterações?")) {
+        e.preventDefault();
+      }
+    }
   });
 });
 
@@ -156,7 +204,7 @@ function renderizarKanban() {
 
       return `
         <div class="kanban-card" style="border-left-color:${etapa.cor};"
-             onclick="abrirEdicao('${o.id}')">
+             onclick="visualizarOportunidade('${o.id}')">
           <div class="fw-bold small mb-1">${o.titulo}</div>
           <div class="text-muted" style="font-size:.75rem;">${nomeEmp}</div>
           ${valorFmt ? `<div class="text-success fw-bold" style="font-size:.78rem;">${valorFmt}</div>` : ""}
@@ -178,11 +226,10 @@ function renderizarKanban() {
   });
 }
 
-function abrirEdicao(id) {
+function visualizarOportunidade(id) {
   const op = CrmStorage.buscarTodos().find((o) => o.id === id);
   if (!op) return;
 
-  document.getElementById("titulo-modal-oportunidade").textContent = "✏️ Editar Oportunidade";
   document.getElementById("op-titulo").value = op.titulo || "";
   document.getElementById("op-empresa").value = op.empresaId || "";
   document.getElementById("op-valor").value = op.valor || "";
@@ -192,7 +239,13 @@ function abrirEdicao(id) {
   document.getElementById("op-observacoes").value = op.observacoes || "";
   document.getElementById("form-oportunidade").dataset.editId = id;
 
+  _crmSetModo("visualizacao");
   new bootstrap.Modal(document.getElementById("modal-oportunidade")).show();
+}
+
+// Alias para compatibilidade
+function abrirEdicao(id) {
+  visualizarOportunidade(id);
 }
 
 function moverEtapa(id, novaEtapa) {
