@@ -216,6 +216,14 @@ function _coletarForm() {
   };
 }
 
+function _atualizarKpisAgenda(dados) {
+  const el = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+  el("agenda-kpi-total", dados.length);
+  el("agenda-kpi-pendente", dados.filter((c) => c.status === "pendente").length);
+  el("agenda-kpi-concluido", dados.filter((c) => c.status === "concluido").length);
+  el("agenda-kpi-cancelado", dados.filter((c) => c.status === "cancelado").length);
+}
+
 function renderizarLista() {
   const container = document.getElementById("agenda-lista");
   const vazio = document.getElementById("agenda-vazio");
@@ -227,6 +235,10 @@ function renderizarLista() {
 
   let dados = AgendaStorage.buscarTodos();
   if (window.RolesController) dados = RolesController.filtrarPorVisibilidade(dados);
+
+  // Atualiza KPIs antes de filtrar (mostra totais reais)
+  _atualizarKpisAgenda(dados);
+
   dados = dados
     .sort((a, b) => a.data.localeCompare(b.data) || (a.hora || "").localeCompare(b.hora || ""));
 

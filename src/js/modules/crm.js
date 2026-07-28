@@ -210,6 +210,8 @@ function renderizarKanban() {
     : todasBruto;
   const empresas = window.EmpreendimentoStorage ? EmpreendimentoStorage.buscarTodos() : [];
 
+  _atualizarKpisCrm(todas);
+
   ETAPAS.forEach((etapa) => {
     const col = document.getElementById(etapa.col);
     if (!col) return;
@@ -252,6 +254,20 @@ function renderizarKanban() {
         </div>`;
     }).join("");
   });
+}
+
+function _atualizarKpisCrm(todas) {
+  const fmt = (v) => Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const pipeline = todas.filter((o) => !["fechado", "perdido"].includes(o.etapa))
+    .reduce((s, o) => s + (Number(o.valor) || 0), 0);
+
+  const el = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+  el("crm-kpi-pipeline", fmt(pipeline));
+  el("crm-kpi-prospeccao", todas.filter((o) => o.etapa === "prospeccao").length);
+  el("crm-kpi-contato", todas.filter((o) => o.etapa === "contato").length);
+  el("crm-kpi-proposta", todas.filter((o) => o.etapa === "proposta").length);
+  el("crm-kpi-negociacao", todas.filter((o) => o.etapa === "negociacao").length);
+  el("crm-kpi-fechado", todas.filter((o) => o.etapa === "fechado").length);
 }
 
 function visualizarOportunidade(id) {

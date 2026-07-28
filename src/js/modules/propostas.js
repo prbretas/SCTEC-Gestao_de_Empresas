@@ -266,6 +266,16 @@ function _coletar() {
   };
 }
 
+function _atualizarKpisPropostas(todas) {
+  const el = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+  const fmt = (v) => Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  el("prop-kpi-total", todas.length);
+  el("prop-kpi-enviadas", todas.filter((p) => p.status === "enviada").length);
+  const aceitas = todas.filter((p) => p.status === "aceita");
+  el("prop-kpi-aceitas", aceitas.length);
+  el("prop-kpi-valor", fmt(aceitas.reduce((s, p) => s + (p.total || 0), 0)));
+}
+
 function renderizarLista() {
   const container = document.getElementById("propostas-lista");
   const vazio = document.getElementById("propostas-vazio");
@@ -274,6 +284,10 @@ function renderizarLista() {
   const todas = window.RolesController
     ? RolesController.filtrarPorVisibilidade(todasBruto)
     : todasBruto;
+
+  // Atualiza KPIs
+  _atualizarKpisPropostas(todas);
+
   const sorted = todas.sort((a, b) => b.criadoEm?.localeCompare(a.criadoEm));
 
   if (sorted.length === 0) { container.innerHTML = ""; vazio?.classList.remove("d-none"); return; }
