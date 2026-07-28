@@ -164,6 +164,13 @@
                 <input type="text" id="op-responsavel" class="form-control" placeholder="Nome do responsável" />
               </div>
               <div class="mb-3">
+                <label class="form-label fw-bold">Proposta Vinculada</label>
+                <select id="op-proposta" class="form-select">
+                  <option value="">— Nenhuma —</option>
+                </select>
+                <div class="form-text small text-muted">Obrigatório para etapas Negociação e Fechado.</div>
+              </div>
+              <div class="mb-3">
                 <label class="form-label fw-bold">Observações</label>
                 <textarea id="op-observacoes" class="form-control" rows="3"></textarea>
               </div>
@@ -189,6 +196,7 @@
     <script src="./src/js/core/integrations.js"></script>
     <script src="./src/js/core/theme.js"></script>
     <script src="./src/js/core/navbar.js"></script>
+    <script src="./src/js/core/dashboard-storages.js"></script>
     <script src="./src/js/modules/crm.js"></script>
     <script src="./src/js/core/inactivity.js"></script>
   </body>

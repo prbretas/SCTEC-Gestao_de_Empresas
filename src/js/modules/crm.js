@@ -130,8 +130,14 @@ document.addEventListener("DOMContentLoaded", () => {
     _resetarForm();
     document.getElementById("titulo-modal-oportunidade").textContent = "🎯 Nova Oportunidade";
     document.getElementById("op-previsao").value = new Date().toISOString().split("T")[0];
+    _preencherPropostas("", null);
     _crmSetModo("edicao");
     modal.show();
+  });
+
+  // Atualiza propostas ao mudar empresa
+  document.getElementById("op-empresa")?.addEventListener("change", (e) => {
+    _preencherPropostas(e.target.value, null);
   });
 
   document.getElementById("btn-editar-oportunidade")?.addEventListener("click", () => {
@@ -199,8 +205,32 @@ function _coletarForm() {
     previsao: document.getElementById("op-previsao").value,
     etapa: document.getElementById("op-etapa").value,
     responsavel: document.getElementById("op-responsavel").value.trim(),
+    propostaId: document.getElementById("op-proposta").value || null,
     observacoes: document.getElementById("op-observacoes").value.trim(),
   };
+}
+
+function _preencherPropostas(empresaId, propostaIdAtual) {
+  const select = document.getElementById("op-proposta");
+  if (!select || !window.PropostasStorage) return;
+  select.innerHTML = `<option value="">— Nenhuma —</option>`;
+  if (!empresaId) return;
+  const propostas = PropostasStorage.buscarTodos().filter((p) => p.empresaId === empresaId);
+  propostas.forEach((p) => {
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = `${p.numero || ""} ${p.titulo} (${p.status})`;
+    if (p.id === propostaIdAtual) opt.selected = true;
+    select.appendChild(opt);
+  });
+}
+
+function _validarEtapaComProposta(novaEtapa, oportunidadeId) {
+  if (!["negociacao", "fechado"].includes(novaEtapa)) return true;
+  const op = CrmStorage.buscarTodos().find((o) => o.id === oportunidadeId);
+  if (op && op.propostaId) return true;
+  alert(`⚠️ Para mover para "${novaEtapa === "negociacao" ? "Negociação" : "Fechado"}", é obrigatório vincular uma proposta à oportunidade.\n\nAbra a oportunidade e selecione uma proposta no campo "Proposta Vinculada".`);
+  return false;
 }
 
 function renderizarKanban() {
@@ -283,6 +313,9 @@ function visualizarOportunidade(id) {
   document.getElementById("op-observacoes").value = op.observacoes || "";
   document.getElementById("form-oportunidade").dataset.editId = id;
 
+  // Preenche select de propostas com as da mesma empresa
+  _preencherPropostas(op.empresaId, op.propostaId);
+
   // Exibe auditoria no footer
   const auditoriaEl = document.getElementById("auditoria-crm");
   if (auditoriaEl) auditoriaEl.textContent = _formatarAuditoria(op);
@@ -296,6 +329,9 @@ function abrirEdicao(id) {
 }
 
 function moverEtapa(id, novaEtapa) {
+  // Valida proposta obrigatória para Negociação e Fechado
+  if (!_validarEtapaComProposta(novaEtapa, id)) return;
+
   CrmStorage.atualizar(id, { etapa: novaEtapa });
 
   // Integração: CRM Fechado → Financeiro
