@@ -41,6 +41,7 @@ const FinanceiroStorage = {
     t.id = Date.now().toString();
     t.criadoPor = _obterIdentidadeSessao();
     t.criadoEm = new Date().toISOString();
+    t.criadoPorId = window.AuthService ? (AuthService.obterSessao()?.id || null) : null;
     lista.push(t);
     this.salvarTodos(lista);
     return t;
@@ -195,15 +196,17 @@ function renderizar() {
 
   const empresas = window.EmpreendimentoStorage ? EmpreendimentoStorage.buscarTodos() : [];
 
-  let dados = FinanceiroStorage.buscarTodos()
-    .sort((a, b) => b.data.localeCompare(a.data));
+  let dados = FinanceiroStorage.buscarTodos();
+  if (window.RolesController) dados = RolesController.filtrarPorVisibilidade(dados);
+  dados = dados.sort((a, b) => b.data.localeCompare(a.data));
 
   if (mesFiltro) dados = dados.filter((t) => t.data?.startsWith(mesFiltro));
   if (tipoFiltro) dados = dados.filter((t) => t.tipo === tipoFiltro);
   if (busca) dados = dados.filter((t) => t.descricao?.toLowerCase().includes(busca) || t.categoria?.toLowerCase().includes(busca));
 
-  // Resumo (sempre com todos os do mês, sem filtro de tipo)
-  const todosMes = FinanceiroStorage.buscarTodos().filter((t) => !mesFiltro || t.data?.startsWith(mesFiltro));
+  // Resumo (sempre com todos os do mês, sem filtro de tipo, mas com visibilidade)
+  const todosBruto = FinanceiroStorage.buscarTodos().filter((t) => !mesFiltro || t.data?.startsWith(mesFiltro));
+  const todosMes = window.RolesController ? RolesController.filtrarPorVisibilidade(todosBruto) : todosBruto;
   const totalEntradas = todosMes.filter((t) => t.tipo === "entrada").reduce((s, t) => s + t.valor, 0);
   const totalSaidas = todosMes.filter((t) => t.tipo === "saida").reduce((s, t) => s + t.valor, 0);
   const saldo = totalEntradas - totalSaidas;

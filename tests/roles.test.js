@@ -291,3 +291,116 @@ describe("RolesController — modulosPermitidos", () => {
     expect(RolesController.obterModulosPermitidos(ORG_ID, "fake")).toBeNull();
   });
 });
+
+// ─── podeVerTodos e filtrarPorVisibilidade ────────────────────────────────────
+
+describe("RolesController — podeVerTodos e isolamento de registros", () => {
+  const ORG_ID = "66001";
+  const COD_BASE = "SCTEC-ORG-66001";
+
+  test("papel recém-criado tem podeVerTodos false por padrão", () => {
+    const r = RolesController.criar(ORG_ID, "Vendedor", COD_BASE);
+    expect(r.papel.podeVerTodos).toBe(false);
+  });
+
+  test("setPodeVerTodos salva true corretamente", () => {
+    const r = RolesController.criar(ORG_ID, "Gerente", COD_BASE);
+    const res = RolesController.setPodeVerTodos(ORG_ID, r.papel.id, true);
+    expect(res.ok).toBe(true);
+    const papel = RolesController.buscarPorId(ORG_ID, r.papel.id);
+    expect(papel.podeVerTodos).toBe(true);
+  });
+
+  test("setPodeVerTodos falha para papel inexistente", () => {
+    const res = RolesController.setPodeVerTodos(ORG_ID, "fake", true);
+    expect(res.ok).toBe(false);
+    expect(res.erro).toMatch(/não encontrado/i);
+  });
+
+  test("usuarioPodeVerTodos retorna true para admin", () => {
+    sessionStorage.setItem("SCTEC_SESSION", JSON.stringify({
+      id: "u99", nome: "admin", role: "admin", orgId: ORG_ID, papelId: null,
+    }));
+    expect(RolesController.usuarioPodeVerTodos()).toBe(true);
+  });
+
+  test("usuarioPodeVerTodos retorna false para usuário sem papel", () => {
+    sessionStorage.setItem("SCTEC_SESSION", JSON.stringify({
+      id: "u1", nome: "user1", role: "user", orgId: ORG_ID, papelId: null,
+    }));
+    expect(RolesController.usuarioPodeVerTodos()).toBe(false);
+  });
+
+  test("usuarioPodeVerTodos retorna false para papel sem a flag", () => {
+    const r = RolesController.criar(ORG_ID, "Operador", COD_BASE);
+    sessionStorage.setItem("SCTEC_SESSION", JSON.stringify({
+      id: "u2", nome: "user2", role: "user", orgId: ORG_ID, papelId: r.papel.id,
+    }));
+    expect(RolesController.usuarioPodeVerTodos()).toBe(false);
+  });
+
+  test("usuarioPodeVerTodos retorna true para papel com podeVerTodos:true", () => {
+    const r = RolesController.criar(ORG_ID, "Supervisor", COD_BASE);
+    RolesController.setPodeVerTodos(ORG_ID, r.papel.id, true);
+    sessionStorage.setItem("SCTEC_SESSION", JSON.stringify({
+      id: "u3", nome: "super", role: "user", orgId: ORG_ID, papelId: r.papel.id,
+    }));
+    expect(RolesController.usuarioPodeVerTodos()).toBe(true);
+  });
+
+  test("filtrarPorVisibilidade: usuário comum vê apenas seus registros", () => {
+    const papelR = RolesController.criar(ORG_ID, "Comum", COD_BASE);
+    sessionStorage.setItem("SCTEC_SESSION", JSON.stringify({
+      id: "u10", nome: "user10", role: "user", orgId: ORG_ID, papelId: papelR.papel.id,
+    }));
+    const registros = [
+      { id: "1", criadoPorId: "u10" },
+      { id: "2", criadoPorId: "u20" },
+      { id: "3" }, // sem criadoPorId (legado) — visível para todos
+    ];
+    const resultado = RolesController.filtrarPorVisibilidade(registros);
+    expect(resultado.map((r) => r.id)).toEqual(["1", "3"]);
+  });
+
+  test("filtrarPorVisibilidade: admin vê todos os registros", () => {
+    sessionStorage.setItem("SCTEC_SESSION", JSON.stringify({
+      id: "a1", nome: "admin", role: "admin", orgId: ORG_ID, papelId: null,
+    }));
+    const registros = [
+      { id: "1", criadoPorId: "u10" },
+      { id: "2", criadoPorId: "u20" },
+      { id: "3" },
+    ];
+    const resultado = RolesController.filtrarPorVisibilidade(registros);
+    expect(resultado).toHaveLength(3);
+  });
+
+  test("filtrarPorVisibilidade: papel com podeVerTodos vê todos", () => {
+    const papelR = RolesController.criar(ORG_ID, "Gerente2", COD_BASE);
+    RolesController.setPodeVerTodos(ORG_ID, papelR.papel.id, true);
+    sessionStorage.setItem("SCTEC_SESSION", JSON.stringify({
+      id: "g1", nome: "gerente", role: "user", orgId: ORG_ID, papelId: papelR.papel.id,
+    }));
+    const registros = [
+      { id: "1", criadoPorId: "u10" },
+      { id: "2", criadoPorId: "u20" },
+    ];
+    const resultado = RolesController.filtrarPorVisibilidade(registros);
+    expect(resultado).toHaveLength(2);
+  });
+
+  test("filtrarPorVisibilidade: registros legados (sem criadoPorId) são visíveis para todos", () => {
+    const papelR = RolesController.criar(ORG_ID, "Legado", COD_BASE);
+    sessionStorage.setItem("SCTEC_SESSION", JSON.stringify({
+      id: "u50", nome: "user50", role: "user", orgId: ORG_ID, papelId: papelR.papel.id,
+    }));
+    const registros = [
+      { id: "1" },
+      { id: "2", criadoPorId: null },
+      { id: "3", criadoPorId: "outro-usuario" },
+    ];
+    const resultado = RolesController.filtrarPorVisibilidade(registros);
+    // Registros 1 e 2 são legados (sem criadoPorId), registro 3 é de outro usuário
+    expect(resultado.map((r) => r.id)).toEqual(["1", "2"]);
+  });
+});

@@ -49,6 +49,7 @@ const AgendaStorage = {
     comp.id = Date.now().toString();
     comp.criadoPor = _obterIdentidadeSessao();
     comp.criadoEm = new Date().toISOString();
+    comp.criadoPorId = window.AuthService ? (AuthService.obterSessao()?.id || null) : null;
     lista.push(comp);
     this.salvarTodos(lista);
     return comp;
@@ -220,7 +221,9 @@ function renderizarLista() {
   const tipoFiltro = document.getElementById("filtro-tipo").value;
   const busca = document.getElementById("filtro-busca").value.toLowerCase().trim();
 
-  let dados = AgendaStorage.buscarTodos()
+  let dados = AgendaStorage.buscarTodos();
+  if (window.RolesController) dados = RolesController.filtrarPorVisibilidade(dados);
+  dados = dados
     .sort((a, b) => a.data.localeCompare(b.data) || (a.hora || "").localeCompare(b.hora || ""));
 
   if (mesFiltro) dados = dados.filter((c) => c.data && c.data.startsWith(mesFiltro));

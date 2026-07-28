@@ -255,6 +255,10 @@ function renderizarPapeis() {
       return `<span class="badge me-1 ${ativo ? "bg-success" : "bg-light text-muted border"}" title="${m.label}">${m.icon}</span>`;
     }).join("");
 
+    const badgeVerTodos = p.podeVerTodos
+      ? `<span class="badge bg-info text-dark ms-1" title="Pode ver registros de todos">👁️ Ver todos</span>`
+      : "";
+
     return `
       <tr>
         <td class="fw-semibold">${p.nome}</td>
@@ -265,7 +269,7 @@ function renderizarPapeis() {
             📋
           </button>
         </td>
-        <td>${badgesModulos}</td>
+        <td>${badgesModulos}${badgeVerTodos}</td>
         <td class="text-center">
           <span class="badge ${qtdUsuarios > 0 ? "bg-primary" : "bg-light text-dark border"}">
             ${qtdUsuarios} usuário${qtdUsuarios !== 1 ? "s" : ""}
@@ -306,18 +310,19 @@ function abrirFormPapel(id = "", nomeAtual = "") {
   inputNome.value = nomeAtual;
   titulo.textContent = id ? "Editar Papel" : "Novo Papel";
 
+  // Obtém dados do papel atual (modo edição) ou defaults (modo criação)
+  const sessao = AuthService.obterSessao();
+  let permitidos = null;
+  let podeVerTodos = false;
+  if (id && sessao) {
+    const papel = RolesController.buscarPorId(sessao.orgId, id);
+    permitidos = papel ? papel.modulosPermitidos : null;
+    podeVerTodos = papel?.podeVerTodos === true;
+  }
+
   // Renderiza checkboxes dos módulos (exclui adminOnly)
   if (containerModulos) {
-    const sessao = AuthService.obterSessao();
     const modulosDisponiveis = MODULOS_CATALOGO.filter((m) => !m.adminOnly);
-
-    // Obtém seleção atual do papel (modo edição) ou marca todos por padrão (modo criação)
-    let permitidos = null;
-    if (id && sessao) {
-      const papel = RolesController.buscarPorId(sessao.orgId, id);
-      permitidos = papel ? papel.modulosPermitidos : null;
-    }
-
     containerModulos.innerHTML = modulosDisponiveis.map((m) => {
       const checked = permitidos === null || permitidos.includes(m.id) ? "checked" : "";
       return `
@@ -331,10 +336,13 @@ function abrirFormPapel(id = "", nomeAtual = "") {
     }).join("");
   }
 
+  // Define estado do checkbox podeVerTodos
+  const cbVerTodos = document.getElementById("input-papel-ver-todos");
+  if (cbVerTodos) cbVerTodos.checked = podeVerTodos;
+
   card.classList.remove("d-none");
   inputNome.focus();
 }
-
 /**
  * Fecha o formulário de papel sem salvar.
  */
@@ -346,10 +354,12 @@ function fecharFormPapel() {
   document.getElementById("input-papel-id").value = "";
   const containerModulos = document.getElementById("modulos-papel-checkboxes");
   if (containerModulos) containerModulos.innerHTML = "";
+  const cbVerTodos = document.getElementById("input-papel-ver-todos");
+  if (cbVerTodos) cbVerTodos.checked = false;
 }
 
 /**
- * Salva o papel (cria ou edita), incluindo modulosPermitidos.
+ * Salva o papel (cria ou edita), incluindo modulosPermitidos e podeVerTodos.
  */
 function salvarPapel() {
   const sessao = AuthService.obterSessao();
@@ -357,6 +367,7 @@ function salvarPapel() {
 
   const nome = document.getElementById("input-nome-papel")?.value.trim();
   const papelId = document.getElementById("input-papel-id")?.value;
+  const podeVerTodos = document.getElementById("input-papel-ver-todos")?.checked === true;
 
   // Coleta os módulos marcados
   const checkboxes = document.querySelectorAll(".modulo-checkbox");
@@ -372,17 +383,17 @@ function salvarPapel() {
 
   let resultado;
   if (papelId) {
-    // Edição: nome + módulos
     resultado = RolesController.editar(sessao.orgId, papelId, nome);
     if (resultado.ok) {
       RolesController.definirModulos(sessao.orgId, papelId, modulosPermitidos);
+      RolesController.setPodeVerTodos(sessao.orgId, papelId, podeVerTodos);
     }
   } else {
-    // Criação
     const org = AuthService.buscarOrgPorId(sessao.orgId);
     resultado = RolesController.criar(sessao.orgId, nome, org ? org.codigoConvite : sessao.orgId);
     if (resultado.ok) {
       RolesController.definirModulos(sessao.orgId, resultado.papel.id, modulosPermitidos);
+      RolesController.setPodeVerTodos(sessao.orgId, resultado.papel.id, podeVerTodos);
     }
   }
 
@@ -393,7 +404,7 @@ function salvarPapel() {
 
   fecharFormPapel();
   renderizarPapeis();
-  renderizarUsuarios(); // atualiza seletores de papel
+  renderizarUsuarios();
 }
 
 /**
