@@ -122,11 +122,21 @@ const DashboardConfigController = {
 
   /**
    * Salva a seleção de widgets com ordem.
+   * Se um modelo está ativo, atualiza esse modelo também.
    * @param {Array} widgetStates - [{id, ativo, ordem}]
    */
   salvarSelecao(widgetStates) {
     const config = this.obterConfig() || {};
     config.widgets = widgetStates;
+
+    // Se há modelo ativo, atualiza os widgets desse modelo
+    if (config.modeloAtivo && config.modeloAtivo !== "__default__" && config.modelos) {
+      const idx = config.modelos.findIndex((m) => m.id === config.modeloAtivo);
+      if (idx !== -1) {
+        config.modelos[idx].widgets = JSON.parse(JSON.stringify(widgetStates));
+      }
+    }
+
     this.salvarConfig(config);
   },
 
@@ -150,17 +160,22 @@ const DashboardConfigController = {
   },
 
   /**
-   * Define o modelo ativo. Se "__default__", usa widgets padrão salvo.
+   * Define o modelo ativo. Se "__default__", restaura widgets padrão.
    * @param {string} modeloId
    */
   setModeloAtivo(modeloId) {
     const config = this.obterConfig() || {};
     config.modeloAtivo = modeloId;
 
-    // Se é um modelo salvo, aplica seus widgets como ativos
-    if (modeloId !== "__default__") {
+    if (modeloId === "__default__") {
+      // Restaura widgets padrão (remove seleção customizada)
+      delete config.widgets;
+    } else {
+      // Aplica widgets do modelo selecionado
       const modelo = (config.modelos || []).find((m) => m.id === modeloId);
-      if (modelo) config.widgets = modelo.widgets;
+      if (modelo && modelo.widgets) {
+        config.widgets = JSON.parse(JSON.stringify(modelo.widgets));
+      }
     }
 
     this.salvarConfig(config);
