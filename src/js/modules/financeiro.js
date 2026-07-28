@@ -168,6 +168,34 @@ document.addEventListener("DOMContentLoaded", () => {
     _preencherOportunidadesFinanceiro(e.target.value, null);
   });
 
+  // Atualiza valor ao vincular proposta
+  document.getElementById("trans-proposta-vinculada")?.addEventListener("change", (e) => {
+    const propostaId = e.target.value;
+    if (propostaId && window.PropostasStorage) {
+      const proposta = PropostasStorage.buscarTodos().find((p) => p.id === propostaId);
+      if (proposta && proposta.total) {
+        document.getElementById("trans-valor").value = proposta.total;
+        if (!document.getElementById("trans-descricao").value) {
+          document.getElementById("trans-descricao").value = `Proposta${proposta.numero ? " #" + proposta.numero : ""}: ${proposta.titulo || ""}`;
+        }
+      }
+    }
+  });
+
+  // Atualiza valor ao vincular oportunidade
+  document.getElementById("trans-oportunidade-vinculada")?.addEventListener("change", (e) => {
+    const opId = e.target.value;
+    if (opId && window.CrmStorage) {
+      const op = CrmStorage.buscarTodos().find((o) => o.id === opId);
+      if (op && op.valor) {
+        document.getElementById("trans-valor").value = op.valor;
+        if (!document.getElementById("trans-descricao").value) {
+          document.getElementById("trans-descricao").value = `CRM: ${op.titulo || "Oportunidade"}`;
+        }
+      }
+    }
+  });
+
   document.getElementById("btn-limpar").addEventListener("click", () => {
     document.getElementById("filtro-tipo").value = "";
     document.getElementById("filtro-busca").value = "";
