@@ -53,6 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   renderizarUsuarios();
   renderizarPapeis();
+  renderizarAprovacoes();
 });
 
 // ─── Usuários ─────────────────────────────────────────────────────────────────
@@ -447,4 +448,82 @@ function copiarCodigoPapel(codigo) {
   }).catch(() => {
     prompt("Copie o código abaixo:", codigo);
   });
+}
+
+// ─── Aprovações ────────────────────────────────────────────────────────────────
+
+/**
+ * Renderiza a tabela de pendências de aprovação.
+ */
+function renderizarAprovacoes() {
+  const tbody = document.getElementById("admin-aprovacoes-lista");
+  if (!tbody || !window.ApprovalsController) return;
+
+  const pendentes = ApprovalsController.buscarPendentes();
+  const badgeCount = document.getElementById("aprovacoes-count");
+  if (badgeCount) badgeCount.textContent = pendentes.length;
+
+  if (pendentes.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3">Nenhuma pendência de aprovação.</td></tr>`;
+    return;
+  }
+
+  const empresas = window.EmpreendimentoStorage ? EmpreendimentoStorage.buscarTodos() : [];
+  const _fmt = (v) => Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  tbody.innerHTML = pendentes.map((p) => {
+    const emp = empresas.find((e) => String(e.id) === String(p.empresaId));
+    const dataSol = p.dataSolicitacao ? new Date(p.dataSolicitacao).toLocaleString("pt-BR") : "—";
+    const tipoBadge = p.tipo === "proposta_aceita"
+      ? `<span class="badge bg-success">📄 Proposta</span>`
+      : `<span class="badge bg-primary">🎯 CRM</span>`;
+
+    return `
+      <tr>
+        <td>${tipoBadge}</td>
+        <td>
+          <div class="fw-semibold">${p.descricao}</div>
+          <div class="small text-muted">Solicitado por: ${p.solicitanteNome} em ${dataSol}</div>
+          ${emp ? `<div class="small text-muted">Empresa: ${emp.nome}</div>` : ""}
+        </td>
+        <td class="fw-bold text-success">${_fmt(p.valor)}</td>
+        <td class="text-center">
+          <button class="btn btn-xs btn-success me-1" onclick="aprovarPendencia('${p.id}')" title="Aprovar">
+            ✅ Aprovar
+          </button>
+          <button class="btn btn-xs btn-outline-danger" onclick="rejeitarPendencia('${p.id}')" title="Rejeitar">
+            ❌ Rejeitar
+          </button>
+        </td>
+      </tr>`;
+  }).join("");
+}
+
+/**
+ * Aprova uma pendência.
+ */
+function aprovarPendencia(pendenciaId) {
+  if (!confirm("Aprovar esta solicitação? A entrada financeira será gerada automaticamente.")) return;
+  const resultado = ApprovalsController.aprovar(pendenciaId);
+  if (!resultado.ok) {
+    alert(`⚠️ ${resultado.erro}`);
+    return;
+  }
+  alert("✅ Aprovado! Entrada financeira gerada com sucesso.");
+  renderizarAprovacoes();
+}
+
+/**
+ * Rejeita uma pendência.
+ */
+function rejeitarPendencia(pendenciaId) {
+  const motivo = prompt("Motivo da rejeição (opcional):");
+  if (motivo === null) return; // cancelou
+  const resultado = ApprovalsController.rejeitar(pendenciaId, motivo);
+  if (!resultado.ok) {
+    alert(`⚠️ ${resultado.erro}`);
+    return;
+  }
+  alert("❌ Rejeitado.");
+  renderizarAprovacoes();
 }

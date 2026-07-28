@@ -143,7 +143,27 @@ document.addEventListener("DOMContentLoaded", () => {
     const id = form.dataset.editId;
     const dados = _coletar();
     if (!dados) return;
-    id ? PropostasStorage.atualizar(id, dados) : PropostasStorage.adicionar(dados);
+    if (id) {
+      PropostasStorage.atualizar(id, dados);
+    } else {
+      PropostasStorage.adicionar(dados);
+    }
+
+    // Integração: Proposta → CRM e Proposta → Financeiro
+    if (window.IntegrationsController) {
+      const propostaSalva = PropostasStorage.buscarTodos().find((p) => id ? p.id === id : p.titulo === dados.titulo);
+      if (propostaSalva) {
+        if (dados.status === "enviada") {
+          IntegrationsController.onPropostaEnviada(propostaSalva);
+        } else if (dados.status === "aceita") {
+          const resultado = IntegrationsController.onPropostaAceita(propostaSalva);
+          if (!resultado.aprovado) {
+            alert("📋 Proposta aceita! Uma pendência de aprovação foi criada para geração da entrada financeira.");
+          }
+        }
+      }
+    }
+
     // Marca como visualização para que o hide.bs.modal não pergunte sobre descartar
     form.dataset.modoVisualizacao = "true";
     modal.hide();

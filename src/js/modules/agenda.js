@@ -156,7 +156,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (id) {
       AgendaStorage.atualizar(id, dados);
     } else {
-      AgendaStorage.adicionar(dados);
+      const novoComp = AgendaStorage.adicionar(dados);
+      // Integração: Agenda → CRM (Prospecção)
+      if (novoComp && novoComp.empresaId && window.IntegrationsController) {
+        IntegrationsController.onCompromissoCriado(novoComp);
+      }
     }
     // Marca como visualização para que o hide.bs.modal não pergunte sobre descartar
     form.dataset.modoVisualizacao = "true";
