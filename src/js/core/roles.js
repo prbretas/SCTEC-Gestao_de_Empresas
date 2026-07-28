@@ -1,7 +1,8 @@
 /**
- * roles.js — Gerenciamento de Papéis de Trabalho por Organização (#41)
+ * roles.js — Gerenciamento de Papéis de Trabalho por Organização (#41, #51)
  * Permite ao Admin criar, editar e excluir papéis de trabalho.
  * Cada usuário tem exatamente um papel. Papel com usuários vinculados não pode ser excluído.
+ * Cada papel define quais módulos seus membros podem acessar (modulosPermitidos).
  * Chave de storage: SCTEC_ROLES_{orgId}
  */
 
@@ -127,6 +128,7 @@ const RolesController = {
       id: this._gerarId(orgId),
       nome,
       codigoConvite: this._gerarCodigoConvitePapel(codigoBaseOrg, orgId),
+      modulosPermitidos: null, // null = todos os módulos ativos não-adminOnly (fallback)
       dataCriacao: new Date().toISOString(),
     };
 
@@ -267,6 +269,52 @@ const RolesController = {
     const usuario = AuthService.buscarPorId(userId);
     if (!usuario || !usuario.papelId) return null;
     return this.buscarPorId(usuario.orgId, usuario.papelId);
+  },
+
+  // ─── Permissões de Módulos ────────────────────────────────────────────────
+
+  /**
+   * Retorna os IDs dos módulos permitidos para um papel.
+   * Se `modulosPermitidos` for null, retorna null (significando "todos").
+   * @param {string} orgId
+   * @param {string} papelId
+   * @returns {Array<string>|null} array de IDs ou null (todos)
+   */
+  obterModulosPermitidos(orgId, papelId) {
+    const papel = this.buscarPorId(orgId, papelId);
+    if (!papel) return null;
+    return papel.modulosPermitidos || null; // null = todos (fallback)
+  },
+
+  /**
+   * Define os módulos permitidos para um papel.
+   * @param {string} orgId
+   * @param {string} papelId
+   * @param {Array<string>} moduloIds - array de IDs de módulos permitidos
+   * @returns {{ok: boolean, erro?: string}}
+   */
+  definirModulos(orgId, papelId, moduloIds) {
+    const papeis = this.obterPorOrg(orgId);
+    const idx = papeis.findIndex((p) => p.id === papelId);
+    if (idx === -1) return { ok: false, erro: "Papel não encontrado." };
+
+    papeis[idx].modulosPermitidos = Array.isArray(moduloIds) ? moduloIds : null;
+    this.salvar(orgId, papeis);
+    return { ok: true };
+  },
+
+  /**
+   * Verifica se um papel tem acesso a um módulo específico.
+   * Admin sempre tem acesso. Papel sem modulosPermitidos (null) tem acesso a todos.
+   * @param {string} orgId
+   * @param {string} papelId
+   * @param {string} moduleId
+   * @returns {boolean}
+   */
+  podeAcessarModulo(orgId, papelId, moduleId) {
+    const permitidos = this.obterModulosPermitidos(orgId, papelId);
+    if (permitidos === null) return true; // fallback: acesso total
+    return permitidos.includes(moduleId);
   },
 };
 

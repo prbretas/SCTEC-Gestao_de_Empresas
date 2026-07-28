@@ -10,6 +10,7 @@ const DashboardController = {
   init() {
     const sessao = window.AuthService ? AuthService.requireAuth() : null;
     if (!sessao) return;
+    if (window.ModulesController && !ModulesController.requireModuleAccess("dashboard")) return;
 
     // Aplica configurações de cores/logo
     if (window.ConfigController) ConfigController.aplicar(ConfigController.obter());

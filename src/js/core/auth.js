@@ -316,6 +316,7 @@ const AuthService = {
       nome: usuario.nome,
       role: usuario.role || "user",
       orgId: usuario.orgId || null,
+      papelId: usuario.papelId || null,
       identidade: `${usuario.nome}#${usuario.id}`,
       loginEm: new Date().toISOString(),
     }));

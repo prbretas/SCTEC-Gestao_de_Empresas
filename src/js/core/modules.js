@@ -83,7 +83,9 @@ const ModulesController = {
 
   /**
    * Retorna os módulos visíveis para o usuário atual.
-   * Filtra por: módulo ativo + adminOnly (se aplicável)
+   * Filtra por: módulo ativo + adminOnly (se aplicável) + modulosPermitidos do papel
+   * Admin vê todos os módulos ativos independente do papel.
+   * Usuário sem papel vê todos os módulos ativos não-adminOnly (fallback).
    * @returns {Array}
    */
   obterModulosVisiveis() {
@@ -92,9 +94,56 @@ const ModulesController = {
     const isAdmin = sessao?.role === "admin";
 
     return MODULOS_CATALOGO.filter((m) => {
+      // adminOnly: só para admin
       if (m.adminOnly && !isAdmin) return false;
-      return estado[m.id] !== false;
+      // módulo desativado na org
+      if (estado[m.id] === false) return false;
+      // admin sempre vê tudo que está ativo
+      if (isAdmin) return true;
+
+      // usuário comum: checar modulosPermitidos do papel
+      if (sessao && sessao.orgId && sessao.papelId && window.RolesController) {
+        const permitidos = RolesController.obterModulosPermitidos(sessao.orgId, sessao.papelId);
+        if (permitidos !== null) return permitidos.includes(m.id);
+      }
+      // fallback: sem papel definido ou papel sem restrição → mostra tudo ativo
+      return true;
     });
+  },
+
+  /**
+   * Verifica se o usuário atual pode acessar a página atual.
+   * Deve ser chamado no DOMContentLoaded de cada página de módulo.
+   * Redireciona para home.html com aviso se o acesso for negado.
+   * @param {string} moduleId - ID do módulo da página atual
+   * @returns {boolean} true se pode acessar, false se foi redirecionado
+   */
+  requireModuleAccess(moduleId) {
+    const sessao = window.AuthService ? AuthService.obterSessao() : null;
+    if (!sessao) return true; // requireAuth já cuida do redirect para login
+
+    // Admin sempre pode
+    if (sessao.role === "admin") return true;
+
+    // Módulo desativado na org
+    if (!this.isAtivo(moduleId)) {
+      alert("⛔ Este módulo não está ativo na sua organização.");
+      window.location.href = "home.html";
+      return false;
+    }
+
+    // Usuário sem papel: acesso liberado (fallback)
+    if (!sessao.papelId || !window.RolesController) return true;
+
+    // Checa permissão do papel
+    const pode = RolesController.podeAcessarModulo(sessao.orgId, sessao.papelId, moduleId);
+    if (!pode) {
+      alert(`⛔ Seu papel de trabalho não tem acesso a este módulo.`);
+      window.location.href = "home.html";
+      return false;
+    }
+
+    return true;
   },
 };
 

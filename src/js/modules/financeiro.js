@@ -91,6 +91,7 @@ function _finSetModo(modo) {
 document.addEventListener("DOMContentLoaded", () => {
   const sessao = AuthService.requireAuth();
   if (!sessao) return;
+  if (window.ModulesController && !ModulesController.requireModuleAccess("financeiro")) return;
   if (window.ConfigController) ConfigController.aplicar(ConfigController.obter());
   if (window.NavbarController) NavbarController.init("financeiro");
   if (window.ThemeController) ThemeController.init();

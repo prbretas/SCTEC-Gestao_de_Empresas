@@ -6,6 +6,9 @@ document.addEventListener("DOMContentLoaded", () => {
         console.warn("SCTEC - ConfigController: erro ao aplicar config", e);
     }
 
+    // Guard de acesso ao módulo de cadastros
+    if (window.ModulesController && !ModulesController.requireModuleAccess("cadastros")) return;
+
     // Renderiza navbar padronizado
     if (window.NavbarController) {
         NavbarController.init("cadastros");

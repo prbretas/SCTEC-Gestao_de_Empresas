@@ -235,3 +235,59 @@ describe("AuthService — Cadastro via código de convite de papel", () => {
     expect(userR.usuario.role).toBe("user");
   });
 });
+
+// ─── Módulos Permitidos por Papel ─────────────────────────────────────────────
+
+describe("RolesController — modulosPermitidos", () => {
+  const ORG_ID = "55001";
+  const COD_BASE = "SCTEC-ORG-55001";
+
+  test("papel recém-criado tem modulosPermitidos null (fallback total)", () => {
+    const r = RolesController.criar(ORG_ID, "Novo", COD_BASE);
+    expect(r.papel.modulosPermitidos).toBeNull();
+  });
+
+  test("definirModulos salva array de IDs corretamente", () => {
+    const r = RolesController.criar(ORG_ID, "Vendedor", COD_BASE);
+    const resultado = RolesController.definirModulos(ORG_ID, r.papel.id, ["crm", "cadastros"]);
+    expect(resultado.ok).toBe(true);
+    const permitidos = RolesController.obterModulosPermitidos(ORG_ID, r.papel.id);
+    expect(permitidos).toEqual(["crm", "cadastros"]);
+  });
+
+  test("definirModulos com null remove restrição", () => {
+    const r = RolesController.criar(ORG_ID, "Gerente", COD_BASE);
+    RolesController.definirModulos(ORG_ID, r.papel.id, ["crm"]);
+    RolesController.definirModulos(ORG_ID, r.papel.id, null);
+    expect(RolesController.obterModulosPermitidos(ORG_ID, r.papel.id)).toBeNull();
+  });
+
+  test("podeAcessarModulo retorna true se modulosPermitidos é null", () => {
+    const r = RolesController.criar(ORG_ID, "Full", COD_BASE);
+    expect(RolesController.podeAcessarModulo(ORG_ID, r.papel.id, "financeiro")).toBe(true);
+  });
+
+  test("podeAcessarModulo retorna true para módulo na lista", () => {
+    const r = RolesController.criar(ORG_ID, "Parcial", COD_BASE);
+    RolesController.definirModulos(ORG_ID, r.papel.id, ["crm", "agenda"]);
+    expect(RolesController.podeAcessarModulo(ORG_ID, r.papel.id, "crm")).toBe(true);
+    expect(RolesController.podeAcessarModulo(ORG_ID, r.papel.id, "agenda")).toBe(true);
+  });
+
+  test("podeAcessarModulo retorna false para módulo fora da lista", () => {
+    const r = RolesController.criar(ORG_ID, "Restrito", COD_BASE);
+    RolesController.definirModulos(ORG_ID, r.papel.id, ["cadastros"]);
+    expect(RolesController.podeAcessarModulo(ORG_ID, r.papel.id, "financeiro")).toBe(false);
+    expect(RolesController.podeAcessarModulo(ORG_ID, r.papel.id, "crm")).toBe(false);
+  });
+
+  test("definirModulos falha para papel inexistente", () => {
+    const r = RolesController.definirModulos(ORG_ID, "id-fake", ["crm"]);
+    expect(r.ok).toBe(false);
+    expect(r.erro).toMatch(/não encontrado/i);
+  });
+
+  test("obterModulosPermitidos retorna null para papel inexistente", () => {
+    expect(RolesController.obterModulosPermitidos(ORG_ID, "fake")).toBeNull();
+  });
+});
