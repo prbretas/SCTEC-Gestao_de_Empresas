@@ -281,6 +281,18 @@ function abrirEdicao(id) {
 
 function moverEtapa(id, novaEtapa) {
   CrmStorage.atualizar(id, { etapa: novaEtapa });
+
+  // Integração: CRM Fechado → Financeiro
+  if (novaEtapa === "fechado" && window.IntegrationsController) {
+    const op = CrmStorage.buscarTodos().find((o) => o.id === id);
+    if (op) {
+      const resultado = IntegrationsController.onCrmFechado(op);
+      if (!resultado.aprovado) {
+        alert("📋 Oportunidade fechada! Uma pendência de aprovação foi criada para geração da entrada financeira.");
+      }
+    }
+  }
+
   renderizarKanban();
 }
 

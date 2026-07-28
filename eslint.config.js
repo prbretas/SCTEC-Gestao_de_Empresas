@@ -67,6 +67,8 @@ module.exports = [
         PropostasStorage: 'readonly',
         ETAPAS: 'readonly',
         RolesController: 'readonly',
+        IntegrationsController: 'readonly',
+        ApprovalsController: 'readonly',
         // ── APIs do browser nao declaradas anteriormente ─────────────────────
         TextEncoder: 'readonly',
         crypto: 'readonly',
