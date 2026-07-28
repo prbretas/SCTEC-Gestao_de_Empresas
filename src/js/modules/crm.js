@@ -48,6 +48,7 @@ const CrmStorage = {
     op.id = Date.now().toString();
     op.criadoPor = _obterIdentidadeSessao();
     op.criadoEm = new Date().toISOString();
+    op.criadoPorId = window.AuthService ? (AuthService.obterSessao()?.id || null) : null;
     lista.push(op);
     this.salvarTodos(lista);
     return op;
@@ -203,7 +204,10 @@ function _coletarForm() {
 }
 
 function renderizarKanban() {
-  const todas = CrmStorage.buscarTodos();
+  const todasBruto = CrmStorage.buscarTodos();
+  const todas = window.RolesController
+    ? RolesController.filtrarPorVisibilidade(todasBruto)
+    : todasBruto;
   const empresas = window.EmpreendimentoStorage ? EmpreendimentoStorage.buscarTodos() : [];
 
   ETAPAS.forEach((etapa) => {

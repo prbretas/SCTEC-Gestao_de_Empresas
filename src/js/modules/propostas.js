@@ -42,6 +42,7 @@ const PropostasStorage = {
     p.id = Date.now().toString();
     p.criadoPor = _obterIdentidadeSessao();
     p.criadoEm = new Date().toISOString();
+    p.criadoPorId = window.AuthService ? (AuthService.obterSessao()?.id || null) : null;
     lista.push(p);
     this.salvarTodos(lista);
     return p;
@@ -243,9 +244,13 @@ function renderizarLista() {
   const container = document.getElementById("propostas-lista");
   const vazio = document.getElementById("propostas-vazio");
   const empresas = window.EmpreendimentoStorage ? EmpreendimentoStorage.buscarTodos() : [];
-  const todas = PropostasStorage.buscarTodos().sort((a, b) => b.criadoEm?.localeCompare(a.criadoEm));
+  const todasBruto = PropostasStorage.buscarTodos();
+  const todas = window.RolesController
+    ? RolesController.filtrarPorVisibilidade(todasBruto)
+    : todasBruto;
+  const sorted = todas.sort((a, b) => b.criadoEm?.localeCompare(a.criadoEm));
 
-  if (todas.length === 0) { container.innerHTML = ""; vazio?.classList.remove("d-none"); return; }
+  if (sorted.length === 0) { container.innerHTML = ""; vazio?.classList.remove("d-none"); return; }
   vazio?.classList.add("d-none");
 
   const statusConfig = {
@@ -255,7 +260,7 @@ function renderizarLista() {
     recusada: { badge: "bg-danger",    icon: "❌" },
   };
 
-  container.innerHTML = todas.map((p) => {
+  container.innerHTML = sorted.map((p) => {
     const emp = empresas.find((e) => String(e.id) === String(p.empresaId));
     const sc = statusConfig[p.status] || statusConfig.rascunho;
     const dataCriacao = p.criadoEm ? new Date(p.criadoEm).toLocaleDateString("pt-BR") : "—";

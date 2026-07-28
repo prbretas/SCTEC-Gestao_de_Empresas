@@ -129,6 +129,7 @@ const RolesController = {
       nome,
       codigoConvite: this._gerarCodigoConvitePapel(codigoBaseOrg, orgId),
       modulosPermitidos: null, // null = todos os módulos ativos não-adminOnly (fallback)
+      podeVerTodos: false,     // false = usuário vê apenas seus próprios registros
       dataCriacao: new Date().toISOString(),
     };
 
@@ -315,6 +316,55 @@ const RolesController = {
     const permitidos = this.obterModulosPermitidos(orgId, papelId);
     if (permitidos === null) return true; // fallback: acesso total
     return permitidos.includes(moduleId);
+  },
+
+  // ─── Visibilidade de Registros ────────────────────────────────────────────
+
+  /**
+   * Define a flag podeVerTodos de um papel.
+   * @param {string} orgId
+   * @param {string} papelId
+   * @param {boolean} valor
+   * @returns {{ok: boolean, erro?: string}}
+   */
+  setPodeVerTodos(orgId, papelId, valor) {
+    const papeis = this.obterPorOrg(orgId);
+    const idx = papeis.findIndex((p) => p.id === papelId);
+    if (idx === -1) return { ok: false, erro: "Papel não encontrado." };
+    papeis[idx].podeVerTodos = Boolean(valor);
+    this.salvar(orgId, papeis);
+    return { ok: true };
+  },
+
+  /**
+   * Verifica se o usuário logado pode ver os registros de outros usuários.
+   * Admin sempre pode. Papel com podeVerTodos: true pode.
+   * @returns {boolean}
+   */
+  usuarioPodeVerTodos() {
+    if (!window.AuthService) return false;
+    const sessao = AuthService.obterSessao();
+    if (!sessao) return false;
+    if (sessao.role === "admin") return true;
+    if (!sessao.papelId || !sessao.orgId) return false;
+    const papel = this.buscarPorId(sessao.orgId, sessao.papelId);
+    return papel?.podeVerTodos === true;
+  },
+
+  /**
+   * Filtra uma lista de registros pela visibilidade do usuário logado.
+   * Admin e papéis com podeVerTodos: true veem tudo.
+   * Outros usuários veem apenas seus próprios registros.
+   * Registros sem criadoPorId (legados) são visíveis para todos (compatibilidade).
+   * @param {Array} registros
+   * @returns {Array}
+   */
+  filtrarPorVisibilidade(registros) {
+    if (this.usuarioPodeVerTodos()) return registros;
+    if (!window.AuthService) return registros;
+    const sessao = AuthService.obterSessao();
+    if (!sessao) return [];
+    return registros.filter((r) => !r.criadoPorId || r.criadoPorId === sessao.id);
   },
 };
 
