@@ -248,11 +248,11 @@ function renderizarPapeis() {
   tbody.innerHTML = papeis.map((p) => {
     const qtdUsuarios = RolesController.contarUsuariosPorPapel(sessao.orgId, p.id);
     const podeExcluir = qtdUsuarios === 0;
-    const permitidos = p.modulosPermitidos;
+    const permitidos = p.modulosPermitidos || null;
 
     // Badge de módulos
     const badgesModulos = modulosDisponiveis.map((m) => {
-      const ativo = permitidos === null || permitidos.includes(m.id);
+      const ativo = permitidos === null || (Array.isArray(permitidos) && permitidos.includes(m.id));
       return `<span class="badge me-1 ${ativo ? "bg-success" : "bg-light text-muted border"}" title="${m.label}">${m.icon}</span>`;
     }).join("");
 
@@ -278,12 +278,12 @@ function renderizarPapeis() {
         </td>
         <td class="text-center">
           <button class="btn btn-xs btn-outline-primary me-1"
-            onclick="editarPapel('${p.id}', '${p.nome.replace(/'/g, "\\'")}')"
+            onclick="editarPapel('${p.id}', decodeURIComponent('${encodeURIComponent(p.nome)}'))"
             title="Editar papel">
             ✏️ Editar
           </button>
           <button class="btn btn-xs btn-outline-danger ${podeExcluir ? "" : "disabled"}"
-            onclick="${podeExcluir ? `excluirPapel('${p.id}', '${p.nome.replace(/'/g, "\\'")}')` : "return false"}"
+            onclick="${podeExcluir ? `excluirPapel('${p.id}', decodeURIComponent('${encodeURIComponent(p.nome)}'))` : "return false"}"
             title="${podeExcluir ? "Excluir papel" : "Não é possível excluir: há usuários vinculados"}"
             ${!podeExcluir ? 'aria-disabled="true"' : ""}>
             🗑️ Excluir
