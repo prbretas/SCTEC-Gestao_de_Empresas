@@ -307,7 +307,7 @@ function renderizarLista() {
     const valFmt = p.validade ? new Date(p.validade + "T12:00:00").toLocaleDateString("pt-BR") : "—";
     return `
       <div class="col-md-6 col-lg-4">
-        <div class="card border-0 shadow-sm h-100">
+        <div class="card border-0 shadow-sm h-100" style="cursor:pointer;" onclick="visualizarProposta('${p.id}')">
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-start mb-2">
               <h6 class="fw-bold mb-0">${p.titulo}</h6>
@@ -319,8 +319,7 @@ function renderizarLista() {
             ${p.validade ? `<div class="small text-muted">⏰ Válida até: ${valFmt}</div>` : ""}
             <div class="fw-bold text-success mt-2">${_fmt(p.total || 0)}</div>
           </div>
-          <div class="card-footer bg-transparent d-flex justify-content-between gap-2">
-            <button class="btn btn-xs btn-outline-info flex-fill" onclick="visualizarProposta('${p.id}')">👁️ Ver</button>
+          <div class="card-footer bg-transparent d-flex justify-content-between gap-2" onclick="event.stopPropagation()">
             <button class="btn btn-xs btn-outline-secondary flex-fill" onclick="imprimirProposta('${p.id}')">🖨️ Imprimir</button>
             <button class="btn btn-xs btn-outline-danger" onclick="excluirProposta('${p.id}')">🗑️</button>
           </div>
