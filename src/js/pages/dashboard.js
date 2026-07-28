@@ -411,3 +411,110 @@ if (document.readyState === "loading") {
 } else {
   DashboardController.init();
 }
+
+// ─── Configuração de Widgets Personalizáveis (#63) ─────────────────────────────
+
+/**
+ * Inicializa o sistema de configuração de widgets do dashboard.
+ */
+function initDashboardConfig() {
+  if (!window.DashboardConfigController) return;
+
+  // Botão configurar
+  document.getElementById("btn-configurar-dash")?.addEventListener("click", () => {
+    _renderizarModalConfig();
+    new bootstrap.Modal(document.getElementById("modal-config-dash")).show();
+  });
+
+  // Botão salvar
+  document.getElementById("btn-salvar-config-dash")?.addEventListener("click", () => {
+    _salvarConfigDash();
+    bootstrap.Modal.getInstance(document.getElementById("modal-config-dash")).hide();
+    _aplicarVisibilidade();
+  });
+
+  // Aplica visibilidade inicial
+  _aplicarVisibilidade();
+}
+
+/**
+ * Renderiza a lista de widgets no modal de configuração.
+ */
+function _renderizarModalConfig() {
+  const container = document.getElementById("config-widgets-lista");
+  if (!container) return;
+
+  const disponiveis = DashboardConfigController.obterWidgetsDisponiveis();
+  const config = DashboardConfigController.obterConfig();
+
+  // Agrupa por módulo
+  const modulos = {};
+  disponiveis.forEach((w) => {
+    if (!modulos[w.modulo]) modulos[w.modulo] = [];
+    modulos[w.modulo].push(w);
+  });
+
+  const moduloLabels = {
+    cadastros: "📋 Cadastros",
+    crm: "🎯 CRM / Funil",
+    propostas: "📄 Propostas",
+    agenda: "📅 Agenda",
+    financeiro: "💰 Financeiro",
+  };
+
+  let html = "";
+  Object.entries(modulos).forEach(([modulo, widgets]) => {
+    html += `<h6 class="fw-bold mt-3 mb-2">${moduloLabels[modulo] || modulo}</h6>`;
+    widgets.forEach((w, idx) => {
+      const cfgWidget = config?.widgets?.find((c) => c.id === w.id);
+      const ativo = cfgWidget ? cfgWidget.ativo : w.defaultAtivo;
+      html += `
+        <div class="form-check mb-2">
+          <input class="form-check-input dash-widget-check" type="checkbox"
+            id="wdg-${w.id}" value="${w.id}" data-ordem="${idx}" ${ativo ? "checked" : ""} />
+          <label class="form-check-label" for="wdg-${w.id}">
+            ${w.icon} ${w.label} <span class="text-muted small">(${w.tipo})</span>
+          </label>
+        </div>`;
+    });
+  });
+
+  container.innerHTML = html;
+}
+
+/**
+ * Salva a configuração a partir dos checkboxes do modal.
+ */
+function _salvarConfigDash() {
+  const checks = document.querySelectorAll(".dash-widget-check");
+  const widgets = Array.from(checks).map((cb, idx) => ({
+    id: cb.value,
+    ativo: cb.checked,
+    ordem: idx,
+  }));
+  DashboardConfigController.salvarSelecao(widgets);
+}
+
+/**
+ * Aplica a visibilidade dos widgets no dashboard baseado na configuração.
+ * Mostra/oculta seções com base nos IDs dos widgets ativos.
+ */
+function _aplicarVisibilidade() {
+  if (!window.DashboardConfigController) return;
+
+  const ativos = DashboardConfigController.obterWidgetsAtivos();
+  const idsAtivos = new Set(ativos.map((w) => w.id));
+
+  // Esconde seções com data-widget-id que não estão na lista de ativos
+  document.querySelectorAll("[data-widget-id]").forEach((el) => {
+    const wId = el.getAttribute("data-widget-id");
+    el.style.display = idsAtivos.has(wId) ? "" : "none";
+  });
+}
+
+// Chama após o init do DashboardController
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => initDashboardConfig());
+} else {
+  setTimeout(() => initDashboardConfig(), 0);
+}

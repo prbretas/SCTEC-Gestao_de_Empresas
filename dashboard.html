@@ -55,13 +55,38 @@
   <main class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h1 id="rotinaTitle">📊 Dashboard Analítico</h1>
-      <button onclick="window.print()" class="btn btn-outline-secondary">
-        🖨️ Imprimir / Exportar PDF
-      </button>
+      <div class="d-flex gap-2">
+        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+          🖨️ Imprimir
+        </button>
+        <button class="btn btn-outline-primary btn-sm" id="btn-configurar-dash">
+          ⚙️ Configurar Widgets
+        </button>
+      </div>
     </div>
 
-    <!-- INDICADORES -->
-    <div class="row g-3 mb-4">
+    <!-- CONTAINER DINÂMICO DE WIDGETS -->
+    <div id="dashboard-widgets-grid" class="row g-3 mb-4"></div>
+
+    <!-- MODAL CONFIGURAR WIDGETS -->
+    <div class="modal fade" id="modal-config-dash" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+          <div class="modal-header">
+            <h5 class="modal-title">⚙️ Configurar Dashboard</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <p class="text-muted small mb-3">Selecione quais widgets deseja ver no seu dashboard. A configuração é individual.</p>
+            <div id="config-widgets-lista"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-success" id="btn-salvar-config-dash">💾 Salvar</button>
+          </div>
+        </div>
+      </div>
+    </div>
       <div class="col-md-3">
         <div class="card shadow-sm border-0 h-100">
           <div class="card-body text-center">
@@ -197,6 +222,7 @@
   <script src="./src/js/core/theme.js"></script>
   <script src="./src/js/core/navbar.js"></script>
   <script src="./src/js/modules/crm.js"></script>
+  <script src="./src/js/core/dashboard-config.js"></script>
   <script src="./src/js/pages/dashboard.js"></script>
   <script src="./src/js/core/inactivity.js"></script>
 
