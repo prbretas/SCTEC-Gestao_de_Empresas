@@ -247,6 +247,10 @@
               <button class="nav-link" id="tab-tarefas" data-bs-toggle="tab" data-bs-target="#panel-tarefas"
                 type="button" role="tab" aria-controls="panel-tarefas" aria-selected="false">✓ Tarefas</button>
             </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="tab-historico" data-bs-toggle="tab" data-bs-target="#panel-historico"
+                type="button" role="tab" aria-controls="panel-historico" aria-selected="false">🕐 Histórico</button>
+            </li>
           </ul>
 
           <!-- Conteúdo das Abas -->
@@ -400,6 +404,15 @@
               </div>
               <div id="tarefas-lista" class="tarefas-container"></div>
             </div>
+
+            <!-- ABA 4: HISTÓRICO -->
+            <div class="tab-pane fade" id="panel-historico" role="tabpanel" aria-labelledby="tab-historico">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">Histórico de Interações</h6>
+                <button type="button" id="btn-adicionar-ocorrencia" class="btn btn-sm btn-success">➕ Adicionar</button>
+              </div>
+              <div id="historico-lista" class="historico-container"></div>
+            </div>
           </div>
         </div>
 
@@ -518,6 +531,61 @@
     </div>
   </div>
 
+  <!-- MODAL: Adicionar/Editar Ocorrência -->
+  <div class="modal fade" id="modal-ocorrencia" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header text-white">
+          <h5 class="modal-title" id="titulo-modal-ocorrencia">➕ Nova Ocorrência</h5>
+          <button type="button" class="btn-close btn-close-white" id="btn-fechar-modal-ocorrencia"
+            data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form id="form-ocorrencia">
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Data *</label>
+                <input type="date" id="ocorrencia-data" class="form-control" required />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Hora</label>
+                <input type="time" id="ocorrencia-hora" class="form-control" />
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Tipo *</label>
+              <select id="ocorrencia-tipo" class="form-select" required>
+                <option value="ligacao">📞 Ligação</option>
+                <option value="reuniao">🤝 Reunião</option>
+                <option value="email">📧 E-mail</option>
+                <option value="visita">🏢 Visita</option>
+                <option value="proposta">📄 Proposta</option>
+                <option value="contrato">📝 Contrato</option>
+                <option value="outro">📌 Outro</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Descrição *</label>
+              <textarea id="ocorrencia-descricao" class="form-control" rows="3" required></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Status</label>
+              <select id="ocorrencia-status" class="form-select">
+                <option value="concluido">✅ Concluído</option>
+                <option value="pendente">⏳ Pendente</option>
+                <option value="aberto">🔓 Aberto</option>
+              </select>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" form="form-ocorrencia" class="btn btn-success">Salvar Ocorrência</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
@@ -534,6 +602,7 @@
   <script src="./src/js/shared/forms.js"></script>
   <script src="./src/js/shared/contatos.js"></script>
   <script src="./src/js/shared/tarefas.js"></script>
+  <script src="./src/js/shared/historico.js"></script>
   <script src="./src/js/shared/main.js"></script>
   <script src="./src/js/core/inactivity.js"></script>
 
