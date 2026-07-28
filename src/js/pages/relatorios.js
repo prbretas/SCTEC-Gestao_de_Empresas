@@ -21,6 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("rel-data-fim").value = hoje.toISOString().split("T")[0];
 
   document.getElementById("btn-gerar-relatorio")?.addEventListener("click", gerarRelatorio);
+  document.getElementById("btn-exportar-csv-relatorio")?.addEventListener("click", exportarCsvRelatorio);
 
   document.querySelectorAll(".rel-preset").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -219,4 +220,55 @@ function gerarRelatorio() {
       Gerado em ${new Date().toLocaleString("pt-BR")} — SCTEC Gestão Empresarial
     </div>
   `;
+}
+
+function exportarCsvRelatorio() {
+  const dataInicio = document.getElementById("rel-data-inicio").value;
+  const dataFim = document.getElementById("rel-data-fim").value;
+
+  const financeiro = _filtrarPorData(window.FinanceiroStorage ? FinanceiroStorage.buscarTodos() : [], dataInicio, dataFim);
+  const crm = _filtrarPorData(window.CrmStorage ? CrmStorage.buscarTodos() : [], dataInicio, dataFim);
+  const propostas = _filtrarPorData(window.PropostasStorage ? PropostasStorage.buscarTodos() : [], dataInicio, dataFim);
+  const agenda = _filtrarPorData(window.AgendaStorage ? AgendaStorage.buscarTodos() : [], dataInicio, dataFim);
+
+  let csv = "RELATÓRIO CONSOLIDADO SCTEC\n";
+  csv += `Período: ${dataInicio || "início"} a ${dataFim || "hoje"}\n`;
+  csv += `Gerado em: ${new Date().toLocaleString("pt-BR")}\n\n`;
+
+  // Financeiro
+  csv += "=== FINANCEIRO ===\n";
+  csv += "Data;Tipo;Descrição;Valor;Categoria;Status Pagamento\n";
+  financeiro.forEach((t) => {
+    csv += `${t.data || ""};${t.tipo || ""};${(t.descricao || "").replace(/;/g, ",")};${t.valor || 0};${t.categoria || ""};${t.statusPagamento || "pendente"}\n`;
+  });
+
+  // CRM
+  csv += "\n=== CRM / FUNIL ===\n";
+  csv += "Título;Empresa;Etapa;Valor;Previsão\n";
+  crm.forEach((o) => {
+    csv += `${(o.titulo || "").replace(/;/g, ",")};${o.empresaId || ""};${o.etapa || ""};${o.valor || 0};${o.previsao || ""}\n`;
+  });
+
+  // Propostas
+  csv += "\n=== PROPOSTAS ===\n";
+  csv += "Número;Título;Status;Valor Total;Validade\n";
+  propostas.forEach((p) => {
+    csv += `${p.numero || ""};${(p.titulo || "").replace(/;/g, ",")};${p.status || ""};${p.total || 0};${p.validade || ""}\n`;
+  });
+
+  // Agenda
+  csv += "\n=== AGENDA ===\n";
+  csv += "Data;Título;Tipo;Status\n";
+  agenda.forEach((c) => {
+    csv += `${c.data || ""};${(c.titulo || "").replace(/;/g, ",")};${c.tipo || ""};${c.status || ""}\n`;
+  });
+
+  // Download
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `relatorio_sctec_${dataInicio || "total"}_${dataFim || "hoje"}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
 }

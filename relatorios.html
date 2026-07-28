@@ -32,7 +32,10 @@
   <main class="container pb-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h1 id="rotinaTitle">📑 Relatórios Avançados</h1>
-      <button onclick="window.print()" class="btn btn-outline-secondary btn-sm no-print">🖨️ Imprimir / PDF</button>
+      <div class="d-flex gap-2 no-print">
+        <button class="btn btn-outline-success btn-sm" id="btn-exportar-csv-relatorio">📥 Exportar CSV</button>
+        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">🖨️ Imprimir / PDF</button>
+      </div>
     </div>
 
     <!-- FILTROS -->
