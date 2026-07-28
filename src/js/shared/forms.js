@@ -345,6 +345,12 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
       const sociosJson = sociosSection ? sociosSection.getAttribute("data-socios") : null;
       if (sociosJson) {
         try { dados.socios = JSON.parse(sociosJson); } catch { dados.socios = []; }
+      } else if (idExistente) {
+        // Preserva sócios do registro existente se não houve nova consulta
+        const empExistente = EmpreendimentoStorage.buscarPorId(idExistente);
+        if (empExistente && empExistente.socios) {
+          dados.socios = empExistente.socios;
+        }
       }
 
       // Coleta contatos e tarefas das abas
@@ -404,8 +410,13 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
     if (selectTipo) selectTipo.value = emp.tipoPessoa || "PJ";
 
     // Restaura sócios salvos (se houver)
-    const socios = emp.socios && emp.socios.length > 0 ? emp.socios : [];
+    const socios = Array.isArray(emp.socios) && emp.socios.length > 0 ? emp.socios : [];
     FormController.renderizarSocios(socios);
+    // Garante que data-socios está setado para persistência no save
+    const sociosSec = document.querySelector("#socios-section");
+    if (sociosSec && socios.length > 0) {
+      sociosSec.setAttribute("data-socios", JSON.stringify(socios));
+    }
 
     // Carrega contatos e tarefas nas abas
     if (window.ContatosController) {
