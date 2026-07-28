@@ -99,6 +99,7 @@ function _propSetModo(modo) {
 document.addEventListener("DOMContentLoaded", () => {
   const sessao = AuthService.requireAuth();
   if (!sessao) return;
+  if (window.ModulesController && !ModulesController.requireModuleAccess("propostas")) return;
   if (window.ConfigController) ConfigController.aplicar(ConfigController.obter());
   if (window.NavbarController) NavbarController.init("propostas");
   if (window.ThemeController) ThemeController.init();

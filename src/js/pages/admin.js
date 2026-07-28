@@ -237,13 +237,23 @@ function renderizarPapeis() {
   const papeis = RolesController.obterPorOrg(sessao.orgId);
 
   if (papeis.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-4">Nenhum papel criado. Clique em "➕ Novo Papel" para começar.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">Nenhum papel criado. Clique em "➕ Novo Papel" para começar.</td></tr>`;
     return;
   }
+
+  // Módulos disponíveis para papéis (exclui adminOnly)
+  const modulosDisponiveis = MODULOS_CATALOGO.filter((m) => !m.adminOnly);
 
   tbody.innerHTML = papeis.map((p) => {
     const qtdUsuarios = RolesController.contarUsuariosPorPapel(sessao.orgId, p.id);
     const podeExcluir = qtdUsuarios === 0;
+    const permitidos = p.modulosPermitidos;
+
+    // Badge de módulos
+    const badgesModulos = modulosDisponiveis.map((m) => {
+      const ativo = permitidos === null || permitidos.includes(m.id);
+      return `<span class="badge me-1 ${ativo ? "bg-success" : "bg-light text-muted border"}" title="${m.label}">${m.icon}</span>`;
+    }).join("");
 
     return `
       <tr>
@@ -255,6 +265,7 @@ function renderizarPapeis() {
             📋
           </button>
         </td>
+        <td>${badgesModulos}</td>
         <td class="text-center">
           <span class="badge ${qtdUsuarios > 0 ? "bg-primary" : "bg-light text-dark border"}">
             ${qtdUsuarios} usuário${qtdUsuarios !== 1 ? "s" : ""}
@@ -263,7 +274,7 @@ function renderizarPapeis() {
         <td class="text-center">
           <button class="btn btn-xs btn-outline-primary me-1"
             onclick="editarPapel('${p.id}', '${p.nome.replace(/'/g, "\\'")}')"
-            title="Editar nome do papel">
+            title="Editar papel">
             ✏️ Editar
           </button>
           <button class="btn btn-xs btn-outline-danger ${podeExcluir ? "" : "disabled"}"
@@ -287,12 +298,39 @@ function abrirFormPapel(id = "", nomeAtual = "") {
   const inputNome = document.getElementById("input-nome-papel");
   const inputId = document.getElementById("input-papel-id");
   const titulo = document.getElementById("form-papel-titulo");
+  const containerModulos = document.getElementById("modulos-papel-checkboxes");
 
   if (!card) return;
 
   inputId.value = id;
   inputNome.value = nomeAtual;
   titulo.textContent = id ? "Editar Papel" : "Novo Papel";
+
+  // Renderiza checkboxes dos módulos (exclui adminOnly)
+  if (containerModulos) {
+    const sessao = AuthService.obterSessao();
+    const modulosDisponiveis = MODULOS_CATALOGO.filter((m) => !m.adminOnly);
+
+    // Obtém seleção atual do papel (modo edição) ou marca todos por padrão (modo criação)
+    let permitidos = null;
+    if (id && sessao) {
+      const papel = RolesController.buscarPorId(sessao.orgId, id);
+      permitidos = papel ? papel.modulosPermitidos : null;
+    }
+
+    containerModulos.innerHTML = modulosDisponiveis.map((m) => {
+      const checked = permitidos === null || permitidos.includes(m.id) ? "checked" : "";
+      return `
+        <div class="form-check form-check-inline mb-2">
+          <input class="form-check-input modulo-checkbox" type="checkbox"
+            id="mod-check-${m.id}" value="${m.id}" ${checked} />
+          <label class="form-check-label" for="mod-check-${m.id}">
+            ${m.icon} ${m.label}
+          </label>
+        </div>`;
+    }).join("");
+  }
+
   card.classList.remove("d-none");
   inputNome.focus();
 }
@@ -306,10 +344,12 @@ function fecharFormPapel() {
   card.classList.add("d-none");
   document.getElementById("input-nome-papel").value = "";
   document.getElementById("input-papel-id").value = "";
+  const containerModulos = document.getElementById("modulos-papel-checkboxes");
+  if (containerModulos) containerModulos.innerHTML = "";
 }
 
 /**
- * Salva o papel (cria ou edita).
+ * Salva o papel (cria ou edita), incluindo modulosPermitidos.
  */
 function salvarPapel() {
   const sessao = AuthService.obterSessao();
@@ -318,14 +358,32 @@ function salvarPapel() {
   const nome = document.getElementById("input-nome-papel")?.value.trim();
   const papelId = document.getElementById("input-papel-id")?.value;
 
+  // Coleta os módulos marcados
+  const checkboxes = document.querySelectorAll(".modulo-checkbox");
+  const modulosMarcados = Array.from(checkboxes)
+    .filter((cb) => cb.checked)
+    .map((cb) => cb.value);
+
+  // Se todos marcados → null (sem restrição); se parcial → array com selecionados
+  const modulosDisponiveis = MODULOS_CATALOGO.filter((m) => !m.adminOnly);
+  const modulosPermitidos = modulosMarcados.length === modulosDisponiveis.length
+    ? null
+    : modulosMarcados;
+
   let resultado;
   if (papelId) {
-    // Edição
+    // Edição: nome + módulos
     resultado = RolesController.editar(sessao.orgId, papelId, nome);
+    if (resultado.ok) {
+      RolesController.definirModulos(sessao.orgId, papelId, modulosPermitidos);
+    }
   } else {
-    // Criação — precisa do código base da organização
+    // Criação
     const org = AuthService.buscarOrgPorId(sessao.orgId);
     resultado = RolesController.criar(sessao.orgId, nome, org ? org.codigoConvite : sessao.orgId);
+    if (resultado.ok) {
+      RolesController.definirModulos(sessao.orgId, resultado.papel.id, modulosPermitidos);
+    }
   }
 
   if (!resultado.ok) {

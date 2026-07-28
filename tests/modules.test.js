@@ -1,29 +1,58 @@
 /**
  * modules.test.js — Testes do sistema de módulos (modules.js)
+ * @jest-environment node
  */
 
 const fs = require("fs");
 const path = require("path");
+const { TextEncoder, TextDecoder } = require("util");
+const nodeCrypto = require("crypto");
+
+globalThis.TextEncoder = TextEncoder;
+globalThis.TextDecoder = TextDecoder;
+globalThis.crypto = nodeCrypto.webcrypto;
+
+function makeMockStorage() {
+  const store = {};
+  return {
+    getItem: (k) => (k in store ? store[k] : null),
+    setItem: (k, v) => { store[k] = String(v); },
+    removeItem: (k) => { delete store[k]; },
+    clear: () => { Object.keys(store).forEach((k) => delete store[k]); },
+  };
+}
+const mockLS = makeMockStorage();
+const mockSS = makeMockStorage();
+globalThis.localStorage = mockLS;
+globalThis.sessionStorage = mockSS;
 
 beforeAll(() => {
   // Carrega auth.js (necessário para obterSessao)
   const authCode = fs.readFileSync(path.join(__dirname, "../src/js/core/auth.js"), "utf8");
+  const authWithCrypto = `const crypto = globalThis.crypto;\n${authCode}`;
   // eslint-disable-next-line no-new-func
-  new Function("globalThis", "window", "localStorage", "sessionStorage", "crypto", authCode)(
-    globalThis, globalThis, globalThis.localStorage, globalThis.sessionStorage, globalThis.crypto
+  new Function("globalThis", "window", "localStorage", "sessionStorage", authWithCrypto)(
+    globalThis, globalThis, globalThis.localStorage, globalThis.sessionStorage
+  );
+
+  // Carrega roles.js (necessário para obterModulosPermitidos)
+  const rolesCode = fs.readFileSync(path.join(__dirname, "../src/js/core/roles.js"), "utf8");
+  // eslint-disable-next-line no-new-func
+  new Function("globalThis", "window", "localStorage", rolesCode)(
+    globalThis, globalThis, globalThis.localStorage
   );
 
   // Carrega modules.js
-  const code = fs.readFileSync(path.join(__dirname, "../src/js/core/modules.js"), "utf8");
+  const modulesCode = fs.readFileSync(path.join(__dirname, "../src/js/core/modules.js"), "utf8");
   // eslint-disable-next-line no-new-func
-  new Function("globalThis", "window", "localStorage", code)(
+  new Function("globalThis", "window", "localStorage", modulesCode)(
     globalThis, globalThis, globalThis.localStorage
   );
 });
 
 beforeEach(() => {
-  localStorage.clear();
-  sessionStorage.clear();
+  mockLS.clear();
+  mockSS.clear();
 });
 
 describe("ModulesController — Estado dos módulos", () => {
@@ -74,6 +103,89 @@ describe("ModulesController — Visibilidade por role", () => {
     ModulesController.definir("crm", false);
     const visiveis = ModulesController.obterModulosVisiveis();
     expect(visiveis.map((m) => m.id)).not.toContain("crm");
+  });
+});
+
+describe("ModulesController — Filtragem por papel (modulosPermitidos)", () => {
+  const ORG_ID = "77001";
+  const COD_BASE = "SCTEC-ORG-77001";
+
+  test("usuário sem papel vê todos os módulos ativos não-adminOnly (fallback)", () => {
+    sessionStorage.setItem("SCTEC_SESSION", JSON.stringify({
+      id: "u1", nome: "user1", role: "user", orgId: ORG_ID, papelId: null,
+    }));
+    const visiveis = ModulesController.obterModulosVisiveis();
+    const ids = visiveis.map((m) => m.id);
+    expect(ids).toContain("crm");
+    expect(ids).toContain("financeiro");
+    expect(ids).toContain("cadastros");
+    expect(ids).not.toContain("settings");
+    expect(ids).not.toContain("admin");
+  });
+
+  test("papel com modulosPermitidos restritos filtra corretamente", () => {
+    // Cria papel com apenas cadastros e crm
+    const papel = RolesController.criar(ORG_ID, "Vendedor", COD_BASE);
+    RolesController.definirModulos(ORG_ID, papel.papel.id, ["cadastros", "crm"]);
+
+    sessionStorage.setItem("SCTEC_SESSION", JSON.stringify({
+      id: "u2", nome: "user2", role: "user", orgId: ORG_ID, papelId: papel.papel.id,
+    }));
+
+    const visiveis = ModulesController.obterModulosVisiveis();
+    const ids = visiveis.map((m) => m.id);
+    expect(ids).toContain("cadastros");
+    expect(ids).toContain("crm");
+    expect(ids).not.toContain("financeiro");
+    expect(ids).not.toContain("propostas");
+    expect(ids).not.toContain("agenda");
+  });
+
+  test("papel com modulosPermitidos null (sem restrição) vê todos os módulos ativos não-adminOnly", () => {
+    const papel = RolesController.criar(ORG_ID, "Gerente", COD_BASE);
+    RolesController.definirModulos(ORG_ID, papel.papel.id, null);
+
+    sessionStorage.setItem("SCTEC_SESSION", JSON.stringify({
+      id: "u3", nome: "user3", role: "user", orgId: ORG_ID, papelId: papel.papel.id,
+    }));
+
+    const visiveis = ModulesController.obterModulosVisiveis();
+    const ids = visiveis.map((m) => m.id);
+    expect(ids).toContain("crm");
+    expect(ids).toContain("financeiro");
+    expect(ids).not.toContain("settings");
+  });
+
+  test("admin vê todos os módulos ativos independente do papel", () => {
+    const papel = RolesController.criar(ORG_ID, "Suporte", COD_BASE);
+    RolesController.definirModulos(ORG_ID, papel.papel.id, ["cadastros"]);
+
+    sessionStorage.setItem("SCTEC_SESSION", JSON.stringify({
+      id: "a1", nome: "admin1", role: "admin", orgId: ORG_ID, papelId: papel.papel.id,
+    }));
+
+    const visiveis = ModulesController.obterModulosVisiveis();
+    const ids = visiveis.map((m) => m.id);
+    // Admin ignora restrição de papel
+    expect(ids).toContain("crm");
+    expect(ids).toContain("financeiro");
+    expect(ids).toContain("settings");
+    expect(ids).toContain("admin");
+  });
+
+  test("módulo desativado na org não aparece mesmo se papel permite", () => {
+    const papel = RolesController.criar(ORG_ID, "Analista", COD_BASE);
+    RolesController.definirModulos(ORG_ID, papel.papel.id, ["crm", "financeiro"]);
+
+    // Seta sessão ANTES de chamar definir, para que a chave da org seja usada
+    sessionStorage.setItem("SCTEC_SESSION", JSON.stringify({
+      id: "u4", nome: "user4", role: "user", orgId: ORG_ID, papelId: papel.papel.id,
+    }));
+    ModulesController.definir("crm", false); // agora salva em SCTEC_MODULES_77001
+
+    const visiveis = ModulesController.obterModulosVisiveis();
+    expect(visiveis.map((m) => m.id)).not.toContain("crm");
+    expect(visiveis.map((m) => m.id)).toContain("financeiro");
   });
 });
 

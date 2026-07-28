@@ -72,17 +72,26 @@
       <div class="card shadow-sm border-0 mb-3 d-none" id="card-form-papel">
         <div class="card-body">
           <h6 id="form-papel-titulo" class="mb-3">Novo Papel</h6>
-          <div class="d-flex gap-2 align-items-end">
-            <div class="flex-grow-1">
-              <label for="input-nome-papel" class="form-label small mb-1">Nome do Papel</label>
-              <input type="text" id="input-nome-papel" class="form-control form-control-sm"
-                placeholder="Ex: Vendedor, Analista, Gerente..." maxlength="40" />
-            </div>
-            <div>
-              <input type="hidden" id="input-papel-id" value="" />
-              <button class="btn btn-sm btn-success" id="btn-salvar-papel">💾 Salvar</button>
-              <button class="btn btn-sm btn-outline-secondary ms-1" id="btn-cancelar-papel">Cancelar</button>
-            </div>
+
+          <!-- Nome -->
+          <div class="mb-3">
+            <label for="input-nome-papel" class="form-label small mb-1">Nome do Papel</label>
+            <input type="text" id="input-nome-papel" class="form-control form-control-sm"
+              placeholder="Ex: Vendedor, Analista, Gerente..." maxlength="40" />
+            <input type="hidden" id="input-papel-id" value="" />
+          </div>
+
+          <!-- Módulos permitidos -->
+          <div class="mb-3">
+            <label class="form-label small mb-2 fw-semibold">🔓 Módulos Permitidos</label>
+            <div class="text-muted small mb-2">Selecione quais módulos os usuários deste papel poderão acessar.</div>
+            <div id="modulos-papel-checkboxes" class="d-flex flex-wrap gap-2"></div>
+          </div>
+
+          <!-- Ações -->
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-success" id="btn-salvar-papel">💾 Salvar Papel</button>
+            <button class="btn btn-sm btn-outline-secondary" id="btn-cancelar-papel">Cancelar</button>
           </div>
         </div>
       </div>
@@ -95,6 +104,7 @@
               <tr>
                 <th>Papel</th>
                 <th>Código de Convite</th>
+                <th>Módulos</th>
                 <th class="text-center">Usuários</th>
                 <th class="text-center">Ações</th>
               </tr>
