@@ -59,6 +59,7 @@ const NavbarController = {
             <div class="d-flex align-items-center gap-2 ms-auto flex-shrink-0">
               ${identidade}
               <span id="navbar-tarefas-vencidas" class="badge bg-danger d-none" title="Tarefas vencidas" style="font-size:.7rem;"></span>
+              <a href="settings.html" class="btn btn-outline-light btn-sm" title="Minha Conta">🔒</a>
               <a href="home.html" class="btn btn-outline-light btn-sm" title="Voltar para Home">🏠 Home</a>
               <div class="form-check form-switch text-light mb-0" title="Modo Escuro">
                 <input class="form-check-input" type="checkbox" id="dark-mode-switch" />
