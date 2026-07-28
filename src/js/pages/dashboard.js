@@ -6,6 +6,8 @@
 
 const DashboardController = {
   charts: {},
+  dataInicio: null,
+  dataFim: null,
 
   init() {
     const sessao = window.AuthService ? AuthService.requireAuth() : null;
@@ -17,8 +19,66 @@ const DashboardController = {
     if (window.ThemeController) ThemeController.init();
 
     this._initEventos();
+    this._initFiltroData();
     this._carregarModelos();
     this.renderizar();
+  },
+
+  _initFiltroData() {
+    // Default: últimos 30 dias
+    const hoje = new Date();
+    const inicio = new Date(hoje);
+    inicio.setDate(inicio.getDate() - 30);
+    document.getElementById("dash-data-inicio").value = inicio.toISOString().split("T")[0];
+    document.getElementById("dash-data-fim").value = hoje.toISOString().split("T")[0];
+    this.dataInicio = inicio.toISOString().split("T")[0];
+    this.dataFim = hoje.toISOString().split("T")[0];
+
+    document.getElementById("btn-aplicar-filtro-dash")?.addEventListener("click", () => {
+      this.dataInicio = document.getElementById("dash-data-inicio").value || null;
+      this.dataFim = document.getElementById("dash-data-fim").value || null;
+      this.renderizar();
+    });
+
+    document.getElementById("btn-limpar-filtro-dash")?.addEventListener("click", () => {
+      document.getElementById("dash-data-inicio").value = "";
+      document.getElementById("dash-data-fim").value = "";
+      this.dataInicio = null;
+      this.dataFim = null;
+      this.renderizar();
+    });
+
+    document.querySelectorAll(".dash-preset-periodo").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const dias = parseInt(btn.getAttribute("data-dias"));
+        const fim = new Date();
+        const ini = new Date();
+        ini.setDate(ini.getDate() - dias);
+        document.getElementById("dash-data-inicio").value = ini.toISOString().split("T")[0];
+        document.getElementById("dash-data-fim").value = fim.toISOString().split("T")[0];
+        this.dataInicio = ini.toISOString().split("T")[0];
+        this.dataFim = fim.toISOString().split("T")[0];
+        this.renderizar();
+      });
+    });
+  },
+
+  /**
+   * Filtra um array de registros pela data.
+   * Suporta campos: data, criadoEm, dataCadastro.
+   * @param {Array} registros
+   * @returns {Array}
+   */
+  _filtrarPorData(registros) {
+    if (!this.dataInicio && !this.dataFim) return registros;
+    return registros.filter((r) => {
+      const dataReg = r.data || r.criadoEm || r.dataCadastro || null;
+      if (!dataReg) return true; // sem data = inclui
+      const d = dataReg.slice(0, 10); // YYYY-MM-DD
+      if (this.dataInicio && d < this.dataInicio) return false;
+      if (this.dataFim && d > this.dataFim) return false;
+      return true;
+    });
   },
 
   _initEventos() {
@@ -134,10 +194,17 @@ const DashboardController = {
 
   _obterDadosWidget(widgetId) {
     const empresas = window.EmpreendimentoStorage ? EmpreendimentoStorage.buscarTodos() : [];
-    const crm = window.CrmStorage ? CrmStorage.buscarTodos() : [];
-    const propostas = window.PropostasStorage ? PropostasStorage.buscarTodos() : [];
-    const agenda = window.AgendaStorage ? AgendaStorage.buscarTodos() : [];
-    const financeiro = window.FinanceiroStorage ? FinanceiroStorage.buscarTodos() : [];
+    const crmBruto = window.CrmStorage ? CrmStorage.buscarTodos() : [];
+    const propostasBruto = window.PropostasStorage ? PropostasStorage.buscarTodos() : [];
+    const agendaBruto = window.AgendaStorage ? AgendaStorage.buscarTodos() : [];
+    const financeiroBruto = window.FinanceiroStorage ? FinanceiroStorage.buscarTodos() : [];
+
+    // Aplica filtro de data
+    const crm = this._filtrarPorData(crmBruto);
+    const propostas = this._filtrarPorData(propostasBruto);
+    const agenda = this._filtrarPorData(agendaBruto);
+    const financeiro = this._filtrarPorData(financeiroBruto);
+
     const fmt = (v) => Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
     switch (widgetId) {

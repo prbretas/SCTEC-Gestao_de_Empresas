@@ -41,6 +41,40 @@
       </div>
     </div>
 
+    <!-- FILTRO DE PERÍODO -->
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-body p-3">
+        <div class="row g-2 align-items-center">
+          <div class="col-auto">
+            <label class="form-label small mb-0 fw-bold">📅 Período:</label>
+          </div>
+          <div class="col-auto">
+            <input type="date" id="dash-data-inicio" class="form-control form-control-sm" />
+          </div>
+          <div class="col-auto">
+            <span class="text-muted">até</span>
+          </div>
+          <div class="col-auto">
+            <input type="date" id="dash-data-fim" class="form-control form-control-sm" />
+          </div>
+          <div class="col-auto">
+            <button class="btn btn-sm btn-primary" id="btn-aplicar-filtro-dash">Aplicar</button>
+          </div>
+          <div class="col-auto">
+            <button class="btn btn-sm btn-outline-secondary" id="btn-limpar-filtro-dash">Limpar</button>
+          </div>
+          <div class="col-auto ms-auto">
+            <div class="btn-group btn-group-sm" role="group">
+              <button class="btn btn-outline-secondary dash-preset-periodo" data-dias="7">7d</button>
+              <button class="btn btn-outline-secondary dash-preset-periodo" data-dias="30">30d</button>
+              <button class="btn btn-outline-secondary dash-preset-periodo" data-dias="90">90d</button>
+              <button class="btn btn-outline-secondary dash-preset-periodo" data-dias="365">1 ano</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- GRID DINÂMICO DE WIDGETS — renderizado por JS -->
     <div id="dashboard-grid" class="row g-3"></div>
   </main>
