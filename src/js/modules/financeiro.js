@@ -111,6 +111,10 @@ document.addEventListener("DOMContentLoaded", () => {
     _resetarForm();
     document.getElementById("titulo-modal-transacao").textContent = "💰 Nova Transação";
     document.getElementById("trans-data").value = new Date().toISOString().split("T")[0];
+    // Reset anexos e itens
+    if (window.AttachmentsController) AttachmentsController.carregar("trans-anexos-container", [], false);
+    const itensSection = document.getElementById("trans-itens-section");
+    if (itensSection) itensSection.classList.add("d-none");
     _finSetModo("edicao");
     modal.show();
   });
@@ -118,6 +122,11 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-editar-transacao")?.addEventListener("click", () => {
     _finSetModo("edicao");
     document.getElementById("titulo-modal-transacao").textContent = "✏️ Editar Transação";
+    // Libera anexos para edição
+    if (window.AttachmentsController) {
+      const anexos = AttachmentsController.obterAnexos("trans-anexos-container");
+      AttachmentsController.carregar("trans-anexos-container", anexos, false);
+    }
   });
 
   modalEl.addEventListener("hide.bs.modal", (e) => {
@@ -135,6 +144,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const id = form.dataset.editId;
     const dados = _coletar();
     if (!dados) return;
+
+    // Coleta anexos
+    if (window.AttachmentsController) {
+      dados.anexos = AttachmentsController.obterAnexos("trans-anexos-container");
+    }
+
     id ? FinanceiroStorage.atualizar(id, dados) : FinanceiroStorage.adicionar(dados);
     // Marca como visualização para que o hide.bs.modal não pergunte sobre descartar
     form.dataset.modoVisualizacao = "true";
@@ -257,6 +272,30 @@ function visualizarTransacao(id) {
   document.getElementById("trans-empresa").value = t.empresaId || "";
   document.getElementById("trans-obs").value = t.obs || "";
   document.getElementById("form-transacao").dataset.editId = id;
+
+  // Exibe itens detalhados se existirem (NFe)
+  const itensSection = document.getElementById("trans-itens-section");
+  const itensLista = document.getElementById("trans-itens-lista");
+  if (itensSection && itensLista) {
+    if (t.itens && t.itens.length > 0) {
+      itensSection.classList.remove("d-none");
+      const _fmtV = (v) => Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+      itensLista.innerHTML = t.itens.map((i) =>
+        `<div class="d-flex justify-content-between border-bottom py-1">
+          <span>${i.desc || "—"}</span>
+          <span>${i.qtd || 1}x ${_fmtV(i.valor)} = <strong>${_fmtV((i.qtd || 1) * (i.valor || 0))}</strong></span>
+        </div>`
+      ).join("");
+    } else {
+      itensSection.classList.add("d-none");
+      itensLista.innerHTML = "";
+    }
+  }
+
+  // Carrega anexos
+  if (window.AttachmentsController) {
+    AttachmentsController.carregar("trans-anexos-container", t.anexos || [], true);
+  }
 
   // Exibe auditoria no footer
   const auditoriaEl = document.getElementById("auditoria-fin");

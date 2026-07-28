@@ -71,6 +71,7 @@ module.exports = [
         RolesController: 'readonly',
         IntegrationsController: 'readonly',
         ApprovalsController: 'readonly',
+        AttachmentsController: 'readonly',
         // ── APIs do browser nao declaradas anteriormente ─────────────────────
         TextEncoder: 'readonly',
         crypto: 'readonly',
