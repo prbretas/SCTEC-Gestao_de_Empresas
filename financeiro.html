@@ -172,6 +172,17 @@
                 <label class="form-label fw-bold">Observações</label>
                 <textarea id="trans-obs" class="form-control" rows="2"></textarea>
               </div>
+
+              <!-- Itens detalhados (NFe) — visível quando há itens -->
+              <div class="mb-3 d-none" id="trans-itens-section">
+                <label class="form-label fw-bold">📦 Itens da Proposta</label>
+                <div id="trans-itens-lista" class="small border rounded p-2 bg-light"></div>
+              </div>
+
+              <!-- Anexos -->
+              <div class="mb-3">
+                <div id="trans-anexos-container"></div>
+              </div>
             </form>
           </div>
           <div class="modal-footer">
@@ -192,6 +203,7 @@
     <script src="./src/js/core/modules.js"></script>
     <script src="./src/js/core/theme.js"></script>
     <script src="./src/js/core/navbar.js"></script>
+    <script src="./src/js/shared/attachments.js"></script>
     <script src="./src/js/modules/financeiro.js"></script>
     <script src="./src/js/core/inactivity.js"></script>
   </body>

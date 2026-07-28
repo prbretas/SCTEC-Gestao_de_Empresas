@@ -88,18 +88,23 @@ const IntegrationsController = {
 
   /**
    * Gera a entrada financeira a partir de uma proposta aceita.
+   * Inclui itens detalhados da proposta para formato NFe.
    * @param {Object} proposta
    */
   _gerarEntradaFinanceira(proposta) {
     if (!window.FinanceiroStorage) return;
     FinanceiroStorage.adicionar({
       tipo: "entrada",
-      descricao: `Proposta aceita: ${proposta.titulo || ""}${proposta.numero ? " #" + proposta.numero : ""}`,
+      statusNfe: "faturado",
+      descricao: `NFe — Proposta${proposta.numero ? " #" + proposta.numero : ""}: ${proposta.titulo || ""}`,
       valor: proposta.total,
+      itens: proposta.itens || [],
       data: new Date().toISOString().split("T")[0],
       categoria: "servicos",
       empresaId: proposta.empresaId,
       propostaId: proposta.id,
+      propostaNumero: proposta.numero || null,
+      anexos: [],
       obs: "Gerado automaticamente pela integração Proposta→Financeiro",
     });
   },

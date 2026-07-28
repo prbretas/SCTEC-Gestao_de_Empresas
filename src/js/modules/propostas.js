@@ -191,6 +191,8 @@ function _resetarForm() {
   document.getElementById("prop-itens-lista").innerHTML = "";
   _recalcularTotal();
   _adicionarLinhaItem();
+  // Limpa anexos
+  if (window.AttachmentsController) AttachmentsController.carregar("prop-anexos-container", [], false);
 }
 
 function _adicionarLinhaItem(item = {}) {
@@ -248,6 +250,9 @@ function _coletar() {
   if (!titulo || !empresaId) { alert("Título e Empresa são obrigatórios."); return null; }
   const itens = _coletarItens();
   const total = itens.reduce((s, i) => s + i.qtd * i.valor, 0);
+  const anexos = window.AttachmentsController
+    ? AttachmentsController.obterAnexos("prop-anexos-container")
+    : [];
   return {
     titulo,
     numero: document.getElementById("prop-numero").value.trim(),
@@ -257,6 +262,7 @@ function _coletar() {
     itens,
     total,
     obs: document.getElementById("prop-obs").value.trim(),
+    anexos,
   };
 }
 
@@ -321,6 +327,11 @@ function _carregarProposta(p) {
   (p.itens || []).forEach((item) => _adicionarLinhaItem(item));
   if (!p.itens || p.itens.length === 0) _adicionarLinhaItem();
   _recalcularTotal();
+
+  // Carrega anexos
+  if (window.AttachmentsController) {
+    AttachmentsController.carregar("prop-anexos-container", p.anexos || [], false);
+  }
 }
 
 function visualizarProposta(id) {
