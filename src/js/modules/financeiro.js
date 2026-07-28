@@ -162,6 +162,12 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById(id)?.addEventListener("change", renderizar);
   });
 
+  // Atualiza selects de proposta/oportunidade ao mudar empresa
+  document.getElementById("trans-empresa")?.addEventListener("change", (e) => {
+    _preencherPropostasFinanceiro(e.target.value, null);
+    _preencherOportunidadesFinanceiro(e.target.value, null);
+  });
+
   document.getElementById("btn-limpar").addEventListener("click", () => {
     document.getElementById("filtro-tipo").value = "";
     document.getElementById("filtro-busca").value = "";
@@ -196,10 +202,46 @@ function _coletar() {
     descricao: desc,
     valor,
     data,
+    dataVencimento: document.getElementById("trans-vencimento")?.value || null,
+    statusPagamento: document.getElementById("trans-status-pagamento")?.value || "pendente",
     categoria: document.getElementById("trans-categoria").value,
     empresaId: document.getElementById("trans-empresa").value,
+    propostaId: document.getElementById("trans-proposta-vinculada")?.value || null,
+    oportunidadeId: document.getElementById("trans-oportunidade-vinculada")?.value || null,
     obs: document.getElementById("trans-obs").value.trim(),
   };
+}
+
+function _preencherPropostasFinanceiro(empresaId, propostaIdAtual) {
+  const sel = document.getElementById("trans-proposta-vinculada");
+  if (!sel || !window.PropostasStorage) return;
+  sel.innerHTML = `<option value="">— Nenhuma —</option>`;
+  if (!empresaId) return;
+  PropostasStorage.buscarTodos()
+    .filter((p) => p.empresaId === empresaId && p.status === "aceita")
+    .forEach((p) => {
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = `${p.numero || ""} ${p.titulo} (${_fmt(p.total || 0)})`;
+      if (p.id === propostaIdAtual) opt.selected = true;
+      sel.appendChild(opt);
+    });
+}
+
+function _preencherOportunidadesFinanceiro(empresaId, opIdAtual) {
+  const sel = document.getElementById("trans-oportunidade-vinculada");
+  if (!sel || !window.CrmStorage) return;
+  sel.innerHTML = `<option value="">— Nenhuma —</option>`;
+  if (!empresaId) return;
+  CrmStorage.buscarTodos()
+    .filter((o) => o.empresaId === empresaId && o.etapa === "fechado")
+    .forEach((o) => {
+      const opt = document.createElement("option");
+      opt.value = o.id;
+      opt.textContent = `${o.titulo} (${_fmt(o.valor || 0)})`;
+      if (o.id === opIdAtual) opt.selected = true;
+      sel.appendChild(opt);
+    });
 }
 
 function renderizar() {
@@ -241,12 +283,21 @@ function renderizar() {
     const emp = empresas.find((e) => String(e.id) === String(t.empresaId));
     const dataFmt = t.data ? new Date(t.data + "T12:00:00").toLocaleDateString("pt-BR") : "—";
     const isEntrada = t.tipo === "entrada";
+    const vencFmt = t.dataVencimento ? new Date(t.dataVencimento + "T12:00:00").toLocaleDateString("pt-BR") : "";
+    const hoje = new Date().toISOString().split("T")[0];
+    const estaVencido = t.statusPagamento !== "pago" && t.dataVencimento && t.dataVencimento < hoje;
+    const statusPag = t.statusPagamento || (estaVencido ? "vencido" : "pendente");
+    const badgePag = statusPag === "pago" ? "bg-success" : statusPag === "vencido" || estaVencido ? "bg-danger" : "bg-warning text-dark";
+    const labelPag = statusPag === "pago" ? "✅ Pago" : estaVencido ? "⚠️ Vencido" : "⏳ Pendente";
+
     return `
-      <tr>
+      <tr style="cursor:pointer;" onclick="visualizarTransacao('${t.id}')">
         <td class="small">${dataFmt}</td>
         <td>
           <div class="fw-bold">${t.descricao}</div>
           ${t.obs ? `<div class="small text-muted">${t.obs}</div>` : ""}
+          ${t.propostaId ? `<div class="small text-info">🔗 Proposta vinculada</div>` : ""}
+          ${t.oportunidadeId ? `<div class="small text-info">🔗 Oportunidade vinculada</div>` : ""}
         </td>
         <td><span class="badge bg-secondary">${t.categoria || "outros"}</span></td>
         <td class="small">${emp ? emp.nome : "—"}</td>
@@ -254,7 +305,10 @@ function renderizar() {
           ${isEntrada ? "+" : "-"}${_fmt(t.valor)}
         </td>
         <td class="text-center">
-          <button class="btn btn-xs btn-outline-warning me-1" onclick="visualizarTransacao('${t.id}')">👁️</button>
+          ${vencFmt ? `<div class="small ${estaVencido ? "text-danger fw-bold" : "text-muted"}">${vencFmt}</div>` : ""}
+          <span class="badge ${badgePag}" style="font-size:.7rem;">${labelPag}</span>
+        </td>
+        <td class="text-center" onclick="event.stopPropagation()">
           <button class="btn btn-xs btn-outline-danger" onclick="excluirTransacao('${t.id}')">🗑️</button>
         </td>
       </tr>`;
@@ -272,6 +326,16 @@ function visualizarTransacao(id) {
   document.getElementById("trans-empresa").value = t.empresaId || "";
   document.getElementById("trans-obs").value = t.obs || "";
   document.getElementById("form-transacao").dataset.editId = id;
+
+  // Novos campos (#78)
+  const elVenc = document.getElementById("trans-vencimento");
+  if (elVenc) elVenc.value = t.dataVencimento || "";
+  const elStatus = document.getElementById("trans-status-pagamento");
+  if (elStatus) elStatus.value = t.statusPagamento || "pendente";
+
+  // Vínculos
+  _preencherPropostasFinanceiro(t.empresaId, t.propostaId);
+  _preencherOportunidadesFinanceiro(t.empresaId, t.oportunidadeId);
 
   // Exibe itens detalhados se existirem (NFe)
   const itensSection = document.getElementById("trans-itens-section");
