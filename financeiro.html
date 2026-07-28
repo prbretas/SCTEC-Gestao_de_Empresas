@@ -99,6 +99,7 @@
                 <th>Categoria</th>
                 <th>Empresa</th>
                 <th class="text-end">Valor</th>
+                <th class="text-center">Vencimento</th>
                 <th class="text-center">Ações</th>
               </tr>
             </thead>
@@ -167,6 +168,34 @@
                 <select id="trans-empresa" class="form-select">
                   <option value="">— Nenhuma —</option>
                 </select>
+              </div>
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">Data de Vencimento</label>
+                  <input type="date" id="trans-vencimento" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">Status Pagamento</label>
+                  <select id="trans-status-pagamento" class="form-select">
+                    <option value="pendente">⏳ Pendente</option>
+                    <option value="pago">✅ Pago</option>
+                    <option value="vencido">⚠️ Vencido</option>
+                  </select>
+                </div>
+              </div>
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">Proposta Vinculada</label>
+                  <select id="trans-proposta-vinculada" class="form-select">
+                    <option value="">— Nenhuma —</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">Oportunidade Vinculada</label>
+                  <select id="trans-oportunidade-vinculada" class="form-select">
+                    <option value="">— Nenhuma —</option>
+                  </select>
+                </div>
               </div>
               <div class="mb-3">
                 <label class="form-label fw-bold">Observações</label>
