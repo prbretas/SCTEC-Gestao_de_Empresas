@@ -140,6 +140,17 @@ document.addEventListener("DOMContentLoaded", () => {
     _preencherPropostas(e.target.value, null);
   });
 
+  // Atualiza valor ao vincular proposta
+  document.getElementById("op-proposta")?.addEventListener("change", (e) => {
+    const propostaId = e.target.value;
+    if (propostaId && window.PropostasStorage) {
+      const proposta = PropostasStorage.buscarTodos().find((p) => p.id === propostaId);
+      if (proposta && proposta.total) {
+        document.getElementById("op-valor").value = proposta.total;
+      }
+    }
+  });
+
   document.getElementById("btn-editar-oportunidade")?.addEventListener("click", () => {
     _crmSetModo("edicao");
   });
