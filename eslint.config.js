@@ -52,6 +52,8 @@ module.exports = [
         abrirModalCadastro: 'readonly',
         ContatosController: 'readonly',
         TarefasController: 'readonly',
+        ContatosController: 'readonly',
+        TarefasController: 'readonly',
         DashboardController: 'readonly',
         direcaoOrdenacao: 'writable',
         colunaAtual: 'writable',
