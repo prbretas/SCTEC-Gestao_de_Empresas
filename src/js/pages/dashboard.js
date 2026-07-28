@@ -1,10 +1,10 @@
 /**
- * DashboardController — Gerencia os gráficos e indicadores analíticos
- * Utiliza Chart.js para visualização de dados armazenados no localStorage
+ * dashboard.js — Dashboard dinâmico com widgets personalizáveis (#63)
+ * Renderiza widgets baseado na configuração do usuário + modelos salvos.
+ * Utiliza Chart.js para gráficos e DashboardConfigController para config.
  */
 
 const DashboardController = {
-  registros: [],
   charts: {},
 
   init() {
@@ -12,509 +12,295 @@ const DashboardController = {
     if (!sessao) return;
     if (window.ModulesController && !ModulesController.requireModuleAccess("dashboard")) return;
 
-    // Aplica configurações de cores/logo
     if (window.ConfigController) ConfigController.aplicar(ConfigController.obter());
-
-    // Renderiza navbar padronizado
     if (window.NavbarController) NavbarController.init("dashboard");
-
-    // Inicializa dark mode via ThemeController centralizado
     if (window.ThemeController) ThemeController.init();
 
-    // Carrega dados do localStorage
-    this.registros = EmpreendimentoStorage.buscarTodos();
+    this._initEventos();
+    this._carregarModelos();
+    this.renderizar();
+  },
 
-    // Renderiza indicadores
-    this.renderizarIndicadores();
+  _initEventos() {
+    document.getElementById("btn-configurar-dash")?.addEventListener("click", () => {
+      this._renderizarModalConfig();
+      new bootstrap.Modal(document.getElementById("modal-config-dash")).show();
+    });
 
-    // Renderiza gráficos
-    this.renderizarGraficos();
+    document.getElementById("btn-salvar-config-dash")?.addEventListener("click", () => {
+      this._salvarConfig();
+      bootstrap.Modal.getInstance(document.getElementById("modal-config-dash"))?.hide();
+      this.renderizar();
+    });
 
-    // Renderiza últimos registros
-    this.renderizarUltimosRegistros();
+    document.getElementById("select-modelo-dash")?.addEventListener("change", (e) => {
+      DashboardConfigController.setModeloAtivo(e.target.value);
+      this.renderizar();
+    });
 
-    // Re-renderiza gráficos ao alternar dark mode
-    document.addEventListener("change", (e) => {
-      if (e.target && e.target.id === "dark-mode-switch") {
-        setTimeout(() => this.renderizarGraficos(), 100);
-      }
+    document.getElementById("btn-salvar-modelo")?.addEventListener("click", () => {
+      const nome = prompt("Nome do modelo:");
+      if (!nome || !nome.trim()) return;
+      DashboardConfigController.salvarModelo(nome.trim());
+      this._carregarModelos();
+    });
+
+    document.getElementById("btn-excluir-modelo")?.addEventListener("click", () => {
+      const select = document.getElementById("select-modelo-dash");
+      const modeloId = select?.value;
+      if (modeloId === "__default__") return alert("Não é possível excluir o modelo padrão.");
+      if (!confirm("Excluir este modelo?")) return;
+      DashboardConfigController.excluirModelo(modeloId);
+      this._carregarModelos();
+      this.renderizar();
     });
   },
 
+  _carregarModelos() {
+    const select = document.getElementById("select-modelo-dash");
+    const btnExcluir = document.getElementById("btn-excluir-modelo");
+    if (!select) return;
+
+    const modelos = DashboardConfigController.obterModelos();
+    const ativo = DashboardConfigController.getModeloAtivo();
+
+    select.innerHTML = `<option value="__default__">Modelo Padrão</option>`;
+    modelos.forEach((m) => {
+      select.innerHTML += `<option value="${m.id}" ${ativo === m.id ? "selected" : ""}>${m.nome}</option>`;
+    });
+
+    if (ativo !== "__default__") {
+      select.value = ativo;
+      btnExcluir?.classList.remove("d-none");
+    } else {
+      btnExcluir?.classList.add("d-none");
+    }
+  },
+
   /**
-   * Renderiza os indicadores principais (cards)
+   * Renderiza todos os widgets ativos no grid.
    */
-  renderizarIndicadores() {
-    if (this.registros.length === 0) {
-      document.querySelector("#ind-total").textContent = "0";
+  renderizar() {
+    const grid = document.getElementById("dashboard-grid");
+    if (!grid) return;
+
+    // Destrói charts antigos
+    Object.values(this.charts).forEach((c) => c.destroy());
+    this.charts = {};
+
+    const widgetsAtivos = DashboardConfigController.obterWidgetsAtivos();
+
+    if (widgetsAtivos.length === 0) {
+      grid.innerHTML = `<div class="col-12 text-center text-muted py-5">
+        <div style="font-size:3rem;">📊</div>
+        <h5 class="mt-3">Nenhum widget selecionado</h5>
+        <p>Clique em "⚙️ Configurar" para escolher seus widgets.</p>
+      </div>`;
       return;
     }
 
-    const total = this.registros.length;
-    const ativos = this.registros.filter((r) => r.status === "Ativo").length;
-    const inativos = total - ativos;
+    grid.innerHTML = widgetsAtivos.map((w) => {
+      const colClass = w.tipo === "card" ? "col-md-3" : "col-md-6";
+      return `<div class="${colClass}" id="widget-${w.id}">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body text-center">
+            <h6 class="card-subtitle mb-2 text-muted small">${w.icon} ${w.label}</h6>
+            <div id="widget-content-${w.id}"></div>
+          </div>
+        </div>
+      </div>`;
+    }).join("");
 
-    document.querySelector("#ind-total").textContent = total;
-    document.querySelector("#ind-ativos").textContent = ativos;
-    document.querySelector("#ind-inativos").textContent = inativos;
-
-    // Segmento mais frequente
-    const segmentos = this.agruparPor(this.registros, "segmento");
-    const segmentoMaisFreq = Object.entries(segmentos).sort(
-      ([, a], [, b]) => b.length - a.length,
-    )[0];
-    if (segmentoMaisFreq) {
-      document.querySelector("#ind-segmento").textContent =
-        segmentoMaisFreq[0] || "N/A";
-      document.querySelector("#ind-segmento-qtd").textContent =
-        `${segmentoMaisFreq[1].length} registros`;
-    }
-
-    // Município mais frequente
-    const municipios = this.agruparPor(this.registros, "municipio");
-    const municipioMaisFreq = Object.entries(municipios).sort(
-      ([, a], [, b]) => b.length - a.length,
-    )[0];
-    if (municipioMaisFreq) {
-      document.querySelector("#ind-municipio").textContent =
-        municipioMaisFreq[0] || "N/A";
-      document.querySelector("#ind-municipio-qtd").textContent =
-        `${municipioMaisFreq[1].length} registros`;
-    }
-
-    // Registros sem e-mail
-    const semEmail = this.registros.filter(
-      (r) => !r.email || r.email.trim() === "",
-    ).length;
-    document.querySelector("#ind-sem-email").textContent = semEmail;
-
-    // Registros sem telefone
-    const semTelefone = this.registros.filter(
-      (r) => !r.telefone || r.telefone.trim() === "",
-    ).length;
-    document.querySelector("#ind-sem-telefone").textContent = semTelefone;
+    // Renderiza conteúdo de cada widget
+    widgetsAtivos.forEach((w) => this._renderizarWidget(w));
   },
 
-  /**
-   * Renderiza todos os gráficos
-   */
-  renderizarGraficos() {
-    this.renderizarGraficoSegmento();
-    this.renderizarGraficoStatus();
-    this.renderizarGraficoMunicipios();
-    this.renderizarGraficoEvolucao();
-  },
-
-  /**
-   * Gráfico Pizza - Distribuição por Segmento
-   */
-  renderizarGraficoSegmento() {
-    const ctx = document.querySelector("#chart-segmento");
-    if (!ctx) return;
-
-    const segmentos = this.agruparPor(this.registros, "segmento");
-    const labels = Object.keys(segmentos);
-    const data = labels.map((label) => segmentos[label].length);
-
-    if (this.charts.segmento) this.charts.segmento.destroy();
-
-    this.charts.segmento = new Chart(ctx, {
-      type: "doughnut",
-      data: {
-        labels,
-        datasets: [
-          {
-            data,
-            backgroundColor: [
-              "#FF6384",
-              "#36A2EB",
-              "#FFCE56",
-              "#4BC0C0",
-              "#9966FF",
-              "#FF9F40",
-              "#FF6384",
-              "#C9CBCF",
-            ],
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: {
-          legend: {
-            position: "bottom",
-            labels: {
-              color: document.body.classList.contains("dark-mode")
-                ? "#e0e0e0"
-                : "#333",
-            },
-          },
-        },
-      },
-    });
-  },
-
-  /**
-   * Gráfico Rosca - Ativo vs Inativo
-   */
-  renderizarGraficoStatus() {
-    const ctx = document.querySelector("#chart-status");
-    if (!ctx) return;
-
-    const ativos = this.registros.filter((r) => r.status === "Ativo").length;
-    const inativos = this.registros.length - ativos;
-
-    if (this.charts.status) this.charts.status.destroy();
-
-    this.charts.status = new Chart(ctx, {
-      type: "doughnut",
-      data: {
-        labels: ["🟢 Ativo", "🔴 Inativo"],
-        datasets: [
-          {
-            data: [ativos, inativos],
-            backgroundColor: ["#28a745", "#dc3545"],
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: {
-          legend: {
-            position: "bottom",
-            labels: {
-              color: document.body.classList.contains("dark-mode")
-                ? "#e0e0e0"
-                : "#333",
-            },
-          },
-        },
-      },
-    });
-  },
-
-  /**
-   * Gráfico Barras - Top 10 Municípios
-   */
-  renderizarGraficoMunicipios() {
-    const ctx = document.querySelector("#chart-municipios");
-    if (!ctx) return;
-
-    const municipios = this.agruparPor(this.registros, "municipio");
-    const sorted = Object.entries(municipios)
-      .sort(([, a], [, b]) => b.length - a.length)
-      .slice(0, 10);
-
-    const labels = sorted.map(([label]) => label);
-    const data = sorted.map(([, items]) => items.length);
-
-    if (this.charts.municipios) this.charts.municipios.destroy();
-
-    this.charts.municipios = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: "Quantidade",
-            data,
-            backgroundColor: "#36A2EB",
-          },
-        ],
-      },
-      options: {
-        indexAxis: "y",
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: {
-          legend: {
-            labels: {
-              color: document.body.classList.contains("dark-mode")
-                ? "#e0e0e0"
-                : "#333",
-            },
-          },
-        },
-        scales: {
-          x: {
-            ticks: {
-              color: document.body.classList.contains("dark-mode")
-                ? "#e0e0e0"
-                : "#333",
-            },
-            grid: {
-              color: document.body.classList.contains("dark-mode")
-                ? "#444"
-                : "#e0e0e0",
-            },
-          },
-          y: {
-            ticks: {
-              color: document.body.classList.contains("dark-mode")
-                ? "#e0e0e0"
-                : "#333",
-            },
-            grid: {
-              color: document.body.classList.contains("dark-mode")
-                ? "#444"
-                : "#e0e0e0",
-            },
-          },
-        },
-      },
-    });
-  },
-
-  /**
-   * Gráfico Linha - Evolução de Cadastros por Mês
-   */
-  renderizarGraficoEvolucao() {
-    const ctx = document.querySelector("#chart-evolucao");
-    if (!ctx) return;
-
-    // Agrupa por mês de cadastro
-    const meses = {};
-    this.registros.forEach((r) => {
-      if (r.dataCadastro) {
-        const date = new Date(r.dataCadastro);
-        const chave = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-        meses[chave] = (meses[chave] || 0) + 1;
-      }
-    });
-
-    const labels = Object.keys(meses).sort();
-    const data = labels.map((label) => meses[label]);
-
-    // Converte para escala acumulada
-    let acumulado = 0;
-    const dataAcumulada = data.map((d) => {
-      acumulado += d;
-      return acumulado;
-    });
-
-    if (this.charts.evolucao) this.charts.evolucao.destroy();
-
-    this.charts.evolucao = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: "Total Acumulado",
-            data: dataAcumulada,
-            borderColor: "#FFCE56",
-            backgroundColor: "rgba(255, 206, 86, 0.1)",
-            borderWidth: 2,
-            fill: true,
-            tension: 0.4,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        plugins: {
-          legend: {
-            labels: {
-              color: document.body.classList.contains("dark-mode")
-                ? "#e0e0e0"
-                : "#333",
-            },
-          },
-        },
-        scales: {
-          x: {
-            ticks: {
-              color: document.body.classList.contains("dark-mode")
-                ? "#e0e0e0"
-                : "#333",
-            },
-            grid: {
-              color: document.body.classList.contains("dark-mode")
-                ? "#444"
-                : "#e0e0e0",
-            },
-          },
-          y: {
-            ticks: {
-              color: document.body.classList.contains("dark-mode")
-                ? "#e0e0e0"
-                : "#333",
-            },
-            grid: {
-              color: document.body.classList.contains("dark-mode")
-                ? "#444"
-                : "#e0e0e0",
-            },
-          },
-        },
-      },
-    });
-  },
-
-  /**
-   * Renderiza os últimos 5 registros cadastrados
-   */
-  renderizarUltimosRegistros() {
-    const container = document.querySelector("#ultimos-registros");
+  _renderizarWidget(widget) {
+    const container = document.getElementById(`widget-content-${widget.id}`);
     if (!container) return;
 
-    if (this.registros.length === 0) {
-      container.innerHTML =
-        '<div class="text-muted">Nenhum registro cadastrado.</div>';
-      return;
+    const dados = this._obterDadosWidget(widget.id);
+
+    if (widget.tipo === "card") {
+      container.innerHTML = `<h2 class="display-5 fw-bold ${dados.cor || ""}">${dados.valor}</h2>`;
+    } else if (widget.tipo.startsWith("chart-")) {
+      const canvas = document.createElement("canvas");
+      canvas.id = `chart-${widget.id}`;
+      canvas.height = 250;
+      container.appendChild(canvas);
+      this._renderizarGrafico(widget, canvas, dados);
+    }
+  },
+
+  _obterDadosWidget(widgetId) {
+    const empresas = window.EmpreendimentoStorage ? EmpreendimentoStorage.buscarTodos() : [];
+    const crm = window.CrmStorage ? CrmStorage.buscarTodos() : [];
+    const propostas = window.PropostasStorage ? PropostasStorage.buscarTodos() : [];
+    const agenda = window.AgendaStorage ? AgendaStorage.buscarTodos() : [];
+    const financeiro = window.FinanceiroStorage ? FinanceiroStorage.buscarTodos() : [];
+    const fmt = (v) => Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+    switch (widgetId) {
+    case "cadastros-total":
+      return { valor: empresas.length, cor: "text-primary" };
+    case "cadastros-status": {
+      const ativos = empresas.filter((e) => e.status === "Ativo").length;
+      return { labels: ["Ativo", "Inativo"], data: [ativos, empresas.length - ativos], colors: ["#198754", "#dc3545"] };
+    }
+    case "cadastros-segmento": {
+      const seg = {};
+      empresas.forEach((e) => { seg[e.segmento || "Outros"] = (seg[e.segmento || "Outros"] || 0) + 1; });
+      return { labels: Object.keys(seg), data: Object.values(seg), colors: ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF", "#FF9F40", "#C9CBCF", "#6c757d"] };
+    }
+    case "cadastros-municipios": {
+      const mun = {};
+      empresas.forEach((e) => { mun[e.municipio || "N/D"] = (mun[e.municipio || "N/D"] || 0) + 1; });
+      const sorted = Object.entries(mun).sort(([, a], [, b]) => b - a).slice(0, 10);
+      return { labels: sorted.map(([l]) => l), data: sorted.map(([, v]) => v), colors: ["#36A2EB"] };
+    }
+    case "crm-pipeline": {
+      const val = crm.filter((o) => !["fechado", "perdido"].includes(o.etapa)).reduce((s, o) => s + (Number(o.valor) || 0), 0);
+      return { valor: fmt(val), cor: "text-success" };
+    }
+    case "crm-etapas": {
+      const etapas = { prospeccao: 0, contato: 0, proposta: 0, negociacao: 0, fechado: 0, perdido: 0 };
+      crm.forEach((o) => { if (etapas[o.etapa] !== undefined) etapas[o.etapa]++; });
+      return { labels: Object.keys(etapas), data: Object.values(etapas), colors: ["#6c757d", "#0d6efd", "#6f42c1", "#fd7e14", "#198754", "#dc3545"] };
+    }
+    case "crm-conversao": {
+      const total = crm.length || 1;
+      const fechados = crm.filter((o) => o.etapa === "fechado").length;
+      return { valor: `${Math.round((fechados / total) * 100)}%`, cor: "text-info" };
+    }
+    case "propostas-status": {
+      const st = { rascunho: 0, enviada: 0, aceita: 0, recusada: 0 };
+      propostas.forEach((p) => { if (st[p.status] !== undefined) st[p.status]++; });
+      return { labels: Object.keys(st), data: Object.values(st), colors: ["#6c757d", "#0d6efd", "#198754", "#dc3545"] };
+    }
+    case "propostas-valor": {
+      const val = propostas.filter((p) => p.status === "aceita").reduce((s, p) => s + (p.total || 0), 0);
+      return { valor: fmt(val), cor: "text-success" };
+    }
+    case "agenda-pendentes":
+      return { valor: agenda.filter((c) => c.status === "pendente").length, cor: "text-warning" };
+    case "agenda-status": {
+      const as = { pendente: 0, concluido: 0, cancelado: 0 };
+      agenda.forEach((c) => { if (as[c.status] !== undefined) as[c.status]++; });
+      return { labels: Object.keys(as), data: Object.values(as), colors: ["#ffc107", "#198754", "#dc3545"] };
+    }
+    case "financeiro-saldo": {
+      const entradas = financeiro.filter((t) => t.tipo === "entrada").reduce((s, t) => s + (t.valor || 0), 0);
+      const saidas = financeiro.filter((t) => t.tipo === "saida").reduce((s, t) => s + (t.valor || 0), 0);
+      return { valor: fmt(entradas - saidas), cor: entradas - saidas >= 0 ? "text-success" : "text-danger" };
+    }
+    case "financeiro-comparativo": {
+      const mes = new Date().toISOString().slice(0, 7);
+      const doMes = financeiro.filter((t) => t.data?.startsWith(mes));
+      const ent = doMes.filter((t) => t.tipo === "entrada").reduce((s, t) => s + (t.valor || 0), 0);
+      const sai = doMes.filter((t) => t.tipo === "saida").reduce((s, t) => s + (t.valor || 0), 0);
+      return { labels: ["Entradas", "Saídas"], data: [ent, sai], colors: ["#198754", "#dc3545"] };
+    }
+    case "financeiro-evolucao": {
+      const meses = {};
+      financeiro.forEach((t) => {
+        if (!t.data) return;
+        const m = t.data.slice(0, 7);
+        if (!meses[m]) meses[m] = { ent: 0, sai: 0 };
+        if (t.tipo === "entrada") meses[m].ent += t.valor || 0;
+        else meses[m].sai += t.valor || 0;
+      });
+      const sorted = Object.entries(meses).sort(([a], [b]) => a.localeCompare(b)).slice(-6);
+      return { labels: sorted.map(([m]) => m), datasets: [
+        { label: "Entradas", data: sorted.map(([, v]) => v.ent), borderColor: "#198754", fill: false },
+        { label: "Saídas", data: sorted.map(([, v]) => v.sai), borderColor: "#dc3545", fill: false },
+      ] };
+    }
+    case "tarefas-vencidas": {
+      const agora = new Date(); agora.setHours(0, 0, 0, 0);
+      let total = 0;
+      empresas.forEach((emp) => {
+        (emp.tarefas || []).forEach((t) => {
+          if (t.status !== "Concluida") { const d = new Date(t.dataVencimento); d.setHours(0, 0, 0, 0); if (d < agora) total++; }
+        });
+      });
+      return { valor: total, cor: total > 0 ? "text-danger" : "text-success" };
+    }
+    case "tarefas-prioridade": {
+      const pri = { Alta: 0, Media: 0, Baixa: 0 };
+      empresas.forEach((emp) => { (emp.tarefas || []).filter((t) => t.status !== "Concluida").forEach((t) => { if (pri[t.prioridade] !== undefined) pri[t.prioridade]++; }); });
+      return { labels: Object.keys(pri), data: Object.values(pri), colors: ["#dc3545", "#ffc107", "#198754"] };
+    }
+    default:
+      return { valor: "—", cor: "" };
+    }
+  },
+
+  _renderizarGrafico(widget, canvas, dados) {
+    const isDark = document.body.classList.contains("dark-mode");
+    const textColor = isDark ? "#e0e0e0" : "#333";
+
+    let config;
+    if (widget.tipo === "chart-doughnut") {
+      config = {
+        type: "doughnut",
+        data: { labels: dados.labels, datasets: [{ data: dados.data, backgroundColor: dados.colors }] },
+        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: "bottom", labels: { color: textColor } } } },
+      };
+    } else if (widget.tipo === "chart-bar") {
+      config = {
+        type: "bar",
+        data: { labels: dados.labels, datasets: [{ label: "Qtd", data: dados.data, backgroundColor: dados.colors.length > 1 ? dados.colors : dados.colors[0] }] },
+        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: textColor } }, y: { ticks: { color: textColor } } } },
+      };
+    } else if (widget.tipo === "chart-line") {
+      config = {
+        type: "line",
+        data: { labels: dados.labels, datasets: dados.datasets },
+        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { labels: { color: textColor } } }, scales: { x: { ticks: { color: textColor } }, y: { ticks: { color: textColor } } } },
+      };
     }
 
-    const ultimos = this.registros
-      .sort((a, b) => new Date(b.dataCadastro) - new Date(a.dataCadastro))
-      .slice(0, 5);
+    if (config) {
+      this.charts[widget.id] = new Chart(canvas, config);
+    }
+  },
 
-    const html = ultimos
-      .map((reg) => {
-        const dataBR = new Date(reg.dataCadastro).toLocaleDateString("pt-BR");
-        const status = reg.status === "Ativo" ? "🟢" : "🔴";
-        return `
-        <div class="mb-2 pb-2 border-bottom">
-          <div class="d-flex justify-content-between">
-            <strong>${status} ${reg.nome}</strong>
-            <small class="text-muted">${dataBR}</small>
-          </div>
-          <small class="text-muted">${reg.registro} | ${reg.municipio}</small>
-        </div>
-      `;
-      })
-      .join("");
+  _renderizarModalConfig() {
+    const container = document.getElementById("config-widgets-lista");
+    if (!container) return;
 
+    const disponiveis = DashboardConfigController.obterWidgetsDisponiveis();
+    const ativos = DashboardConfigController.obterWidgetsAtivos();
+    const idsAtivos = new Set(ativos.map((w) => w.id));
+
+    const modulos = {};
+    disponiveis.forEach((w) => { if (!modulos[w.modulo]) modulos[w.modulo] = []; modulos[w.modulo].push(w); });
+
+    const labels = { cadastros: "📋 Cadastros", crm: "🎯 CRM / Funil", propostas: "📄 Propostas", agenda: "📅 Agenda", financeiro: "💰 Financeiro" };
+
+    let html = "";
+    Object.entries(modulos).forEach(([modulo, widgets]) => {
+      html += `<h6 class="fw-bold mt-3 mb-2">${labels[modulo] || modulo}</h6>`;
+      widgets.forEach((w) => {
+        const checked = idsAtivos.has(w.id) ? "checked" : "";
+        html += `<div class="form-check mb-2">
+          <input class="form-check-input dash-widget-check" type="checkbox" id="wdg-${w.id}" value="${w.id}" ${checked} />
+          <label class="form-check-label" for="wdg-${w.id}">${w.icon} ${w.label} <span class="text-muted small">(${w.tipo.replace("chart-", "")})</span></label>
+        </div>`;
+      });
+    });
     container.innerHTML = html;
   },
 
-  /**
-   * Helper - Agrupa registros por um campo específico
-   */
-  agruparPor(arr, campo) {
-    return arr.reduce((acc, item) => {
-      const chave = item[campo] || "Não Informado";
-      if (!acc[chave]) acc[chave] = [];
-      acc[chave].push(item);
-      return acc;
-    }, {});
+  _salvarConfig() {
+    const checks = document.querySelectorAll(".dash-widget-check");
+    const widgets = Array.from(checks).map((cb, idx) => ({ id: cb.value, ativo: cb.checked, ordem: idx }));
+    DashboardConfigController.salvarSelecao(widgets);
   },
 };
 
-// Inicializa quando o DOM estiver pronto
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", () =>
-    DashboardController.init(),
-  );
+  document.addEventListener("DOMContentLoaded", () => DashboardController.init());
 } else {
   DashboardController.init();
-}
-
-// ─── Configuração de Widgets Personalizáveis (#63) ─────────────────────────────
-
-/**
- * Inicializa o sistema de configuração de widgets do dashboard.
- */
-function initDashboardConfig() {
-  if (!window.DashboardConfigController) return;
-
-  // Botão configurar
-  document.getElementById("btn-configurar-dash")?.addEventListener("click", () => {
-    _renderizarModalConfig();
-    new bootstrap.Modal(document.getElementById("modal-config-dash")).show();
-  });
-
-  // Botão salvar
-  document.getElementById("btn-salvar-config-dash")?.addEventListener("click", () => {
-    _salvarConfigDash();
-    bootstrap.Modal.getInstance(document.getElementById("modal-config-dash")).hide();
-    _aplicarVisibilidade();
-  });
-
-  // Aplica visibilidade inicial
-  _aplicarVisibilidade();
-}
-
-/**
- * Renderiza a lista de widgets no modal de configuração.
- */
-function _renderizarModalConfig() {
-  const container = document.getElementById("config-widgets-lista");
-  if (!container) return;
-
-  const disponiveis = DashboardConfigController.obterWidgetsDisponiveis();
-  const config = DashboardConfigController.obterConfig();
-
-  // Agrupa por módulo
-  const modulos = {};
-  disponiveis.forEach((w) => {
-    if (!modulos[w.modulo]) modulos[w.modulo] = [];
-    modulos[w.modulo].push(w);
-  });
-
-  const moduloLabels = {
-    cadastros: "📋 Cadastros",
-    crm: "🎯 CRM / Funil",
-    propostas: "📄 Propostas",
-    agenda: "📅 Agenda",
-    financeiro: "💰 Financeiro",
-  };
-
-  let html = "";
-  Object.entries(modulos).forEach(([modulo, widgets]) => {
-    html += `<h6 class="fw-bold mt-3 mb-2">${moduloLabels[modulo] || modulo}</h6>`;
-    widgets.forEach((w, idx) => {
-      const cfgWidget = config?.widgets?.find((c) => c.id === w.id);
-      const ativo = cfgWidget ? cfgWidget.ativo : w.defaultAtivo;
-      html += `
-        <div class="form-check mb-2">
-          <input class="form-check-input dash-widget-check" type="checkbox"
-            id="wdg-${w.id}" value="${w.id}" data-ordem="${idx}" ${ativo ? "checked" : ""} />
-          <label class="form-check-label" for="wdg-${w.id}">
-            ${w.icon} ${w.label} <span class="text-muted small">(${w.tipo})</span>
-          </label>
-        </div>`;
-    });
-  });
-
-  container.innerHTML = html;
-}
-
-/**
- * Salva a configuração a partir dos checkboxes do modal.
- */
-function _salvarConfigDash() {
-  const checks = document.querySelectorAll(".dash-widget-check");
-  const widgets = Array.from(checks).map((cb, idx) => ({
-    id: cb.value,
-    ativo: cb.checked,
-    ordem: idx,
-  }));
-  DashboardConfigController.salvarSelecao(widgets);
-}
-
-/**
- * Aplica a visibilidade dos widgets no dashboard baseado na configuração.
- * Mostra/oculta seções com base nos IDs dos widgets ativos.
- */
-function _aplicarVisibilidade() {
-  if (!window.DashboardConfigController) return;
-
-  const ativos = DashboardConfigController.obterWidgetsAtivos();
-  const idsAtivos = new Set(ativos.map((w) => w.id));
-
-  // Esconde seções com data-widget-id que não estão na lista de ativos
-  document.querySelectorAll("[data-widget-id]").forEach((el) => {
-    const wId = el.getAttribute("data-widget-id");
-    el.style.display = idsAtivos.has(wId) ? "" : "none";
-  });
-}
-
-// Chama após o init do DashboardController
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", () => initDashboardConfig());
-} else {
-  setTimeout(() => initDashboardConfig(), 0);
 }
