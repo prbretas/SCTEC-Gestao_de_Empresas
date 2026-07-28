@@ -125,7 +125,73 @@ const DashboardConfigController = {
    * @param {Array} widgetStates - [{id, ativo, ordem}]
    */
   salvarSelecao(widgetStates) {
-    this.salvarConfig({ widgets: widgetStates });
+    const config = this.obterConfig() || {};
+    config.widgets = widgetStates;
+    this.salvarConfig(config);
+  },
+
+  // ─── Modelos (Presets) ────────────────────────────────────────────────────
+
+  /**
+   * Retorna a lista de modelos salvos pelo usuário.
+   * @returns {Array} [{id, nome, widgets}]
+   */
+  obterModelos() {
+    const config = this.obterConfig() || {};
+    return config.modelos || [];
+  },
+
+  /**
+   * Retorna o ID do modelo ativo, ou "__default__".
+   */
+  getModeloAtivo() {
+    const config = this.obterConfig() || {};
+    return config.modeloAtivo || "__default__";
+  },
+
+  /**
+   * Define o modelo ativo. Se "__default__", usa widgets padrão salvo.
+   * @param {string} modeloId
+   */
+  setModeloAtivo(modeloId) {
+    const config = this.obterConfig() || {};
+    config.modeloAtivo = modeloId;
+
+    // Se é um modelo salvo, aplica seus widgets como ativos
+    if (modeloId !== "__default__") {
+      const modelo = (config.modelos || []).find((m) => m.id === modeloId);
+      if (modelo) config.widgets = modelo.widgets;
+    }
+
+    this.salvarConfig(config);
+  },
+
+  /**
+   * Salva o estado atual de widgets como um novo modelo com nome.
+   * @param {string} nome
+   */
+  salvarModelo(nome) {
+    const config = this.obterConfig() || {};
+    if (!config.modelos) config.modelos = [];
+    const novoModelo = {
+      id: `modelo_${Date.now()}`,
+      nome,
+      widgets: config.widgets || WIDGETS_CATALOGO.filter((w) => w.defaultAtivo).map((w, i) => ({ id: w.id, ativo: true, ordem: i })),
+    };
+    config.modelos.push(novoModelo);
+    config.modeloAtivo = novoModelo.id;
+    this.salvarConfig(config);
+  },
+
+  /**
+   * Exclui um modelo pelo ID.
+   * @param {string} modeloId
+   */
+  excluirModelo(modeloId) {
+    const config = this.obterConfig() || {};
+    config.modelos = (config.modelos || []).filter((m) => m.id !== modeloId);
+    if (config.modeloAtivo === modeloId) config.modeloAtivo = "__default__";
+    this.salvarConfig(config);
   },
 };
 
