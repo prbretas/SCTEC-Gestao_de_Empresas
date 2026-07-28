@@ -322,3 +322,5 @@ if (document.readyState === "loading") {
 } else {
   ContatosController.init();
 }
+
+window.ContatosController = ContatosController;

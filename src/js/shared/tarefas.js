@@ -332,3 +332,5 @@ if (document.readyState === "loading") {
 } else {
   TarefasController.init();
 }
+
+window.TarefasController = TarefasController;

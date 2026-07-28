@@ -348,10 +348,10 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
       }
 
       // Coleta contatos e tarefas das abas
-      if (ContatosController) {
+      if (window.ContatosController) {
         dados.contatos = ContatosController.obterContatos();
       }
-      if (TarefasController) {
+      if (window.TarefasController) {
         dados.tarefas = TarefasController.obterTarefas();
       }
 
@@ -408,10 +408,10 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
     FormController.renderizarSocios(socios);
 
     // Carrega contatos e tarefas nas abas
-    if (ContatosController) {
+    if (window.ContatosController) {
       ContatosController.carregarContatos(emp.id, emp.contatos || []);
     }
-    if (TarefasController) {
+    if (window.TarefasController) {
       TarefasController.carregarTarefas(emp.id, emp.tarefas || []);
     }
   },
@@ -504,6 +504,11 @@ window.abrirModalCadastro = () => {
   document.querySelector("#emp-id").value = "";
   FormController.setReadOnly(false);
   FormController.limparSocios();
+
+  // Reseta contatos e tarefas para novo cadastro
+  if (window.ContatosController) ContatosController.carregarContatos(null, []);
+  if (window.TarefasController) TarefasController.carregarTarefas(null, []);
+
   document.querySelector("#titulo-modal-form").textContent =
     "Novo Empreendimento";
   UIController.modalForm.show();
