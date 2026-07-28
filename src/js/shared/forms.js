@@ -360,6 +360,9 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
       if (window.TarefasController) {
         dados.tarefas = TarefasController.obterTarefas();
       }
+      if (window.HistoricoController) {
+        dados.historico = HistoricoController.obterOcorrencias();
+      }
 
       if (idExistente) {
         // MODO EDIÇÃO
@@ -424,6 +427,9 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
     }
     if (window.TarefasController) {
       TarefasController.carregarTarefas(emp.id, emp.tarefas || []);
+    }
+    if (window.HistoricoController) {
+      HistoricoController.carregarOcorrencias(emp.id, emp.historico || []);
     }
   },
 
@@ -519,6 +525,7 @@ window.abrirModalCadastro = () => {
   // Reseta contatos e tarefas para novo cadastro
   if (window.ContatosController) ContatosController.carregarContatos(null, []);
   if (window.TarefasController) TarefasController.carregarTarefas(null, []);
+  if (window.HistoricoController) HistoricoController.carregarOcorrencias(null, []);
 
   document.querySelector("#titulo-modal-form").textContent =
     "Novo Empreendimento";

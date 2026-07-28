@@ -54,6 +54,7 @@ module.exports = [
         TarefasController: 'readonly',
         ContatosController: 'readonly',
         TarefasController: 'readonly',
+        HistoricoController: 'readonly',
         DashboardController: 'readonly',
         direcaoOrdenacao: 'writable',
         colunaAtual: 'writable',
