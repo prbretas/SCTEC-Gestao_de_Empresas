@@ -55,9 +55,10 @@ const NavbarController = {
               ` : ""}
             </div>
 
-            <!-- DIREITA: usuário + home + dark mode + sair -->
+            <!-- DIREITA: usuário + tarefas vencidas + home + dark mode + sair -->
             <div class="d-flex align-items-center gap-2 ms-auto flex-shrink-0">
               ${identidade}
+              <span id="navbar-tarefas-vencidas" class="badge bg-danger d-none" title="Tarefas vencidas" style="font-size:.7rem;"></span>
               <a href="home.html" class="btn btn-outline-light btn-sm" title="Voltar para Home">🏠 Home</a>
               <div class="form-check form-switch text-light mb-0" title="Modo Escuro">
                 <input class="form-check-input" type="checkbox" id="dark-mode-switch" />
@@ -75,6 +76,16 @@ const NavbarController = {
     document.getElementById("btn-logout-nav")?.addEventListener("click", () => {
       if (confirm("Deseja sair do sistema?") && window.AuthService) AuthService.logout();
     });
+
+    // Indicador de tarefas vencidas
+    if (window.TarefasController) {
+      const vencidas = TarefasController.contarVencidasGlobal();
+      const badge = document.getElementById("navbar-tarefas-vencidas");
+      if (badge && vencidas > 0) {
+        badge.textContent = `⚠️ ${vencidas} tarefa${vencidas > 1 ? "s" : ""} vencida${vencidas > 1 ? "s" : ""}`;
+        badge.classList.remove("d-none");
+      }
+    }
   },
 };
 

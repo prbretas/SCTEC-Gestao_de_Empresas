@@ -324,6 +324,29 @@ const TarefasController = {
   obterTarefas() {
     return this.tarefasAtuais;
   },
+
+  /**
+   * Conta o total de tarefas vencidas em todas as empresas da organização.
+   * Usado para indicador global (navbar/dashboard).
+   * @returns {number}
+   */
+  contarVencidasGlobal() {
+    if (!window.EmpreendimentoStorage) return 0;
+    const agora = new Date();
+    agora.setHours(0, 0, 0, 0);
+    let total = 0;
+    const empresas = EmpreendimentoStorage.buscarTodos();
+    empresas.forEach((emp) => {
+      if (!emp.tarefas || !Array.isArray(emp.tarefas)) return;
+      emp.tarefas.forEach((t) => {
+        if (t.status === "Concluida") return;
+        const dt = new Date(t.dataVencimento);
+        dt.setHours(0, 0, 0, 0);
+        if (dt < agora) total++;
+      });
+    });
+    return total;
+  },
 };
 
 // Inicializa quando o DOM estiver pronto

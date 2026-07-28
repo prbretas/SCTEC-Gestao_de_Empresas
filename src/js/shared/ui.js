@@ -122,6 +122,7 @@ const UIController = {
             <td>
                 <div class="fw-bold text-primary">${emp.nome}</div>
                 <div class="small">${emp.registro}</div>
+                ${emp.tarefas && emp.tarefas.filter((t) => t.status !== "Concluida").length > 0 ? `<span class="badge bg-warning text-dark" style="font-size:.65rem;">✓ ${emp.tarefas.filter((t) => t.status !== "Concluida").length} tarefa(s)</span>` : ""}
             </td>
             <td>
                 <div class="fw-bold">${emp.responsavel || "N/D"}</div>
