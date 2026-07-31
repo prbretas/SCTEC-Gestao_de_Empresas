@@ -129,13 +129,21 @@
                 <div class="d-flex gap-3">
                   <div class="form-check">
                     <input class="form-check-input" type="radio" name="trans-tipo" id="tipo-entrada" value="entrada" checked />
-                    <label class="form-check-label text-success fw-bold" for="tipo-entrada">⬆️ Entrada</label>
+                    <label class="form-check-label text-success fw-bold" for="tipo-entrada">⬆️ Entrada (Receita)</label>
                   </div>
                   <div class="form-check">
                     <input class="form-check-input" type="radio" name="trans-tipo" id="tipo-saida" value="saida" />
-                    <label class="form-check-label text-danger fw-bold" for="tipo-saida">⬇️ Saída</label>
+                    <label class="form-check-label text-danger fw-bold" for="tipo-saida">⬇️ Saída (Despesa)</label>
                   </div>
                 </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Tipo Fiscal</label>
+                <select id="trans-tipo-fiscal" class="form-select">
+                  <option value="">— Sem nota fiscal —</option>
+                  <option value="nfs">NFs — Nota Fiscal de Saída (Venda = Entrada $)</option>
+                  <option value="nfe">NFe — Nota Fiscal de Entrada (Compra = Saída $)</option>
+                </select>
               </div>
               <div class="mb-3">
                 <label class="form-label fw-bold">Descrição *</label>
@@ -181,6 +189,32 @@
                     <option value="pago">✅ Pago</option>
                     <option value="vencido">⚠️ Vencido</option>
                   </select>
+                </div>
+              </div>
+              <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">Forma de Pagamento</label>
+                  <select id="trans-forma-pagamento" class="form-select">
+                    <option value="">— Selecione —</option>
+                    <option value="boleto">📋 Boleto</option>
+                    <option value="pix">⚡ PIX</option>
+                    <option value="cartao_credito">💳 Cartão Crédito</option>
+                    <option value="cartao_debito">💳 Cartão Débito</option>
+                    <option value="transferencia">🏦 Transferência</option>
+                    <option value="dinheiro">💵 Dinheiro</option>
+                    <option value="cheque">📄 Cheque</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">Parcelas</label>
+                  <select id="trans-parcelas" class="form-select">
+                    <option value="1">1x (à vista)</option>
+                  </select>
+                  <div class="form-text small" id="trans-valor-parcela"></div>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">Valor da Parcela</label>
+                  <input type="text" id="trans-valor-parcela-display" class="form-control" readonly disabled />
                 </div>
               </div>
               <div class="row g-3 mb-3">

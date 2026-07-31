@@ -168,7 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
     _preencherOportunidadesFinanceiro(e.target.value, null);
   });
 
-  // Atualiza valor ao vincular proposta
+  // Atualiza valor ao vincular proposta + calcula vencimento
   document.getElementById("trans-proposta-vinculada")?.addEventListener("change", (e) => {
     const propostaId = e.target.value;
     if (propostaId && window.PropostasStorage) {
@@ -176,8 +176,14 @@ document.addEventListener("DOMContentLoaded", () => {
       if (proposta && proposta.total) {
         document.getElementById("trans-valor").value = proposta.total;
         if (!document.getElementById("trans-descricao").value) {
-          document.getElementById("trans-descricao").value = `Proposta${proposta.numero ? " #" + proposta.numero : ""}: ${proposta.titulo || ""}`;
+          document.getElementById("trans-descricao").value = `Pedido${proposta.numero ? " #" + proposta.numero : ""}: ${proposta.titulo || ""}`;
         }
+        // Tipo fiscal = NFs (venda)
+        const elFiscal = document.getElementById("trans-tipo-fiscal");
+        if (elFiscal) elFiscal.value = "nfs";
+        // Vencimento = +15 dias úteis
+        _calcularVencimento(15);
+        _calcularParcelas();
       }
     }
   });
@@ -190,11 +196,16 @@ document.addEventListener("DOMContentLoaded", () => {
       if (op && op.valor) {
         document.getElementById("trans-valor").value = op.valor;
         if (!document.getElementById("trans-descricao").value) {
-          document.getElementById("trans-descricao").value = `CRM: ${op.titulo || "Oportunidade"}`;
+          document.getElementById("trans-descricao").value = `CRM: ${op.titulo || "Negócio"}`;
         }
+        _calcularParcelas();
       }
     }
   });
+
+  // Recalcula parcelas ao mudar valor ou forma de pagamento
+  document.getElementById("trans-valor")?.addEventListener("input", _calcularParcelas);
+  document.getElementById("trans-forma-pagamento")?.addEventListener("change", _calcularParcelas);
 
   document.getElementById("btn-limpar").addEventListener("click", () => {
     document.getElementById("filtro-tipo").value = "";
@@ -227,17 +238,71 @@ function _coletar() {
   if (!desc || !valor || !data) { alert("Descrição, Valor e Data são obrigatórios."); return null; }
   return {
     tipo: document.querySelector('input[name="trans-tipo"]:checked').value,
+    tipoFiscal: document.getElementById("trans-tipo-fiscal")?.value || "",
     descricao: desc,
     valor,
     data,
     dataVencimento: document.getElementById("trans-vencimento")?.value || null,
     statusPagamento: document.getElementById("trans-status-pagamento")?.value || "pendente",
+    formaPagamento: document.getElementById("trans-forma-pagamento")?.value || "",
+    parcelas: parseInt(document.getElementById("trans-parcelas")?.value) || 1,
     categoria: document.getElementById("trans-categoria").value,
     empresaId: document.getElementById("trans-empresa").value,
     propostaId: document.getElementById("trans-proposta-vinculada")?.value || null,
     oportunidadeId: document.getElementById("trans-oportunidade-vinculada")?.value || null,
     obs: document.getElementById("trans-obs").value.trim(),
   };
+}
+
+function _calcularVencimento(diasUteis) {
+  const dataBase = document.getElementById("trans-data")?.value;
+  if (!dataBase) return;
+  const d = new Date(dataBase + "T12:00:00");
+  let contados = 0;
+  while (contados < diasUteis) {
+    d.setDate(d.getDate() + 1);
+    const dow = d.getDay();
+    if (dow !== 0 && dow !== 6) contados++;
+  }
+  const vencEl = document.getElementById("trans-vencimento");
+  if (vencEl) vencEl.value = d.toISOString().split("T")[0];
+}
+
+function _calcularParcelas() {
+  const valor = parseFloat(document.getElementById("trans-valor")?.value) || 0;
+  const forma = document.getElementById("trans-forma-pagamento")?.value || "";
+  const selectParcelas = document.getElementById("trans-parcelas");
+  const displayParcela = document.getElementById("trans-valor-parcela-display");
+  if (!selectParcelas) return;
+
+  const VALOR_MIN_PARCELA = 50; // Padrão — futuro: vem do ParamsController
+  const formasParcelaveis = ["boleto", "cartao_credito", "cheque"];
+
+  let maxParcelas = 1;
+  if (formasParcelaveis.includes(forma) && valor > 0) {
+    maxParcelas = Math.max(1, Math.floor(valor / VALOR_MIN_PARCELA));
+    maxParcelas = Math.min(maxParcelas, 24); // Limite: 24x
+  }
+
+  selectParcelas.innerHTML = "";
+  for (let i = 1; i <= maxParcelas; i++) {
+    const opt = document.createElement("option");
+    opt.value = i;
+    const vlParcela = (valor / i).toFixed(2);
+    opt.textContent = `${i}x de R$ ${Number(vlParcela).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+    selectParcelas.appendChild(opt);
+  }
+
+  // Exibe valor da parcela selecionada
+  const parcSelecionada = parseInt(selectParcelas.value) || 1;
+  if (displayParcela) {
+    displayParcela.value = valor > 0 ? `R$ ${(valor / parcSelecionada).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "";
+  }
+
+  selectParcelas.addEventListener("change", () => {
+    const p = parseInt(selectParcelas.value) || 1;
+    if (displayParcela) displayParcela.value = `R$ ${(valor / p).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+  });
 }
 
 function _preencherPropostasFinanceiro(empresaId, propostaIdAtual) {
@@ -360,6 +425,15 @@ function visualizarTransacao(id) {
   if (elVenc) elVenc.value = t.dataVencimento || "";
   const elStatus = document.getElementById("trans-status-pagamento");
   if (elStatus) elStatus.value = t.statusPagamento || "pendente";
+  const elFiscal = document.getElementById("trans-tipo-fiscal");
+  if (elFiscal) elFiscal.value = t.tipoFiscal || "";
+  const elForma = document.getElementById("trans-forma-pagamento");
+  if (elForma) elForma.value = t.formaPagamento || "";
+  const elParcelas = document.getElementById("trans-parcelas");
+  if (elParcelas) {
+    _calcularParcelas();
+    setTimeout(() => { if (elParcelas) elParcelas.value = t.parcelas || "1"; }, 0);
+  }
 
   // Vínculos
   _preencherPropostasFinanceiro(t.empresaId, t.propostaId);
