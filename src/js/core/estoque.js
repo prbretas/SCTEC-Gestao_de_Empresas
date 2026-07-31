@@ -250,6 +250,7 @@ const EstoqueStorage = {
 
   /**
    * Realiza transferência entre endereços.
+   * Faz toda a operação numa única leitura/escrita para evitar race conditions.
    * @param {Object} params - { produtoId, enderecoOrigem, enderecoDestino, quantidade, motivo }
    * @returns {{ sucesso: boolean, mensagem: string }}
    */
@@ -258,17 +259,38 @@ const EstoqueStorage = {
       return { sucesso: false, mensagem: "Endereço de origem e destino são iguais." };
     }
 
-    const posOrigem = this.obterOuCriarPosicao(produtoId, enderecoOrigem);
+    // Lê a lista UMA vez
+    const lista = this.buscarTodos();
+
+    // Encontra ou cria posição de origem
+    let posOrigem = lista.find((e) => e.produtoId === produtoId && e.enderecoId === enderecoOrigem);
+    if (!posOrigem) {
+      posOrigem = { id: "est_" + Date.now().toString(), produtoId, enderecoId: enderecoOrigem, quantidade: 0, estoqueMin: 5 };
+      lista.push(posOrigem);
+    }
+
     if ((posOrigem.quantidade || 0) < quantidade) {
       return { sucesso: false, mensagem: `Estoque insuficiente na origem. Atual: ${posOrigem.quantidade}` };
     }
 
-    const posDestino = this.obterOuCriarPosicao(produtoId, enderecoDestino);
+    // Encontra ou cria posição de destino
+    let posDestino = lista.find((e) => e.produtoId === produtoId && e.enderecoId === enderecoDestino);
+    if (!posDestino) {
+      posDestino = { id: "est_" + (Date.now() + 1).toString(), produtoId, enderecoId: enderecoDestino, quantidade: 0, estoqueMin: 5 };
+      lista.push(posDestino);
+    }
+
     const qtdOrigem = posOrigem.quantidade;
     const qtdDestino = posDestino.quantidade || 0;
 
-    this.atualizarQuantidade(posOrigem.id, qtdOrigem - quantidade);
-    this.atualizarQuantidade(posDestino.id, qtdDestino + quantidade);
+    // Atualiza ambos na mesma lista em memória
+    posOrigem.quantidade = qtdOrigem - quantidade;
+    posOrigem.ultimaMovimentacao = new Date().toISOString();
+    posDestino.quantidade = qtdDestino + quantidade;
+    posDestino.ultimaMovimentacao = new Date().toISOString();
+
+    // Salva UMA vez
+    this.salvarTodos(lista);
 
     this.registrarMovimentacao({
       produtoId,
