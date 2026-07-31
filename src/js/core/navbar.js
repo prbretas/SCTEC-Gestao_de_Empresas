@@ -92,10 +92,22 @@ const NavbarController = {
       if (confirm("Deseja sair do sistema?") && window.AuthService) AuthService.logout();
     });
 
-    // Indicador de alertas (tarefas vencidas + aprovações pendentes)
+    // Indicador de alertas (tarefas vencidas + aprovações pendentes + estoque baixo)
     const vencidas = window.TarefasController ? TarefasController.contarVencidasGlobal() : 0;
     const aprovacoes = window.ApprovalsController ? ApprovalsController.contarPendentes() : 0;
-    const totalAlertas = vencidas + aprovacoes;
+
+    // Alertas de estoque baixo
+    let estoqueBaixo = 0;
+    const paramsEstoque = window.ParamsController ? ParamsController.obter("estoque") : {};
+    if (paramsEstoque.alertarEstoqueBaixo && window.EstoqueStorage && window.ProdutosStorage) {
+      const posicoes = EstoqueStorage.buscarTodos();
+      estoqueBaixo = posicoes.filter((p) => p.quantidade <= (p.estoqueMin || paramsEstoque.estoqueMinimoPadrao || 5)).length;
+      if (paramsEstoque.limiteAlertasNavbar && estoqueBaixo > paramsEstoque.limiteAlertasNavbar) {
+        estoqueBaixo = paramsEstoque.limiteAlertasNavbar;
+      }
+    }
+
+    const totalAlertas = vencidas + aprovacoes + estoqueBaixo;
     const badgeAlertas = document.getElementById("badge-alertas-nav");
     if (badgeAlertas && totalAlertas > 0) {
       badgeAlertas.textContent = totalAlertas;
@@ -106,6 +118,7 @@ const NavbarController = {
       let msg = "🔔 Alertas:\n\n";
       if (vencidas > 0) msg += `⚠️ ${vencidas} tarefa(s) vencida(s)\n`;
       if (aprovacoes > 0) msg += `📋 ${aprovacoes} aprovação(ões) pendente(s)\n`;
+      if (estoqueBaixo > 0) msg += `📦 ${estoqueBaixo} posição(ões) de estoque abaixo do mínimo\n`;
       if (totalAlertas === 0) msg += "✅ Nenhum alerta pendente!";
       alert(msg);
     });
