@@ -77,6 +77,8 @@ module.exports = [
         WIDGETS_CATALOGO: 'readonly',
         ParamsController: 'readonly',
         PARAMS_PADRAO: 'readonly',
+        CalculatorController: 'readonly',
+        Event: 'readonly',
         // ── APIs do browser nao declaradas anteriormente ─────────────────────
         TextEncoder: 'readonly',
         crypto: 'readonly',
