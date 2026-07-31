@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Produtos e Estoque — SCTEC</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="./src/css/styles.css" />
+    <script>
+      (function () {
+        try {
+          var cfg = JSON.parse(localStorage.getItem("SCTEC_CONFIG") || "{}");
+          var cores = cfg.cores || {};
+          var r = document.documentElement;
+          if (cores.header) r.style.setProperty("--sc-header", cores.header);
+          if (cores.btn) r.style.setProperty("--sc-btn", cores.btn);
+          if (cores.destaque) r.style.setProperty("--sc-header2", cores.destaque);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body class="bg-light">
+    <div id="app-navbar"></div>
+    <main class="container pb-5">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 id="rotinaTitle">📦 Produtos e Estoque</h1>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-primary" id="btn-gerenciar-enderecos">📍 Endereços de Estoque</button>
+          <button class="btn btn-success" id="btn-novo-produto">+ Novo Produto</button>
+        </div>
+      </div>
+
+      <!-- CARDS DE RESUMO -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm text-center py-2">
+            <div class="small text-muted">Total Produtos</div>
+            <h5 class="mb-0 fw-bold" id="resumo-total-produtos">0</h5>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm text-center py-2">
+            <div class="small text-muted">Estoque Total</div>
+            <h5 class="mb-0 fw-bold text-primary" id="resumo-estoque-total">0</h5>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm text-center py-2">
+            <div class="small text-muted">⚠️ Estoque Baixo</div>
+            <h5 class="mb-0 fw-bold text-warning" id="resumo-estoque-baixo">0</h5>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm text-center py-2">
+            <div class="small text-muted">💰 Valor em Estoque</div>
+            <h5 class="mb-0 fw-bold text-success" id="resumo-valor-estoque">R$ 0</h5>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILTROS -->
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-3">
+          <div class="row g-2">
+            <div class="col-md-4">
+              <input type="text" id="filtro-busca-produto" class="form-control" placeholder="Buscar por nome, código ou descrição..." />
+            </div>
+            <div class="col-md-3">
+              <select id="filtro-categoria-produto" class="form-select">
+                <option value="">Todas as Categorias</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <select id="filtro-status-estoque" class="form-select">
+                <option value="">Todos</option>
+                <option value="normal">✅ Normal</option>
+                <option value="baixo">⚠️ Estoque Baixo</option>
+                <option value="zerado">❌ Sem Estoque</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <button class="btn btn-outline-secondary w-100" id="btn-limpar-filtro-produto">🔄</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABELA -->
+      <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="thead-sctec">
+              <tr>
+                <th>Código</th>
+                <th>Produto</th>
+                <th>Categoria</th>
+                <th class="text-end">Preço Unit.</th>
+                <th class="text-center">Estoque</th>
+                <th class="text-center">Mín.</th>
+                <th class="text-center">Status</th>
+                <th class="text-center">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="produtos-lista"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="produtos-vazio" class="text-center py-5 d-none">
+        <div style="font-size:3rem;">📦</div>
+        <h5 class="mt-3 text-muted">Nenhum produto cadastrado</h5>
+      </div>
+    </main>
+
+    <!-- MODAL: Gerenciar Endereços de Estoque -->
+    <div class="modal fade" id="modal-enderecos" tabindex="-1">
+      <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
+          <div class="modal-header text-white">
+            <h5 class="modal-title">📍 Endereços de Estoque (Endereçamento)</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body p-4">
+            <!-- Formulário de novo endereço -->
+            <form id="form-endereco" class="mb-4">
+              <h6 class="fw-bold mb-3">➕ Novo Endereço de Armazenamento</h6>
+              <div class="row g-2 mb-2">
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold">Instalação / Empresa *</label>
+                  <input type="text" id="end-instalacao" class="form-control form-control-sm" required placeholder="Ex: Matriz SP" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold">Galpão / Prédio</label>
+                  <input type="text" id="end-galpao" class="form-control form-control-sm" placeholder="Ex: Galpão A" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold">Andar</label>
+                  <input type="text" id="end-andar" class="form-control form-control-sm" placeholder="Ex: Térreo, 1º" />
+                </div>
+              </div>
+              <div class="row g-2 mb-2">
+                <div class="col-md-3">
+                  <label class="form-label small fw-bold">Corredor</label>
+                  <input type="text" id="end-corredor" class="form-control form-control-sm" placeholder="Ex: A1" />
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label small fw-bold">Estante *</label>
+                  <input type="text" id="end-estante" class="form-control form-control-sm" required placeholder="Ex: E01" />
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label small fw-bold">Coluna *</label>
+                  <input type="text" id="end-coluna" class="form-control form-control-sm" required placeholder="Ex: C3" />
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label small fw-bold">Posição *</label>
+                  <input type="text" id="end-posicao" class="form-control form-control-sm" required placeholder="Ex: P2" />
+                </div>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small fw-bold">Observação</label>
+                <input type="text" id="end-descricao" class="form-control form-control-sm" placeholder="Descrição livre..." />
+              </div>
+              <button type="submit" class="btn btn-sm btn-success">Cadastrar Endereço</button>
+            </form>
+
+            <hr />
+
+            <!-- Lista de endereços cadastrados -->
+            <h6 class="fw-bold mb-2">Endereços Cadastrados</h6>
+            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+              <table class="table table-sm table-hover align-middle mb-0">
+                <thead class="table-light sticky-top">
+                  <tr>
+                    <th>Instalação</th>
+                    <th>Galpão</th>
+                    <th>Corredor</th>
+                    <th>Estante</th>
+                    <th>Coluna</th>
+                    <th>Posição</th>
+                    <th class="text-center">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="enderecos-lista"></tbody>
+              </table>
+            </div>
+            <div id="enderecos-vazio" class="text-center py-3 d-none">
+              <p class="text-muted small mb-0">Nenhum endereço cadastrado além do padrão.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: Cadastro/Edição de Produto -->
+    <div class="modal fade" id="modal-produto" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+          <div class="modal-header text-white">
+            <h5 class="modal-title" id="titulo-modal-produto">📦 Novo Produto</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body p-4">
+            <form id="form-produto">
+              <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">Código / SKU</label>
+                  <input type="text" id="prod-codigo" class="form-control" placeholder="Ex: PRD-001" />
+                </div>
+                <div class="col-md-8">
+                  <label class="form-label fw-bold">Nome do Produto *</label>
+                  <input type="text" id="prod-nome" class="form-control" required placeholder="Ex: Parafuso M8" />
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Descrição</label>
+                <textarea id="prod-descricao" class="form-control" rows="2" placeholder="Detalhes do produto..."></textarea>
+              </div>
+              <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">Categoria</label>
+                  <select id="prod-categoria" class="form-select">
+                    <option value="materiais">Materiais</option>
+                    <option value="equipamentos">Equipamentos</option>
+                    <option value="servicos">Serviços</option>
+                    <option value="insumos">Insumos</option>
+                    <option value="outros">Outros</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">Unidade</label>
+                  <select id="prod-unidade" class="form-select">
+                    <option value="un">Unidade (un)</option>
+                    <option value="kg">Quilograma (kg)</option>
+                    <option value="m">Metro (m)</option>
+                    <option value="m2">Metro² (m²)</option>
+                    <option value="l">Litro (L)</option>
+                    <option value="cx">Caixa (cx)</option>
+                    <option value="pc">Peça (pç)</option>
+                    <option value="hr">Hora (hr)</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">Preço Unitário (R$) *</label>
+                  <input type="number" id="prod-preco" class="form-control" min="0" step="0.01" required />
+                </div>
+              </div>
+              <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">Estoque Atual</label>
+                  <input type="number" id="prod-estoque" class="form-control" min="0" value="0" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">Estoque Mínimo</label>
+                  <input type="number" id="prod-estoque-min" class="form-control" min="0" value="5" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">Empresa</label>
+                  <select id="prod-empresa" class="form-select">
+                    <option value="">— Nenhuma —</option>
+                  </select>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Observações</label>
+                <textarea id="prod-obs" class="form-control" rows="2"></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <div id="auditoria-prod" class="small text-muted me-auto"></div>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            <button type="button" class="btn btn-primary d-none" id="btn-editar-produto">✏️ Editar</button>
+            <button type="submit" form="form-produto" class="btn btn-success" id="btn-salvar-produto">Salvar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: Movimentação de Estoque -->
+    <div class="modal fade" id="modal-movimentacao" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content border-0 shadow-lg">
+          <div class="modal-header text-white">
+            <h5 class="modal-title">📊 Movimentar Estoque</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body p-4">
+            <form id="form-movimentacao">
+              <input type="hidden" id="mov-produto-id" />
+              <div class="mb-3">
+                <label class="form-label fw-bold">Produto</label>
+                <input type="text" id="mov-produto-nome" class="form-control" readonly disabled />
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Tipo *</label>
+                <div class="d-flex gap-3">
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="mov-tipo" id="mov-entrada" value="entrada" checked />
+                    <label class="form-check-label text-success fw-bold" for="mov-entrada">⬆️ Entrada</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="mov-tipo" id="mov-saida" value="saida" />
+                    <label class="form-check-label text-danger fw-bold" for="mov-saida">⬇️ Saída</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="mov-tipo" id="mov-transferencia" value="transferencia" />
+                    <label class="form-check-label text-primary fw-bold" for="mov-transferencia">🔄 Transfer.</label>
+                  </div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Endereço (origem)</label>
+                <select id="mov-endereco" class="form-select">
+                  <option value="end_geral">Geral</option>
+                </select>
+              </div>
+              <div class="mb-3 d-none" id="mov-destino-container">
+                <label class="form-label fw-bold">Endereço (destino)</label>
+                <select id="mov-endereco-destino" class="form-select">
+                  <option value="end_geral">Geral</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Quantidade *</label>
+                <input type="number" id="mov-quantidade" class="form-control" min="1" value="1" required />
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Motivo</label>
+                <input type="text" id="mov-motivo" class="form-control" placeholder="Ex: Compra, Venda, Ajuste..." />
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" form="form-movimentacao" class="btn btn-success">Confirmar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="./src/js/core/config.js"></script>
+    <script src="./src/js/core/auth.js"></script>
+    <script src="./src/js/core/storage.js"></script>
+    <script src="./src/js/core/roles.js"></script>
+    <script src="./src/js/core/modules.js"></script>
+    <script src="./src/js/core/theme.js"></script>
+    <script src="./src/js/core/params.js"></script>
+    <script src="./src/js/core/navbar.js"></script>
+    <script src="./src/js/core/dashboard-storages.js"></script>
+    <script src="./src/js/core/estoque.js"></script>
+    <script src="./src/js/modules/produtos.js"></script>
+    <script src="./src/js/core/inactivity.js"></script>
+  </body>
+</html>

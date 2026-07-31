@@ -220,21 +220,82 @@ function _adicionarLinhaItem(item = {}) {
   const lista = document.getElementById("prop-itens-lista");
   const div = document.createElement("div");
   div.className = "row g-2 mb-2 item-linha";
+
+  const isManual = !item.produtoId;
+  const produtoNome = item.produtoId && window.ProdutosStorage
+    ? (ProdutosStorage.buscarTodos().find((p) => p.id === item.produtoId)?.nome || item.desc || "")
+    : (item.desc || "");
+
   div.innerHTML = `
     <div class="col-md-5">
-      <input type="text" class="form-control form-control-sm item-desc" placeholder="Descrição" value="${item.desc || ""}" />
+      <div class="input-group input-group-sm">
+        <input type="text" class="form-control form-control-sm item-desc" placeholder="${isManual ? "Descrição manual" : "Clique em 📦 para selecionar"}" value="${produtoNome}" ${!isManual ? "readonly" : ""} />
+        <button type="button" class="btn btn-outline-primary btn-sm item-btn-picker" title="Selecionar produto do cadastro">📦</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm item-toggle-modo" title="${isManual ? "Selecionar do cadastro" : "Digitar manualmente"}">${isManual ? "✏️" : "🔓"}</button>
+      </div>
+      <input type="hidden" class="item-produto-id" value="${item.produtoId || ""}" />
     </div>
     <div class="col-md-2">
       <input type="number" class="form-control form-control-sm item-qtd" placeholder="Qtd" min="1" value="${item.qtd || 1}" />
     </div>
     <div class="col-md-3">
-      <input type="number" class="form-control form-control-sm item-valor" placeholder="Valor unit." min="0" step="0.01" value="${item.valor || ""}" />
+      <input type="number" class="form-control form-control-sm item-valor" placeholder="Valor unit." min="0" step="0.01" value="${item.valor || ""}" ${!isManual ? "readonly" : ""} />
     </div>
     <div class="col-md-2 d-flex align-items-center gap-1">
       <span class="item-subtotal text-success small fw-bold">R$ 0,00</span>
       <button type="button" class="btn btn-xs btn-outline-danger ms-auto" onclick="this.closest('.item-linha').remove(); _recalcularTotal();">✕</button>
     </div>`;
   lista.appendChild(div);
+
+  const btnPicker = div.querySelector(".item-btn-picker");
+  const toggleBtn = div.querySelector(".item-toggle-modo");
+  const inputDesc = div.querySelector(".item-desc");
+  const inputValor = div.querySelector(".item-valor");
+  const hiddenProdId = div.querySelector(".item-produto-id");
+
+  // Abrir modal de seleção de produto
+  btnPicker.addEventListener("click", () => {
+    if (window.ProductPickerModal) {
+      ProductPickerModal.abrir((produto) => {
+        hiddenProdId.value = produto.id;
+        inputDesc.value = produto.nome;
+        inputDesc.setAttribute("readonly", "readonly");
+        inputValor.value = produto.preco || 0;
+        inputValor.setAttribute("readonly", "readonly");
+        toggleBtn.textContent = "🔓";
+        toggleBtn.title = "Digitar manualmente";
+        _recalcularTotal();
+      });
+    }
+  });
+
+  // Toggle modo manual/produto
+  toggleBtn.addEventListener("click", () => {
+    const isCurrentlyLinked = !!hiddenProdId.value;
+    if (isCurrentlyLinked) {
+      // Libera para manual
+      hiddenProdId.value = "";
+      inputDesc.removeAttribute("readonly");
+      inputValor.removeAttribute("readonly");
+      toggleBtn.textContent = "✏️";
+      toggleBtn.title = "Selecionar do cadastro";
+    } else {
+      // Abre picker
+      if (window.ProductPickerModal) {
+        ProductPickerModal.abrir((produto) => {
+          hiddenProdId.value = produto.id;
+          inputDesc.value = produto.nome;
+          inputDesc.setAttribute("readonly", "readonly");
+          inputValor.value = produto.preco || 0;
+          inputValor.setAttribute("readonly", "readonly");
+          toggleBtn.textContent = "🔓";
+          toggleBtn.title = "Digitar manualmente";
+          _recalcularTotal();
+        });
+      }
+    }
+  });
+
   // Eventos para recalcular ao digitar
   div.querySelectorAll(".item-qtd, .item-valor").forEach((el) =>
     el.addEventListener("input", _recalcularTotal)
@@ -260,7 +321,8 @@ function _coletarItens() {
     const desc = linha.querySelector(".item-desc").value.trim();
     const qtd = parseFloat(linha.querySelector(".item-qtd").value) || 1;
     const valor = parseFloat(linha.querySelector(".item-valor").value) || 0;
-    if (desc || valor > 0) itens.push({ desc, qtd, valor });
+    const produtoId = linha.querySelector(".item-produto-id")?.value || null;
+    if (desc || valor > 0 || produtoId) itens.push({ desc, qtd, valor, produtoId });
   });
   return itens;
 }
