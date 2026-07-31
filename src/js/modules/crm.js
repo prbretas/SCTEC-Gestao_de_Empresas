@@ -400,6 +400,17 @@ function visualizarOportunidade(id) {
   // Preenche select de propostas com as da mesma empresa
   _preencherPropostas(op.empresaId, op.propostaId);
 
+  // Renderiza links de vínculos
+  const vinculosEl = document.getElementById("crm-vinculos");
+  if (vinculosEl) {
+    let links = "";
+    if (op.propostaId && window.PropostasStorage) {
+      const prop = PropostasStorage.buscarTodos().find((p) => p.id === op.propostaId);
+      if (prop) links += `<a href="propostas.html" class="badge bg-info text-decoration-none me-1" title="Ver pedido vinculado">📄 Pedido: ${prop.titulo || prop.numero || "—"}</a>`;
+    }
+    vinculosEl.innerHTML = links || "";
+  }
+
   // Exibe auditoria no footer
   const auditoriaEl = document.getElementById("auditoria-crm");
   if (auditoriaEl) auditoriaEl.textContent = _formatarAuditoria(op);
