@@ -360,6 +360,11 @@ function _coletarProduto() {
     categoria: document.getElementById("prod-categoria").value,
     unidade: document.getElementById("prod-unidade").value,
     preco,
+    valorCompra: parseFloat(document.getElementById("prod-valor-compra")?.value) || 0,
+    valorVenda: parseFloat(document.getElementById("prod-valor-venda")?.value) || 0,
+    lote: document.getElementById("prod-lote")?.value.trim() || "",
+    fabricacao: document.getElementById("prod-fabricacao")?.value || "",
+    validade: document.getElementById("prod-validade")?.value || "",
     estoqueInicial: parseInt(document.getElementById("prod-estoque")?.value) || 0,
     empresaId: document.getElementById("prod-empresa").value,
     enderecoId: document.getElementById("prod-endereco")?.value || "",
@@ -480,6 +485,18 @@ function visualizarProduto(id) {
   document.getElementById("prod-categoria").value = p.categoria || "outros";
   document.getElementById("prod-unidade").value = p.unidade || "un";
   document.getElementById("prod-preco").value = p.preco || "";
+  // Novos campos
+  const elValorCompra = document.getElementById("prod-valor-compra");
+  if (elValorCompra) elValorCompra.value = p.valorCompra || "";
+  const elValorVenda = document.getElementById("prod-valor-venda");
+  if (elValorVenda) elValorVenda.value = p.valorVenda || "";
+  const elLote = document.getElementById("prod-lote");
+  if (elLote) elLote.value = p.lote || "";
+  const elFabricacao = document.getElementById("prod-fabricacao");
+  if (elFabricacao) elFabricacao.value = p.fabricacao || "";
+  const elValidade = document.getElementById("prod-validade");
+  if (elValidade) elValidade.value = p.validade || "";
+
   const estoque = window.EstoqueStorage ? EstoqueStorage.obterQuantidadeTotal(p.id) : (p.estoque || 0);
   const elEstoque = document.getElementById("prod-estoque");
   if (elEstoque) elEstoque.value = estoque;
