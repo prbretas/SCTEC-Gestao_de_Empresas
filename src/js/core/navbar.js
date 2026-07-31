@@ -59,6 +59,7 @@ const NavbarController = {
             <div class="d-flex align-items-center gap-2 ms-auto flex-shrink-0">
               ${identidade}
               <span id="navbar-tarefas-vencidas" class="badge bg-danger d-none" title="Tarefas vencidas" style="font-size:.7rem;"></span>
+              ${sessao && sessao.role === "admin" ? `<button class="btn btn-outline-light btn-sm" id="btn-params-rotina" title="Parâmetros da Rotina">⚙️</button>` : ""}
               <a href="settings.html" class="btn btn-outline-light btn-sm" title="Minha Conta">🔒</a>
               <a href="home.html" class="btn btn-outline-light btn-sm" title="Voltar para Home">🏠 Home</a>
               <div class="form-check form-switch text-light mb-0" title="Modo Escuro">
@@ -87,6 +88,96 @@ const NavbarController = {
         badge.classList.remove("d-none");
       }
     }
+
+    // Botão de parâmetros (admin only) — abre modal com config da rotina atual
+    document.getElementById("btn-params-rotina")?.addEventListener("click", () => {
+      if (window.ParamsController) {
+        NavbarController._abrirModalParams(paginaAtual);
+      }
+    });
+  },
+
+  /**
+   * Abre modal de parâmetros para a rotina especificada.
+   * @param {string} rotina - id do módulo atual
+   */
+  _abrirModalParams(rotina) {
+    if (!window.ParamsController || !rotina) return;
+    const params = ParamsController.obter(rotina);
+    const defaults = ParamsController.obterPadrao(rotina);
+    if (!defaults || Object.keys(defaults).length === 0) {
+      alert("Esta rotina não possui parâmetros configuráveis.");
+      return;
+    }
+
+    // Cria modal dinamicamente
+    let modalEl = document.getElementById("modal-params-rotina");
+    if (!modalEl) {
+      modalEl = document.createElement("div");
+      modalEl.id = "modal-params-rotina";
+      modalEl.className = "modal fade";
+      modalEl.tabIndex = -1;
+      document.body.appendChild(modalEl);
+    }
+
+    // Gera campos baseado nos parâmetros
+    let camposHtml = "";
+    Object.entries(params).forEach(([key, value]) => {
+      const label = key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase());
+      if (typeof value === "boolean") {
+        camposHtml += `<div class="form-check form-switch mb-3">
+          <input class="form-check-input param-field" type="checkbox" id="param-${key}" data-key="${key}" data-type="boolean" ${value ? "checked" : ""} />
+          <label class="form-check-label" for="param-${key}">${label}</label>
+        </div>`;
+      } else if (typeof value === "number") {
+        camposHtml += `<div class="mb-3">
+          <label class="form-label fw-bold small">${label}</label>
+          <input type="number" class="form-control form-control-sm param-field" id="param-${key}" data-key="${key}" data-type="number" value="${value}" />
+        </div>`;
+      } else if (typeof value === "string") {
+        camposHtml += `<div class="mb-3">
+          <label class="form-label fw-bold small">${label}</label>
+          <input type="text" class="form-control form-control-sm param-field" id="param-${key}" data-key="${key}" data-type="string" value="${value}" />
+        </div>`;
+      } else if (Array.isArray(value)) {
+        camposHtml += `<div class="mb-3">
+          <label class="form-label fw-bold small">${label}</label>
+          <input type="text" class="form-control form-control-sm param-field" id="param-${key}" data-key="${key}" data-type="array" value="${value.join(", ")}" />
+          <div class="form-text small">Separe por vírgula</div>
+        </div>`;
+      }
+    });
+
+    modalEl.innerHTML = `
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+          <div class="modal-header"><h5 class="modal-title">⚙️ Parâmetros: ${rotina}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+          <div class="modal-body">${camposHtml}</div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-success" id="btn-salvar-params">💾 Salvar Parâmetros</button>
+          </div>
+        </div>
+      </div>`;
+
+    const bsModal = new bootstrap.Modal(modalEl);
+    bsModal.show();
+
+    document.getElementById("btn-salvar-params")?.addEventListener("click", () => {
+      if (!confirm("Deseja salvar as alterações? Os parâmetros serão aplicados imediatamente.")) return;
+      const novosParams = {};
+      document.querySelectorAll(".param-field").forEach((el) => {
+        const k = el.dataset.key;
+        const t = el.dataset.type;
+        if (t === "boolean") novosParams[k] = el.checked;
+        else if (t === "number") novosParams[k] = parseFloat(el.value) || 0;
+        else if (t === "array") novosParams[k] = el.value.split(",").map((s) => s.trim()).filter(Boolean);
+        else novosParams[k] = el.value;
+      });
+      ParamsController.salvar(rotina, novosParams);
+      bsModal.hide();
+      alert("✅ Parâmetros salvos com sucesso!");
+    });
   },
 };
 
