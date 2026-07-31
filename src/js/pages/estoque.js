@@ -399,13 +399,13 @@ function _renderizarMovimentacoes(todas) {
     const endLabel = end ? (end.id === "end_geral" ? "Geral" : [end.instalacao, end.estante].filter(Boolean).join(" › ")) : "—";
 
     return `
-      <tr>
+      <tr style="cursor:pointer;" onclick="visualizarMovimentacao('${m.id}')">
         <td class="small">${dataFmt}</td>
         <td class="small fw-bold">${produto ? produto.nome : "—"}</td>
         <td><span class="badge ${tc.badge}" style="font-size:.65rem;">${tc.label}</span></td>
         <td class="text-center fw-bold">${m.quantidade}</td>
         <td class="small">${endLabel}</td>
-        <td class="small text-muted">${m.motivo || "—"}</td>
+        <td class="small text-muted text-truncate" style="max-width:150px;">${m.motivo || "—"}</td>
         <td class="small text-muted">${m.usuario || "—"}</td>
       </tr>`;
   }).join("");
@@ -506,4 +506,50 @@ function editarEnderecoEst(id) {
 
   // Scroll para o formulário
   document.getElementById("form-endereco-est").scrollIntoView({ behavior: "smooth" });
+}
+
+
+// ─── Visualizar Detalhe da Movimentação ─────────────────────────────────────
+
+function visualizarMovimentacao(movId) {
+  if (!window.EstoqueStorage) return;
+  const movs = EstoqueStorage.buscarMovimentacoes();
+  const mov = movs.find((m) => m.id === movId);
+  if (!mov) return;
+
+  const produtos = window.ProdutosStorage ? ProdutosStorage.buscarTodos() : [];
+  const enderecos = window.EnderecosStorage ? EnderecosStorage.buscarTodos() : [];
+
+  const produto = produtos.find((p) => p.id === mov.produtoId);
+  const endOrigem = enderecos.find((e) => e.id === mov.enderecoId);
+  const endDestino = mov.enderecoDestino ? enderecos.find((e) => e.id === mov.enderecoDestino) : null;
+
+  const tipoLabels = {
+    entrada: "⬆️ Entrada",
+    saida: "⬇️ Saída",
+    transferencia: "🔄 Transferência",
+  };
+
+  const formatarEnd = (end) => {
+    if (!end) return "—";
+    if (end.id === "end_geral") return "Geral (padrão)";
+    return [end.instalacao, end.galpao, end.corredor, end.estante, end.coluna, end.posicao].filter(Boolean).join(" › ");
+  };
+
+  const dataFmt = mov.data
+    ? new Date(mov.data).toLocaleString("pt-BR", { dateStyle: "long", timeStyle: "medium" })
+    : "—";
+
+  document.getElementById("det-mov-data").textContent = dataFmt;
+  document.getElementById("det-mov-tipo").innerHTML = `<span class="badge ${mov.tipo === "entrada" ? "bg-success" : mov.tipo === "saida" ? "bg-danger" : "bg-primary"}">${tipoLabels[mov.tipo] || mov.tipo}</span>`;
+  document.getElementById("det-mov-produto").textContent = produto ? `${produto.codigo ? produto.codigo + " — " : ""}${produto.nome}` : "Produto removido";
+  document.getElementById("det-mov-quantidade").textContent = mov.quantidade;
+  document.getElementById("det-mov-saldo").textContent = `${mov.estoqueAnterior || "?"} → ${mov.estoqueNovo || "?"}`;
+  document.getElementById("det-mov-endereco").textContent = formatarEnd(endOrigem);
+  document.getElementById("det-mov-endereco-dest").textContent = mov.tipo === "transferencia" ? formatarEnd(endDestino) : "N/A";
+  document.getElementById("det-mov-motivo").textContent = mov.motivo || "Nenhum motivo informado";
+  document.getElementById("det-mov-usuario").textContent = mov.usuario || "Sistema";
+  document.getElementById("det-mov-id").textContent = mov.id;
+
+  new bootstrap.Modal(document.getElementById("modal-detalhe-mov")).show();
 }
