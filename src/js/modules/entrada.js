@@ -97,6 +97,9 @@ document.addEventListener("DOMContentLoaded", () => {
     _resetarFormEntrada();
     document.getElementById("titulo-modal-entrada").textContent = "📥 Novo Documento de Entrada";
     document.getElementById("ent-data").value = new Date().toISOString().split("T")[0];
+    // Gera número sequencial do documento
+    const numero = Utils.gerarProximoCodigo("entrada", EntradaStorage.buscarTodos(), "numero");
+    if (numero) document.getElementById("ent-numero").value = numero;
     _entSetModo("edicao");
     _adicionarLinhaItemEntrada();
     modal.show();

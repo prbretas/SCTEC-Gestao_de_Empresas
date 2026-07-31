@@ -91,10 +91,10 @@
           <table class="table table-hover align-middle mb-0">
             <thead class="thead-sctec">
               <tr>
-                <th>Código</th>
-                <th>Produto</th>
-                <th>Categoria</th>
-                <th class="text-end">Preço Unit.</th>
+                <th onclick="_ordenarProdutos('codigo')" style="cursor:pointer;">Código <span class="sort-icon"></span></th>
+                <th onclick="_ordenarProdutos('nome')" style="cursor:pointer;">Produto <span class="sort-icon"></span></th>
+                <th onclick="_ordenarProdutos('categoria')" style="cursor:pointer;">Categoria <span class="sort-icon"></span></th>
+                <th onclick="_ordenarProdutos('preco')" class="text-end" style="cursor:pointer;">Preço Unit. <span class="sort-icon"></span></th>
                 <th class="text-center">Estoque</th>
                 <th class="text-center">Mín.</th>
                 <th class="text-center">Status</th>
@@ -284,6 +284,11 @@
           </div>
           <div class="modal-footer">
             <div id="auditoria-prod" class="small text-muted me-auto"></div>
+            <div class="d-flex gap-1 me-auto">
+              <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-prev-produto" title="Anterior">← Ant.</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-next-produto" title="Próximo">Próx. →</button>
+            </div>
+            <button type="button" class="btn btn-outline-info btn-sm" id="btn-duplicar-produto" title="Duplicar produto">📋 Duplicar</button>
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
             <button type="button" class="btn btn-primary d-none" id="btn-editar-produto">✏️ Editar</button>
             <button type="submit" form="form-produto" class="btn btn-success" id="btn-salvar-produto">Salvar</button>

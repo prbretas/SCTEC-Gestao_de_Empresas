@@ -28,6 +28,8 @@ const PARAMS_PADRAO = {
     tiposFiscais: ["nfs", "nfe"],
     categorias: ["servicos", "produtos", "salarios", "impostos", "aluguel", "marketing", "outros"],
     formasPagamento: ["boleto", "pix", "cartao_credito", "cartao_debito", "transferencia", "dinheiro", "cheque"],
+    numeracao: "sequencial",
+    prefixoCodigo: "FIN",
   },
   agenda: {
     tipos: ["reuniao", "visita", "ligacao", "prazo", "outro"],
@@ -43,6 +45,8 @@ const PARAMS_PADRAO = {
     descricaoObrigatoria: false,
     categorias: ["materiais", "equipamentos", "servicos", "insumos", "outros"],
     unidadesPadrao: ["un", "kg", "m", "m2", "l", "cx", "pc", "hr"],
+    numeracao: "sequencial",
+    prefixoCodigo: "PRD",
   },
   estoque: {
     estoqueMinimoPadrao: 5,
@@ -55,6 +59,8 @@ const PARAMS_PADRAO = {
   entrada: {
     diasVencimento: 30,
     confirmarRecebimentoAutomatico: false,
+    numeracao: "sequencial",
+    prefixoCodigo: "ENT",
   },
 };
 
@@ -119,3 +125,56 @@ const ParamsController = {
 
 window.ParamsController = ParamsController;
 window.PARAMS_PADRAO = PARAMS_PADRAO;
+
+/**
+ * Gerador de numeração sequencial/aleatória para registros.
+ * Usado em Produtos, Financeiro, Propostas, etc.
+ * Garante unicidade verificando registros existentes.
+ */
+const NumeracaoService = {
+  /**
+   * Gera próximo código baseado no parâmetro de numeração da rotina.
+   * @param {string} rotina - ex: "produtos", "financeiro", "propostas"
+   * @param {Array} registrosExistentes - lista de registros para verificar unicidade
+   * @param {string} [campoCodigoKey] - nome do campo que guarda o código (default: "codigo")
+   * @returns {string} código gerado
+   */
+  gerarCodigo(rotina, registrosExistentes = [], campoCodigoKey = "codigo") {
+    const params = window.ParamsController ? ParamsController.obter(rotina) : {};
+    const tipo = params.numeracao || "sequencial";
+    const prefixo = params.prefixoCodigo || rotina.substring(0, 3).toUpperCase();
+
+    const codigosExistentes = new Set(
+      registrosExistentes.map((r) => r[campoCodigoKey] || "").filter(Boolean)
+    );
+
+    if (tipo === "sequencial") {
+      return this._gerarSequencial(prefixo, codigosExistentes);
+    } else if (tipo === "aleatoria") {
+      return this._gerarAleatoria(prefixo, codigosExistentes);
+    }
+    // tipo === "manual" — retorna vazio, usuário preenche
+    return "";
+  },
+
+  _gerarSequencial(prefixo, existentes) {
+    let seq = 1;
+    let codigo;
+    do {
+      codigo = `${prefixo}-${String(seq).padStart(3, "0")}`;
+      seq++;
+    } while (existentes.has(codigo));
+    return codigo;
+  },
+
+  _gerarAleatoria(prefixo, existentes) {
+    let codigo;
+    do {
+      const rand = Math.floor(10000 + Math.random() * 90000);
+      codigo = `${prefixo}-${rand}`;
+    } while (existentes.has(codigo));
+    return codigo;
+  },
+};
+
+window.NumeracaoService = NumeracaoService;
