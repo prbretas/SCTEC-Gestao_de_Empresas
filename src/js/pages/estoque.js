@@ -495,7 +495,12 @@ function movimentarRapido(produtoId, enderecoId) {
 }
 
 function excluirEnderecoEst(id) {
-  if (!confirm("Remover este endereço?")) return;
+  const posicoes = window.EstoqueStorage ? EstoqueStorage.buscarTodos().filter((p) => p.enderecoId === id && p.quantidade > 0) : [];
+  let msg = "Remover este endereço?";
+  if (posicoes.length > 0) {
+    msg = `Este endereço possui ${posicoes.length} produto(s) com estoque.\nAo excluir, os produtos serão movidos para o primeiro endereço restante.\n\nDeseja continuar?`;
+  }
+  if (!confirm(msg)) return;
   EnderecosStorage.excluir(id);
   _renderizarEnderecosLista();
   _preencherFiltroEnderecos();

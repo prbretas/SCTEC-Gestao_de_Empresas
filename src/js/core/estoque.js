@@ -77,6 +77,27 @@ const EnderecosStorage = {
     }
   },
   excluir(id) {
+    // Antes de excluir, trata posições de estoque órfãs
+    if (window.EstoqueStorage) {
+      const posicoes = EstoqueStorage.buscarTodos();
+      const enderecosRestantes = this.buscarTodos().filter((e) => e.id !== id);
+      const enderecoDestino = enderecosRestantes.length > 0 ? enderecosRestantes[0].id : null;
+
+      const novasPosicoes = [];
+      posicoes.forEach((pos) => {
+        if (pos.enderecoId === id) {
+          if (pos.quantidade > 0 && enderecoDestino) {
+            // Reatribui para o primeiro endereço restante
+            pos.enderecoId = enderecoDestino;
+            novasPosicoes.push(pos);
+          }
+          // Se quantidade = 0, descarta (não adiciona)
+        } else {
+          novasPosicoes.push(pos);
+        }
+      });
+      EstoqueStorage.salvarTodos(novasPosicoes);
+    }
     this.salvarTodos(this.buscarTodos().filter((e) => e.id !== id));
   },
   /**
