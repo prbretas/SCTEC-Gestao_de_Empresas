@@ -22,5 +22,12 @@ document.addEventListener("DOMContentLoaded", () => {
     // Inicializa os controllers globais
     UIController.init();
     FormController.init();
+
+    // Botão Editar no modo visualização
+    document.getElementById("btn-editar-empreendimento")?.addEventListener("click", () => {
+        FormController.setReadOnly(false);
+        document.querySelector("#titulo-modal-form").textContent = "✏️ Editar Empreendimento";
+    });
+
     console.log("SCTEC - Sistema Operacional");
 });

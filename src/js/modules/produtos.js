@@ -101,6 +101,20 @@ document.addEventListener("DOMContentLoaded", () => {
   _preencherEnderecos();
   renderizarProdutos();
 
+  // Cálculo automático: Valor de Venda = Compra × (1 + Margem/100)
+  const calcularVenda = () => {
+    const compra = parseFloat(document.getElementById("prod-valor-compra")?.value) || 0;
+    const margem = parseFloat(document.getElementById("prod-margem")?.value) || 0;
+    const venda = compra * (1 + margem / 100);
+    const elVenda = document.getElementById("prod-valor-venda");
+    if (elVenda) elVenda.value = venda > 0 ? venda.toFixed(2) : "";
+    // Atualiza o hidden preco (compatibilidade)
+    const elPreco = document.getElementById("prod-preco");
+    if (elPreco) elPreco.value = venda > 0 ? venda.toFixed(2) : "0";
+  };
+  document.getElementById("prod-valor-compra")?.addEventListener("input", calcularVenda);
+  document.getElementById("prod-margem")?.addEventListener("input", calcularVenda);
+
   // Novo produto
   document.getElementById("btn-novo-produto").addEventListener("click", () => {
     _resetarFormProduto();
@@ -339,17 +353,20 @@ function _resetarFormProduto() {
 
 function _coletarProduto() {
   const nome = document.getElementById("prod-nome").value.trim();
-  const preco = parseFloat(document.getElementById("prod-preco").value);
-  if (!nome || isNaN(preco)) { alert("Nome e Preço são obrigatórios."); return null; }
+  const valorCompra = parseFloat(document.getElementById("prod-valor-compra")?.value) || 0;
+  const margem = parseFloat(document.getElementById("prod-margem")?.value) || 0;
+  const valorVenda = parseFloat(document.getElementById("prod-valor-venda")?.value) || 0;
+  if (!nome || valorCompra <= 0) { alert("Nome e Valor de Compra são obrigatórios."); return null; }
   return {
     codigo: document.getElementById("prod-codigo").value.trim(),
     nome,
     descricao: document.getElementById("prod-descricao").value.trim(),
     categoria: document.getElementById("prod-categoria").value,
     unidade: document.getElementById("prod-unidade").value,
-    preco,
-    valorCompra: parseFloat(document.getElementById("prod-valor-compra")?.value) || 0,
-    valorVenda: parseFloat(document.getElementById("prod-valor-venda")?.value) || 0,
+    preco: valorVenda, // mantém compatibilidade
+    valorCompra,
+    margem,
+    valorVenda,
     lote: document.getElementById("prod-lote")?.value.trim() || "",
     fabricacao: document.getElementById("prod-fabricacao")?.value || "",
     validade: document.getElementById("prod-validade")?.value || "",
@@ -475,8 +492,10 @@ function visualizarProduto(id) {
   // Novos campos
   const elValorCompra = document.getElementById("prod-valor-compra");
   if (elValorCompra) elValorCompra.value = p.valorCompra || "";
+  const elMargem = document.getElementById("prod-margem");
+  if (elMargem) elMargem.value = p.margem || 30;
   const elValorVenda = document.getElementById("prod-valor-venda");
-  if (elValorVenda) elValorVenda.value = p.valorVenda || "";
+  if (elValorVenda) elValorVenda.value = p.valorVenda || p.preco || "";
   const elLote = document.getElementById("prod-lote");
   if (elLote) elLote.value = p.lote || "";
   const elFabricacao = document.getElementById("prod-fabricacao");
