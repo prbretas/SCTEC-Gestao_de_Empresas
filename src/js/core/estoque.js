@@ -77,7 +77,6 @@ const EnderecosStorage = {
     }
   },
   excluir(id) {
-    if (id === "end_geral") return; // Não pode remover o padrão
     this.salvarTodos(this.buscarTodos().filter((e) => e.id !== id));
   },
   /**

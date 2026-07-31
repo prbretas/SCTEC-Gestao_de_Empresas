@@ -184,16 +184,15 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
   setReadOnly(status) {
     const inputs = this.form.querySelectorAll("input, select, textarea");
     const btnSalvar = document.querySelector("#btn-salvar");
+    const btnEditar = document.querySelector("#btn-editar-empreendimento");
 
     inputs.forEach((el) => {
       if (status) {
-        // APLICA COLORAÇÃO CINZA (Trava visual que você pediu)
         el.style.backgroundColor = "#e9ecef";
         el.style.cursor = "not-allowed";
         if (el.tagName === "SELECT") el.style.pointerEvents = "none";
         else el.readOnly = true;
       } else {
-        // LIBERA OS CAMPOS
         el.style.backgroundColor = "";
         el.style.cursor = "default";
         el.style.pointerEvents = "auto";
@@ -203,6 +202,9 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
 
     if (btnSalvar) {
       btnSalvar.style.display = status ? "none" : "inline-block";
+    }
+    if (btnEditar) {
+      btnEditar.classList.toggle("d-none", !status);
     }
   },
 
