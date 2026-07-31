@@ -130,14 +130,6 @@
           <div class="modal-body p-4">
             <form id="form-movimentacao-est">
               <div class="mb-3">
-                <label class="form-label fw-bold">Produto *</label>
-                <div class="input-group">
-                  <input type="text" id="mov-est-produto-nome" class="form-control" readonly placeholder="Clique para selecionar..." />
-                  <button type="button" class="btn btn-outline-primary" id="btn-selecionar-produto-mov">📦 Selecionar</button>
-                </div>
-                <input type="hidden" id="mov-est-produto-id" />
-              </div>
-              <div class="mb-3">
                 <label class="form-label fw-bold">Tipo *</label>
                 <div class="d-flex gap-3">
                   <div class="form-check">
@@ -163,13 +155,14 @@
                 <select id="mov-est-endereco-destino" class="form-select"></select>
               </div>
               <div class="mb-3">
-                <label class="form-label fw-bold">Quantidade *</label>
-                <input type="number" id="mov-est-quantidade" class="form-control" min="1" value="1" required />
-              </div>
-              <div class="mb-3">
                 <label class="form-label fw-bold">Motivo</label>
                 <input type="text" id="mov-est-motivo" class="form-control" placeholder="Ex: Compra, Venda, Ajuste de inventário..." />
               </div>
+
+              <!-- Lista de Produtos para movimentar -->
+              <h6 class="fw-bold mt-3 mb-2">📦 Produtos</h6>
+              <div id="mov-est-itens-lista"></div>
+              <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="btn-add-item-mov">+ Adicionar Produto</button>
             </form>
           </div>
           <div class="modal-footer">

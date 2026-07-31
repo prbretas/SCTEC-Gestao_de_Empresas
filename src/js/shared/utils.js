@@ -200,14 +200,20 @@ const Utils = {
         });
       }
 
+      // Preview antes de importar (#26)
+      const previewLinhas = novosParaImportar.slice(0, 5).map((r) =>
+        `• ${r.nome} | ${r.registro} | ${r.municipio || "—"}`
+      ).join("\n");
+
       const resumo =
-        `📊 RESUMO DA IMPORTAÇÃO\n` +
+        `📊 PREVIEW DA IMPORTAÇÃO\n` +
         `----------------------------------\n` +
         `📄 Registros no arquivo: ${totalNoArquivo}\n` +
         `⚠️ Duplicados ignorados: ${duplicadosEncontrados}\n` +
         `❌ Erros de estrutura: ${errosLayout}\n\n` +
         `📥 TOTAL A IMPORTAR: ${novosParaImportar.length}\n` +
         `----------------------------------\n` +
+        (novosParaImportar.length > 0 ? `\nPrimeiros registros:\n${previewLinhas}\n${novosParaImportar.length > 5 ? `... e mais ${novosParaImportar.length - 5}\n` : ""}\n` : "") +
         `Confirma a inclusão no sistema?`;
 
       if (novosParaImportar.length > 0) {

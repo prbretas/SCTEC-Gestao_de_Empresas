@@ -630,3 +630,47 @@ body.dark-mode .card-resumo.bg-primary { background-color: #0a58ca !important; }
 .nav-icon-btn:active {
   transform: scale(0.95);
 }
+
+
+/* ==========================================================================
+   Responsividade Mobile (#88)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  /* Navbar: esconde texto, mantém ícones */
+  .navbar .d-none.d-md-inline,
+  .navbar .d-none.d-lg-inline { display: none !important; }
+
+  /* Modais ocupam tela cheia no mobile */
+  .modal-dialog { margin: 0.5rem; max-width: calc(100% - 1rem); }
+  .modal-body { padding: 1rem !important; }
+
+  /* Tabelas: scroll horizontal */
+  .table-responsive { font-size: 0.8rem; }
+  .table th, .table td { padding: 0.4rem 0.5rem; }
+
+  /* Cards de resumo empilham */
+  .row.g-3 > [class*="col-md-"] { flex: 0 0 50%; max-width: 50%; }
+
+  /* Botões de ação menores */
+  .btn-xs { padding: 0.15rem 0.35rem; font-size: 0.65rem; }
+
+  /* Footer e filtros */
+  .card-body.p-3 { padding: 0.75rem !important; }
+  .card-body .row.g-2 > [class*="col-md-"] { flex: 0 0 100%; max-width: 100%; margin-bottom: 0.5rem; }
+
+  /* Título principal */
+  h1 { font-size: 1.3rem; }
+
+  /* Home cards */
+  .home-card .card-icon { font-size: 2rem !important; }
+  .home-card h5 { font-size: 0.9rem; }
+}
+
+@media (max-width: 480px) {
+  /* Cards de resumo: 1 por linha em telas muito pequenas */
+  .row.g-3 > [class*="col-md-"] { flex: 0 0 100%; max-width: 100%; }
+
+  /* Esconde colunas menos importantes nas tabelas */
+  .table .d-none-mobile { display: none !important; }
+}

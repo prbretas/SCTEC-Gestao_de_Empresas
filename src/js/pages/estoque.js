@@ -29,17 +29,13 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-nova-movimentacao").addEventListener("click", () => {
     _resetarFormMov();
     _preencherSelectEnderecos();
+    _adicionarItemMov(); // Adiciona primeira linha
     modalMov.show();
   });
 
-  // Selecionar produto via picker
-  document.getElementById("btn-selecionar-produto-mov").addEventListener("click", () => {
-    if (window.ProductPickerModal) {
-      ProductPickerModal.abrir((produto) => {
-        document.getElementById("mov-est-produto-id").value = produto.id;
-        document.getElementById("mov-est-produto-nome").value = produto.nome;
-      });
-    }
+  // Adicionar mais produtos à movimentação
+  document.getElementById("btn-add-item-mov")?.addEventListener("click", () => {
+    _adicionarItemMov();
   });
 
   // Toggle transferência
@@ -51,18 +47,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Submit movimentação
+  // Submit movimentação (múltiplos produtos)
   document.getElementById("form-movimentacao-est").addEventListener("submit", (e) => {
     e.preventDefault();
-    const prodId = document.getElementById("mov-est-produto-id").value;
-    if (!prodId) { alert("Selecione um produto."); return; }
 
     const tipo = document.querySelector('input[name="mov-est-tipo"]:checked').value;
-    const qtd = parseInt(document.getElementById("mov-est-quantidade").value) || 0;
     const motivo = document.getElementById("mov-est-motivo").value.trim();
     const enderecoId = document.getElementById("mov-est-endereco").value || "end_geral";
-
-    if (qtd <= 0) { alert("Quantidade deve ser maior que zero."); return; }
 
     // Verifica se motivo é obrigatório (parâmetro)
     const params = window.ParamsController ? ParamsController.obter("estoque") : {};
@@ -71,35 +62,32 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    let resultado;
-    if (tipo === "transferencia") {
-      const enderecoDestino = document.getElementById("mov-est-endereco-destino")?.value || "";
-      if (!enderecoDestino) { alert("Selecione o endereço de destino."); return; }
-      resultado = EstoqueStorage.transferir({ produtoId: prodId, enderecoOrigem: enderecoId, enderecoDestino, quantidade: qtd, motivo });
-    } else {
-      resultado = EstoqueStorage.movimentar({ produtoId: prodId, enderecoId, tipo, quantidade: qtd, motivo });
-    }
+    // Coleta itens da movimentação
+    const itens = [];
+    document.querySelectorAll(".mov-item-linha").forEach((linha) => {
+      const prodId = linha.querySelector(".mov-item-produto-id")?.value;
+      const qtd = parseInt(linha.querySelector(".mov-item-qtd")?.value) || 0;
+      if (prodId && qtd > 0) itens.push({ produtoId: prodId, quantidade: qtd });
+    });
 
-    if (!resultado.sucesso) { alert(resultado.mensagem); return; }
+    if (itens.length === 0) { alert("Adicione ao menos um produto com quantidade."); return; }
+    if (!confirm(`Confirmar ${tipo} de ${itens.length} produto(s)?`)) return;
 
-    // Integração Financeiro (se configurado)
-    if (params.gerarFinanceiro && window.FinanceiroStorage && window.ProdutosStorage) {
-      const produto = ProdutosStorage.buscarTodos().find((p) => p.id === prodId);
-      if (produto && produto.preco) {
-        const valorTotal = qtd * parseFloat(produto.preco);
-        if (valorTotal > 0 && tipo !== "transferencia") {
-          FinanceiroStorage.adicionar({
-            tipo: tipo === "entrada" ? "saida" : "entrada",
-            tipoFiscal: tipo === "entrada" ? "nfe" : "nfs",
-            descricao: `${tipo === "entrada" ? "NFe — Compra" : "NFs — Venda"}: ${produto.nome} (${qtd}x)`,
-            valor: valorTotal,
-            data: new Date().toISOString().split("T")[0],
-            statusPagamento: "pendente",
-            categoria: "produtos",
-            obs: `Gerado automaticamente — ${motivo || tipo}`,
-          });
-        }
+    const erros = [];
+    itens.forEach((item) => {
+      let resultado;
+      if (tipo === "transferencia") {
+        const enderecoDestino = document.getElementById("mov-est-endereco-destino")?.value || "";
+        if (!enderecoDestino) { erros.push("Selecione o endereço de destino."); return; }
+        resultado = EstoqueStorage.transferir({ produtoId: item.produtoId, enderecoOrigem: enderecoId, enderecoDestino, quantidade: item.quantidade, motivo });
+      } else {
+        resultado = EstoqueStorage.movimentar({ produtoId: item.produtoId, enderecoId, tipo, quantidade: item.quantidade, motivo });
       }
+      if (!resultado.sucesso) erros.push(resultado.mensagem);
+    });
+
+    if (erros.length > 0) {
+      alert(`⚠️ Alguns itens tiveram erro:\n${erros.join("\n")}`);
     }
 
     modalMov.hide();
@@ -180,10 +168,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function _resetarFormMov() {
   document.getElementById("form-movimentacao-est").reset();
-  document.getElementById("mov-est-produto-id").value = "";
-  document.getElementById("mov-est-produto-nome").value = "";
   document.getElementById("mov-est-entrada").checked = true;
   document.getElementById("mov-est-destino-container")?.classList.add("d-none");
+  document.getElementById("mov-est-itens-lista").innerHTML = "";
+}
+
+function _adicionarItemMov(produtoId, produtoNome) {
+  const lista = document.getElementById("mov-est-itens-lista");
+  const div = document.createElement("div");
+  div.className = "row g-2 mb-2 mov-item-linha";
+  div.innerHTML = `
+    <div class="col-md-7">
+      <div class="input-group input-group-sm">
+        <input type="text" class="form-control mov-item-produto-nome" readonly placeholder="Clique 📦 para selecionar" value="${produtoNome || ""}" />
+        <button type="button" class="btn btn-outline-primary btn-sm mov-item-btn-picker">📦</button>
+      </div>
+      <input type="hidden" class="mov-item-produto-id" value="${produtoId || ""}" />
+    </div>
+    <div class="col-md-3">
+      <input type="number" class="form-control form-control-sm mov-item-qtd" min="1" value="1" placeholder="Qtd" />
+    </div>
+    <div class="col-md-2 d-flex align-items-center">
+      <button type="button" class="btn btn-xs btn-outline-danger" onclick="this.closest('.mov-item-linha').remove()">✕</button>
+    </div>`;
+  lista.appendChild(div);
+
+  // Bind picker
+  div.querySelector(".mov-item-btn-picker").addEventListener("click", () => {
+    if (window.ProductPickerModal) {
+      ProductPickerModal.abrir((produto) => {
+        div.querySelector(".mov-item-produto-id").value = produto.id;
+        div.querySelector(".mov-item-produto-nome").value = produto.nome;
+      });
+    }
+  });
 }
 
 function _preencherSelectEnderecos() {
@@ -466,9 +484,9 @@ function _renderizarEnderecosLista() {
 function movimentarRapido(produtoId, enderecoId) {
   const produto = window.ProdutosStorage ? ProdutosStorage.buscarTodos().find((p) => p.id === produtoId) : null;
   if (!produto) return;
-  document.getElementById("mov-est-produto-id").value = produtoId;
-  document.getElementById("mov-est-produto-nome").value = produto.nome;
+  _resetarFormMov();
   _preencherSelectEnderecos();
+  _adicionarItemMov(produtoId, produto.nome);
   const selEnd = document.getElementById("mov-est-endereco");
   if (selEnd) selEnd.value = enderecoId;
   document.getElementById("mov-est-entrada").checked = true;
