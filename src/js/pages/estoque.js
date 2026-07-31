@@ -444,7 +444,7 @@ function _resetarFormEndereco() {
 function _renderizarEnderecosLista() {
   const tbody = document.getElementById("enderecos-lista-est");
   if (!tbody || !window.EnderecosStorage) return;
-  const enderecos = EnderecosStorage.buscarTodos().filter((e) => e.id !== "end_geral");
+  const enderecos = EnderecosStorage.buscarTodos();
 
   const TIPOS_LABEL = {
     prateleira: "📚 Prateleira",
@@ -458,22 +458,22 @@ function _renderizarEnderecosLista() {
   };
 
   if (enderecos.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-3">Nenhum endereço cadastrado além do padrão.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-3">Nenhum endereço cadastrado.</td></tr>`;
     return;
   }
 
   tbody.innerHTML = enderecos.map((e) => `
     <tr>
-      <td class="small fw-bold">${e.instalacao || "—"}</td>
+      <td class="small fw-bold">${e.instalacao || (e.id === "end_geral" ? "Geral" : "—")}</td>
       <td class="small">${e.galpao || "—"}</td>
       <td class="small">${e.corredor || "—"}</td>
       <td class="small">${e.estante || "—"}</td>
       <td class="small">${e.coluna || "—"}</td>
       <td class="small">${e.posicao || "—"}</td>
-      <td class="small">${TIPOS_LABEL[e.tipoLocal] || "—"}</td>
+      <td class="small">${TIPOS_LABEL[e.tipoLocal] || (e.id === "end_geral" ? "📍 Padrão" : "—")}</td>
       <td class="small text-center">${e.capacidade || "—"}</td>
       <td class="text-center text-nowrap">
-        <button class="btn btn-xs btn-outline-primary me-1" onclick="editarEnderecoEst('${e.id}')" title="Editar">✏️</button>
+        ${e.id !== "end_geral" ? `<button class="btn btn-xs btn-outline-primary me-1" onclick="editarEnderecoEst('${e.id}')" title="Editar">✏️</button>` : ""}
         <button class="btn btn-xs btn-outline-danger" onclick="excluirEnderecoEst('${e.id}')" title="Excluir">🗑️</button>
       </td>
     </tr>`).join("");
