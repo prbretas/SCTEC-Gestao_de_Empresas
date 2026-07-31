@@ -75,6 +75,8 @@ module.exports = [
         AttachmentsController: 'readonly',
         DashboardConfigController: 'readonly',
         WIDGETS_CATALOGO: 'readonly',
+        ParamsController: 'readonly',
+        PARAMS_PADRAO: 'readonly',
         // ── APIs do browser nao declaradas anteriormente ─────────────────────
         TextEncoder: 'readonly',
         crypto: 'readonly',
