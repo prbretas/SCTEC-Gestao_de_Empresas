@@ -15,7 +15,7 @@ const MODULOS_CATALOGO = [
   { id: "dashboard",   label: "Dashboard",          icon: "📊", url: "dashboard.html",   defaultActive: true },
   { id: "agenda",      label: "Agenda",             icon: "📅", url: "agenda.html",      defaultActive: true },
   { id: "crm",         label: "CRM / Funil",        icon: "🎯", url: "crm.html",         defaultActive: true },
-  { id: "propostas",   label: "Propostas",          icon: "📄", url: "propostas.html",   defaultActive: true },
+  { id: "propostas",   label: "Pedido de Venda",    icon: "📄", url: "propostas.html",   defaultActive: true },
   { id: "financeiro",  label: "Financeiro",         icon: "💰", url: "financeiro.html",  defaultActive: true },
   { id: "relatorios",  label: "Relatórios",         icon: "📑", url: "relatorios.html",  defaultActive: true },
   { id: "settings",    label: "Configurações",      icon: "⚙️", url: "settings.html",    defaultActive: true, adminOnly: true },
