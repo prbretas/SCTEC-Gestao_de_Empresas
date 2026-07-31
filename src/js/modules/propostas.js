@@ -260,7 +260,7 @@ function _adicionarLinhaItem(item = {}) {
         hiddenProdId.value = produto.id;
         inputDesc.value = produto.nome;
         inputDesc.setAttribute("readonly", "readonly");
-        inputValor.value = produto.preco || 0;
+        inputValor.value = produto.valorVenda || produto.preco || 0;
         inputValor.setAttribute("readonly", "readonly");
         toggleBtn.textContent = "🔓";
         toggleBtn.title = "Digitar manualmente";
@@ -286,7 +286,7 @@ function _adicionarLinhaItem(item = {}) {
           hiddenProdId.value = produto.id;
           inputDesc.value = produto.nome;
           inputDesc.setAttribute("readonly", "readonly");
-          inputValor.value = produto.preco || 0;
+          inputValor.value = produto.valorVenda || produto.preco || 0;
           inputValor.setAttribute("readonly", "readonly");
           toggleBtn.textContent = "🔓";
           toggleBtn.title = "Digitar manualmente";
