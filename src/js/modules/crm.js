@@ -406,7 +406,7 @@ function visualizarOportunidade(id) {
     let links = "";
     if (op.propostaId && window.PropostasStorage) {
       const prop = PropostasStorage.buscarTodos().find((p) => p.id === op.propostaId);
-      if (prop) links += `<a href="propostas.html" class="badge bg-info text-decoration-none me-1" title="Ver pedido vinculado">📄 Pedido: ${prop.titulo || prop.numero || "—"}</a>`;
+      if (prop) links += `<a href="propostas.html" class="badge bg-light text-info border text-decoration-none me-1 text-truncate" style="max-width:250px;" title="Ver pedido: ${prop.titulo}">📄 Pedido: ${prop.numero || prop.titulo || "—"}</a>`;
     }
     vinculosEl.innerHTML = links || "";
   }

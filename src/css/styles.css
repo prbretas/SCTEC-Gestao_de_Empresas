@@ -2,6 +2,21 @@
    styles.css - Versão Final com Header Neutro e Dark Mode Corrigido
    ========================================================================== */
 
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css");
+
+/* --- Navbar Icon Hover Glow --- */
+.nav-icon-btn {
+  transition: text-shadow 0.2s ease, transform 0.15s ease;
+  border-radius: 6px;
+}
+.nav-icon-btn:hover {
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.8), 0 0 16px rgba(255, 255, 255, 0.4);
+  transform: scale(1.15);
+}
+.nav-icon-btn:active {
+  transform: scale(0.95);
+}
+
 :root {
   /* --- Cores Tema Light --- */
   --sc-header: #333a60;
@@ -592,3 +607,25 @@ body.dark-mode .thead-sctec th {
 body.dark-mode .card-resumo.bg-success { background-color: #157347 !important; }
 body.dark-mode .card-resumo.bg-danger  { background-color: #b02a37 !important; }
 body.dark-mode .card-resumo.bg-primary { background-color: #0a58ca !important; }
+
+/* ─── Navbar Icon Buttons — Glow Hover Effect ─────────────────────────────── */
+.nav-icon-btn {
+  transition: all 0.2s ease;
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none !important;
+}
+
+.nav-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+  transform: scale(1.1);
+}
+
+.nav-icon-btn:active {
+  transform: scale(0.95);
+}

@@ -415,11 +415,11 @@ function visualizarProposta(id) {
     let links = "";
     if (window.CrmStorage) {
       const opVinculada = CrmStorage.buscarTodos().find((o) => o.propostaId === p.id);
-      if (opVinculada) links += `<a href="crm.html" class="badge bg-primary text-decoration-none me-1">🎯 CRM: ${opVinculada.titulo || "Negócio"}</a>`;
+      if (opVinculada) links += `<a href="crm.html" class="badge bg-light text-primary border text-decoration-none me-1 text-truncate" style="max-width:250px;" title="Ver no CRM: ${opVinculada.titulo}">🎯 CRM: ${opVinculada.titulo || "Negócio"}</a>`;
     }
     if (window.FinanceiroStorage) {
       const finVinculado = FinanceiroStorage.buscarTodos().find((t) => t.propostaId === p.id);
-      if (finVinculado) links += `<a href="financeiro.html" class="badge bg-success text-decoration-none me-1">💰 Financeiro: ${finVinculado.descricao || "Transação"}</a>`;
+      if (finVinculado) links += `<a href="financeiro.html" class="badge bg-light text-success border text-decoration-none me-1 text-truncate" style="max-width:250px;" title="Ver no Financeiro: ${finVinculado.descricao}">💰 Financeiro</a>`;
     }
     vinculosEl.innerHTML = links || "";
   }
