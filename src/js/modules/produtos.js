@@ -294,22 +294,6 @@ function _preencherEmpresasProduto() {
     const o = document.createElement("option");
     o.value = e.id; o.textContent = e.nome; sel.appendChild(o);
   });
-
-  // Preenche select de endereços de estoque
-  const selEnd = document.getElementById("prod-endereco");
-  if (selEnd && window.EnderecosStorage) {
-    const enderecos = EnderecosStorage.buscarTodos();
-    selEnd.innerHTML = `<option value="">— Sem endereço vinculado —</option>`;
-    enderecos.forEach((e) => {
-      const label = e.id === "end_geral" ? "Geral (padrão)"
-        : [e.instalacao, e.galpao, e.corredor, e.estante, e.coluna, e.posicao].filter(Boolean).join(" › ");
-      const tipo = e.tipoLocal ? ` (${e.tipoLocal})` : "";
-      const o = document.createElement("option");
-      o.value = e.id;
-      o.textContent = `${label}${tipo}`;
-      selEnd.appendChild(o);
-    });
-  }
 }
 
 function _preencherCategoriasFiltro() {
@@ -349,6 +333,8 @@ function _resetarFormProduto() {
   delete f.dataset.editId;
   delete f.dataset.modoVisualizacao;
   if (window.AttachmentsController) AttachmentsController.carregar("prod-anexos-container", [], false);
+  const secDisp = document.getElementById("prod-disponibilidade-section");
+  if (secDisp) secDisp.classList.add("d-none");
 }
 
 function _coletarProduto() {
@@ -369,7 +355,6 @@ function _coletarProduto() {
     validade: document.getElementById("prod-validade")?.value || "",
     estoqueInicial: parseInt(document.getElementById("prod-estoque")?.value) || 0,
     empresaId: document.getElementById("prod-empresa").value,
-    enderecoId: document.getElementById("prod-endereco")?.value || "",
     obs: document.getElementById("prod-obs").value.trim(),
     anexos: window.AttachmentsController ? AttachmentsController.obterAnexos("prod-anexos-container") : [],
   };
@@ -503,8 +488,29 @@ function visualizarProduto(id) {
   const elEstoque = document.getElementById("prod-estoque");
   if (elEstoque) elEstoque.value = estoque;
   document.getElementById("prod-empresa").value = p.empresaId || "";
-  const elEndereco = document.getElementById("prod-endereco");
-  if (elEndereco) elEndereco.value = p.enderecoId || "";
+
+  // Mostra disponibilidade em estoque (em quais endereços o produto está)
+  const secDisp = document.getElementById("prod-disponibilidade-section");
+  const listaDisp = document.getElementById("prod-disponibilidade-lista");
+  if (secDisp && listaDisp && window.EstoqueStorage && window.EnderecosStorage) {
+    const posicoes = EstoqueStorage.buscarPorProduto(p.id);
+    if (posicoes.length > 0) {
+      const enderecos = EnderecosStorage.buscarTodos();
+      listaDisp.innerHTML = posicoes.map((pos) => {
+        const end = enderecos.find((e) => e.id === pos.enderecoId) || {};
+        const endLabel = end.id === "end_geral" ? "Geral (padrão)" : [end.instalacao, end.galpao, end.estante, end.coluna, end.posicao].filter(Boolean).join(" › ");
+        const tipoLabel = end.tipoLocal ? `<span class="badge bg-light text-dark border me-1">${end.tipoLocal}</span>` : "";
+        return `<div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+          <span class="small">${tipoLabel}${endLabel}</span>
+          <span class="badge bg-primary">${pos.quantidade} un</span>
+        </div>`;
+      }).join("");
+      secDisp.classList.remove("d-none");
+    } else {
+      secDisp.classList.add("d-none");
+    }
+  }
+
   document.getElementById("prod-obs").value = p.obs || "";
   document.getElementById("form-produto").dataset.editId = id;
 

@@ -287,17 +287,12 @@
                   <!-- vazio para alinhamento -->
                 </div>
               </div>
-              <div class="row g-3 mb-3">
-                <div class="col-md-8">
-                  <label class="form-label fw-bold">📍 Endereço de Estoque</label>
-                  <select id="prod-endereco" class="form-select">
-                    <option value="">— Sem endereço vinculado —</option>
-                  </select>
-                  <div class="form-text small">Vincula o produto a um endereço de armazenamento</div>
-                </div>
-                <div class="col-md-4 d-flex align-items-end">
-                  <a href="estoque.html" class="btn btn-outline-info btn-sm w-100">🏗️ Gerenciar Endereços</a>
-                </div>
+
+              <!-- Onde o produto está disponível (read-only, vem do estoque) -->
+              <div class="mb-3 d-none" id="prod-disponibilidade-section">
+                <label class="form-label fw-bold">📍 Disponibilidade em Estoque</label>
+                <div id="prod-disponibilidade-lista" class="border rounded p-2 bg-light" style="max-height:120px;overflow-y:auto;"></div>
+                <div class="form-text small">Gerencie posições na <a href="estoque.html">tela de Estoque</a></div>
               </div>
               <div class="mb-3">
                 <label class="form-label fw-bold">Observações</label>
