@@ -251,6 +251,10 @@
               <button class="nav-link" id="tab-historico" data-bs-toggle="tab" data-bs-target="#panel-historico"
                 type="button" role="tab" aria-controls="panel-historico" aria-selected="false">🕐 Histórico</button>
             </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="tab-anexos" data-bs-toggle="tab" data-bs-target="#panel-anexos"
+                type="button" role="tab" aria-controls="panel-anexos" aria-selected="false">📎 Anexos</button>
+            </li>
           </ul>
 
           <!-- Conteúdo das Abas -->
@@ -412,6 +416,15 @@
                 <button type="button" id="btn-adicionar-ocorrencia" class="btn btn-sm btn-success">➕ Adicionar</button>
               </div>
               <div id="historico-lista" class="historico-container"></div>
+            </div>
+
+            <!-- ABA 5: ANEXOS -->
+            <div class="tab-pane fade" id="panel-anexos" role="tabpanel" aria-labelledby="tab-anexos">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">📎 Documentos e Anexos</h6>
+              </div>
+              <p class="text-muted small">Anexe contratos, escrituras, fotos e outros documentos relevantes ao empreendimento.</p>
+              <div id="emp-anexos-container"></div>
             </div>
           </div>
         </div>
@@ -603,6 +616,7 @@
   <script src="./src/js/shared/contatos.js"></script>
   <script src="./src/js/shared/tarefas.js"></script>
   <script src="./src/js/shared/historico.js"></script>
+  <script src="./src/js/shared/attachments.js"></script>
   <script src="./src/js/shared/main.js"></script>
   <script src="./src/js/core/inactivity.js"></script>
 

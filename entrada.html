@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Documento de Entrada — SCTEC</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="./src/css/styles.css" />
+    <script>
+      (function () {
+        try {
+          var cfg = JSON.parse(localStorage.getItem("SCTEC_CONFIG") || "{}");
+          var cores = cfg.cores || {};
+          var r = document.documentElement;
+          if (cores.header) r.style.setProperty("--sc-header", cores.header);
+          if (cores.btn) r.style.setProperty("--sc-btn", cores.btn);
+          if (cores.destaque) r.style.setProperty("--sc-header2", cores.destaque);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body class="bg-light">
+    <div id="app-navbar"></div>
+    <main class="container pb-5">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 id="rotinaTitle">📥 Documento de Entrada</h1>
+        <button class="btn btn-success" id="btn-novo-doc-entrada">+ Nova Entrada</button>
+      </div>
+
+      <!-- CARDS DE RESUMO -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm text-center py-2">
+            <div class="small text-muted">Total Documentos</div>
+            <h5 class="mb-0 fw-bold" id="resumo-total-docs">0</h5>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm text-center py-2">
+            <div class="small text-muted">⏳ Pendentes</div>
+            <h5 class="mb-0 fw-bold text-warning" id="resumo-pendentes">0</h5>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm text-center py-2">
+            <div class="small text-muted">✅ Recebidos</div>
+            <h5 class="mb-0 fw-bold text-success" id="resumo-recebidos">0</h5>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm text-center py-2">
+            <div class="small text-muted">💰 Valor Total</div>
+            <h5 class="mb-0 fw-bold text-primary" id="resumo-valor-entradas">R$ 0</h5>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILTROS -->
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-3">
+          <div class="row g-2">
+            <div class="col-md-3">
+              <input type="date" id="filtro-entrada-inicio" class="form-control" />
+            </div>
+            <div class="col-md-3">
+              <input type="date" id="filtro-entrada-fim" class="form-control" />
+            </div>
+            <div class="col-md-3">
+              <select id="filtro-entrada-status" class="form-select">
+                <option value="">Todos os Status</option>
+                <option value="pendente">⏳ Pendente</option>
+                <option value="recebido">✅ Recebido</option>
+                <option value="cancelado">❌ Cancelado</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <select id="filtro-entrada-fornecedor" class="form-select">
+                <option value="">Todos Fornecedores</option>
+              </select>
+            </div>
+            <div class="col-md-1">
+              <button class="btn btn-outline-secondary w-100" id="btn-limpar-filtro-entrada">🔄</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABELA -->
+      <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="thead-sctec">
+              <tr>
+                <th>Nº Doc</th>
+                <th>Fornecedor</th>
+                <th>Data</th>
+                <th>Itens</th>
+                <th class="text-end">Valor Total</th>
+                <th class="text-center">Status</th>
+                <th class="text-center">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="entrada-lista"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="entrada-vazio" class="text-center py-5 d-none">
+        <div style="font-size:3rem;">📥</div>
+        <h5 class="mt-3 text-muted">Nenhum documento de entrada registrado</h5>
+      </div>
+    </main>
+
+    <!-- MODAL -->
+    <div class="modal fade" id="modal-entrada" tabindex="-1">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+          <div class="modal-header text-white">
+            <h5 class="modal-title" id="titulo-modal-entrada">📥 Novo Documento de Entrada</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body p-4">
+            <form id="form-entrada">
+              <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">Nº Documento / NF</label>
+                  <input type="text" id="ent-numero" class="form-control" placeholder="Ex: NF-001234" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">Fornecedor *</label>
+                  <select id="ent-fornecedor" class="form-select" required>
+                    <option value="">Selecione...</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">Data de Entrada *</label>
+                  <input type="date" id="ent-data" class="form-control" required />
+                </div>
+              </div>
+              <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">Status</label>
+                  <select id="ent-status" class="form-select">
+                    <option value="pendente">⏳ Pendente</option>
+                    <option value="recebido">✅ Recebido</option>
+                    <option value="cancelado">❌ Cancelado</option>
+                  </select>
+                </div>
+                <div class="col-md-8">
+                  <label class="form-label fw-bold">Observações</label>
+                  <input type="text" id="ent-obs" class="form-control" placeholder="Observações..." />
+                </div>
+              </div>
+
+              <!-- ITENS -->
+              <h6 class="fw-bold mt-2 mb-2">📦 Itens da Entrada</h6>
+              <div id="ent-itens-lista"></div>
+              <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="btn-add-item-entrada">+ Adicionar Item</button>
+
+              <div class="row g-3 mt-3">
+                <div class="col-md-4 ms-auto">
+                  <div class="d-flex justify-content-between fw-bold border-top pt-2">
+                    <span>Total:</span>
+                    <span id="ent-total-display" class="text-primary">R$ 0,00</span>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <div id="auditoria-ent" class="small text-muted me-auto"></div>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            <button type="button" class="btn btn-primary d-none" id="btn-editar-entrada">✏️ Editar</button>
+            <button type="button" class="btn btn-warning d-none" id="btn-receber-entrada">✅ Confirmar Recebimento</button>
+            <button type="submit" form="form-entrada" class="btn btn-success" id="btn-salvar-entrada">Salvar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="./src/js/core/config.js"></script>
+    <script src="./src/js/core/auth.js"></script>
+    <script src="./src/js/core/storage.js"></script>
+    <script src="./src/js/core/roles.js"></script>
+    <script src="./src/js/core/modules.js"></script>
+    <script src="./src/js/core/theme.js"></script>
+    <script src="./src/js/core/params.js"></script>
+    <script src="./src/js/core/navbar.js"></script>
+    <script src="./src/js/core/dashboard-storages.js"></script>
+    <script src="./src/js/core/estoque.js"></script>
+    <script src="./src/js/modules/produtos.js"></script>
+    <script src="./src/js/shared/productPicker.js"></script>
+    <script src="./src/js/modules/entrada.js"></script>
+    <script src="./src/js/core/inactivity.js"></script>
+  </body>
+</html>

@@ -78,6 +78,11 @@ module.exports = [
         ParamsController: 'readonly',
         PARAMS_PADRAO: 'readonly',
         CalculatorController: 'readonly',
+        ProdutosStorage: 'readonly',
+        EstoqueStorage: 'readonly',
+        EnderecosStorage: 'readonly',
+        EntradaStorage: 'readonly',
+        ProductPickerModal: 'readonly',
         Event: 'readonly',
         // ── APIs do browser nao declaradas anteriormente ─────────────────────
         TextEncoder: 'readonly',

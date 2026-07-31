@@ -364,6 +364,11 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
         dados.historico = HistoricoController.obterOcorrencias();
       }
 
+      // Coleta anexos
+      if (window.AttachmentsController) {
+        dados.anexos = AttachmentsController.obterAnexos("emp-anexos-container");
+      }
+
       if (idExistente) {
         // MODO EDIÇÃO
         const confirmar = confirm(
@@ -430,6 +435,11 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
     }
     if (window.HistoricoController) {
       HistoricoController.carregarOcorrencias(emp.id, emp.historico || []);
+    }
+
+    // Carrega anexos
+    if (window.AttachmentsController) {
+      AttachmentsController.carregar("emp-anexos-container", emp.anexos || [], false);
     }
   },
 
@@ -526,6 +536,9 @@ window.abrirModalCadastro = () => {
   if (window.ContatosController) ContatosController.carregarContatos(null, []);
   if (window.TarefasController) TarefasController.carregarTarefas(null, []);
   if (window.HistoricoController) HistoricoController.carregarOcorrencias(null, []);
+
+  // Reseta anexos para novo cadastro
+  if (window.AttachmentsController) AttachmentsController.carregar("emp-anexos-container", [], false);
 
   document.querySelector("#titulo-modal-form").textContent =
     "Novo Empreendimento";
