@@ -196,45 +196,47 @@ function _preencherFiltroEnderecos() {
   }).join("");
 }
 
-// ─── Renderização de Estoque ────────────────────────────────────────────────
+// ─── Renderização de Estoque (agrupado por endereço) ────────────────────────
 
 function _renderizarEstoque() {
-  const tbody = document.getElementById("estoque-lista");
+  const container = document.getElementById("estoque-lista");
   const vazio = document.getElementById("estoque-vazio");
-  if (!tbody || !window.EstoqueStorage || !window.ProdutosStorage) return;
+  if (!container || !window.EstoqueStorage || !window.ProdutosStorage) return;
 
   const busca = (document.getElementById("filtro-busca-estoque")?.value || "").toLowerCase().trim();
   const enderecoFiltro = document.getElementById("filtro-endereco-estoque")?.value || "";
   const statusFiltro = document.getElementById("filtro-status-estoque")?.value || "";
 
-  let posicoes = EstoqueStorage.buscarTodos();
+  const posicoes = EstoqueStorage.buscarTodos();
   const produtos = ProdutosStorage.buscarTodos();
   const enderecos = EnderecosStorage.buscarTodos();
 
-  // Enriquece com dados do produto e endereço
-  posicoes = posicoes.map((pos) => {
-    const produto = produtos.find((p) => p.id === pos.produtoId) || {};
-    const endereco = enderecos.find((e) => e.id === pos.enderecoId) || {};
-    return { ...pos, _produto: produto, _endereco: endereco };
+  // Agrupa posições por endereço
+  const porEndereco = {};
+  enderecos.forEach((end) => { porEndereco[end.id] = { endereco: end, itens: [] }; });
+
+  posicoes.forEach((pos) => {
+    const produto = produtos.find((p) => p.id === pos.produtoId) || { nome: "Produto removido", codigo: "" };
+    const item = { ...pos, _produto: produto };
+
+    // Filtro de busca
+    if (busca && !(produto.nome || "").toLowerCase().includes(busca) && !(produto.codigo || "").toLowerCase().includes(busca)) return;
+
+    // Filtro de status
+    const min = pos.estoqueMin || 5;
+    if (statusFiltro === "zerado" && pos.quantidade !== 0) return;
+    if (statusFiltro === "baixo" && !(pos.quantidade > 0 && pos.quantidade <= min)) return;
+    if (statusFiltro === "normal" && pos.quantidade <= min) return;
+
+    if (!porEndereco[pos.enderecoId]) {
+      porEndereco[pos.enderecoId] = { endereco: { id: pos.enderecoId, nome: "Endereço desconhecido" }, itens: [] };
+    }
+    porEndereco[pos.enderecoId].itens.push(item);
   });
 
-  // Filtros
-  if (busca) {
-    posicoes = posicoes.filter((p) =>
-      (p._produto.nome || "").toLowerCase().includes(busca) ||
-      (p._produto.codigo || "").toLowerCase().includes(busca)
-    );
-  }
-  if (enderecoFiltro) posicoes = posicoes.filter((p) => p.enderecoId === enderecoFiltro);
-  if (statusFiltro) {
-    posicoes = posicoes.filter((p) => {
-      const min = p.estoqueMin || 5;
-      if (statusFiltro === "zerado") return p.quantidade === 0;
-      if (statusFiltro === "baixo") return p.quantidade > 0 && p.quantidade <= min;
-      if (statusFiltro === "normal") return p.quantidade > min;
-      return true;
-    });
-  }
+  // Filtro de endereço
+  let enderecosVisiveis = Object.values(porEndereco);
+  if (enderecoFiltro) enderecosVisiveis = enderecosVisiveis.filter((g) => g.endereco.id === enderecoFiltro);
 
   // Resumos
   const todasPosicoes = EstoqueStorage.buscarTodos();
@@ -246,40 +248,112 @@ function _renderizarEstoque() {
   const movs30d = EstoqueStorage.buscarMovimentacoes().filter((m) => m.data >= trintaDiasAtras).length;
   document.getElementById("resumo-movimentacoes-30d").textContent = movs30d;
 
-  if (posicoes.length === 0) {
-    tbody.innerHTML = "";
-    vazio?.classList.remove("d-none");
+  // Remove endereços sem itens (exceto se não há filtro de busca)
+  const comItens = enderecosVisiveis.filter((g) => g.itens.length > 0);
+  const semItens = enderecosVisiveis.filter((g) => g.itens.length === 0);
+
+  if (comItens.length === 0 && !busca && !statusFiltro) {
+    // Mostra endereços vazios quando não há filtro
+    if (enderecos.length <= 1) {
+      container.innerHTML = "";
+      vazio?.classList.remove("d-none");
+      return;
+    }
+  }
+
+  if (comItens.length === 0 && (busca || statusFiltro)) {
+    container.innerHTML = `<div class="text-center py-4 text-muted"><p>Nenhum resultado para os filtros aplicados.</p></div>`;
+    vazio?.classList.add("d-none");
     return;
   }
+
   vazio?.classList.add("d-none");
 
-  tbody.innerHTML = posicoes.map((pos) => {
-    const min = pos.estoqueMin || 5;
-    let statusBadge, statusLabel;
-    if (pos.quantidade === 0) { statusBadge = "bg-danger"; statusLabel = "❌ Zerado"; }
-    else if (pos.quantidade <= min) { statusBadge = "bg-warning text-dark"; statusLabel = "⚠️ Baixo"; }
-    else { statusBadge = "bg-success"; statusLabel = "✅ Normal"; }
+  // Renderiza cards de endereço com seus produtos
+  let html = "";
 
-    const endLabel = pos._endereco.id === "end_geral" ? "Geral"
-      : [pos._endereco.instalacao, pos._endereco.estante, pos._endereco.coluna, pos._endereco.posicao].filter(Boolean).join(" › ");
-    const ultimaMov = pos.ultimaMovimentacao ? new Date(pos.ultimaMovimentacao).toLocaleDateString("pt-BR") : "—";
+  comItens.forEach((grupo) => {
+    const end = grupo.endereco;
+    const endLabel = end.id === "end_geral" ? "📍 Geral (Padrão)"
+      : `📍 ${[end.instalacao, end.galpao, end.corredor, end.estante, end.coluna, end.posicao].filter(Boolean).join(" › ")}`;
+    const totalItens = grupo.itens.reduce((s, i) => s + (i.quantidade || 0), 0);
 
-    return `
-      <tr>
-        <td>
-          <div class="fw-bold">${pos._produto.nome || "Produto removido"}</div>
-          <div class="small text-muted">${pos._produto.codigo || ""}</div>
-        </td>
-        <td class="small">${endLabel}</td>
-        <td class="text-center fw-bold">${pos.quantidade}</td>
-        <td class="text-center text-muted">${min}</td>
-        <td class="text-center"><span class="badge ${statusBadge}" style="font-size:.7rem;">${statusLabel}</span></td>
-        <td class="text-center small">${ultimaMov}</td>
-        <td class="text-center">
-          <button class="btn btn-xs btn-outline-primary" onclick="movimentarRapido('${pos.produtoId}', '${pos.enderecoId}')" title="Movimentar">📊</button>
-        </td>
-      </tr>`;
-  }).join("");
+    html += `
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="mb-0 fw-bold">${endLabel}</h6>
+            ${end.descricao ? `<small class="text-muted">${end.descricao}</small>` : ""}
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-light text-dark border">${grupo.itens.length} produto${grupo.itens.length !== 1 ? "s" : ""}</span>
+            <span class="badge bg-primary">${totalItens} un. total</span>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th style="width:80px;">Código</th>
+                <th>Produto</th>
+                <th class="text-center" style="width:90px;">Qtd</th>
+                <th class="text-center" style="width:70px;">Mín.</th>
+                <th class="text-center" style="width:90px;">Status</th>
+                <th class="text-center" style="width:100px;">Última Mov.</th>
+                <th class="text-center" style="width:60px;">Ações</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+    grupo.itens.forEach((item) => {
+      const min = item.estoqueMin || 5;
+      let statusBadge, statusLabel;
+      if (item.quantidade === 0) { statusBadge = "bg-danger"; statusLabel = "❌ Zerado"; }
+      else if (item.quantidade <= min) { statusBadge = "bg-warning text-dark"; statusLabel = "⚠️ Baixo"; }
+      else { statusBadge = "bg-success"; statusLabel = "✅ Ok"; }
+
+      const ultimaMov = item.ultimaMovimentacao ? new Date(item.ultimaMovimentacao).toLocaleDateString("pt-BR") : "—";
+
+      html += `
+              <tr>
+                <td class="small text-muted fw-bold">${item._produto.codigo || "—"}</td>
+                <td class="fw-semibold">${item._produto.nome}</td>
+                <td class="text-center fw-bold">${item.quantidade}</td>
+                <td class="text-center text-muted">${min}</td>
+                <td class="text-center"><span class="badge ${statusBadge}" style="font-size:.65rem;">${statusLabel}</span></td>
+                <td class="text-center small">${ultimaMov}</td>
+                <td class="text-center">
+                  <button class="btn btn-xs btn-outline-primary" onclick="movimentarRapido('${item.produtoId}', '${item.enderecoId}')" title="Movimentar">📊</button>
+                </td>
+              </tr>`;
+    });
+
+    html += `
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+  });
+
+  // Mostra endereços vazios (sem produtos) com visual mais sutil
+  if (!busca && !statusFiltro) {
+    semItens.forEach((grupo) => {
+      const end = grupo.endereco;
+      if (end.id === "end_geral" && comItens.some((g) => g.endereco.id === "end_geral")) return;
+      const endLabel = end.id === "end_geral" ? "📍 Geral (Padrão)"
+        : `📍 ${[end.instalacao, end.galpao, end.corredor, end.estante, end.coluna, end.posicao].filter(Boolean).join(" › ")}`;
+
+      html += `
+        <div class="card border-0 shadow-sm mb-3 opacity-50">
+          <div class="card-body py-2 d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 small">${endLabel}</h6>
+            <span class="badge bg-light text-muted border">Vazio</span>
+          </div>
+        </div>`;
+    });
+  }
+
+  container.innerHTML = html;
 }
 
 // ─── Renderização de Movimentações ──────────────────────────────────────────
