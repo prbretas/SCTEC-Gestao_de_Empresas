@@ -70,6 +70,27 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
       e.target.value = Utils.aplicarMascaraTelefone(e.target.value);
     });
 
+    // Máscara automática no campo de documento (CNPJ/CPF)
+    inputReg?.addEventListener("input", () => {
+      const tipo = selectTipo?.value || "PJ";
+      const cursorPos = inputReg.selectionStart;
+      const valorAntes = inputReg.value;
+      inputReg.value = Utils.aplicarMascaraDocumento(inputReg.value, tipo);
+      // Tenta manter a posição do cursor razoável
+      const diff = inputReg.value.length - valorAntes.length;
+      inputReg.setSelectionRange(cursorPos + diff, cursorPos + diff);
+      // Remove destaque de erro enquanto digita
+      inputReg.classList.remove("is-invalid");
+      inputReg.title = "";
+    });
+
+    // Reaplica máscara quando muda o tipo de pessoa
+    selectTipo?.addEventListener("change", () => {
+      if (inputReg && inputReg.value) {
+        inputReg.value = Utils.aplicarMascaraDocumento(inputReg.value, selectTipo.value);
+      }
+    });
+
     // Lógica ViaCEP
     inputCep?.addEventListener("blur", async () => {
       const cep = inputCep.value.replace(/\D/g, "");
@@ -103,14 +124,16 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
       const reg = inputReg.value.replace(/\D/g, "");
 
       if (selectTipo.value === "PJ" && reg.length === 14) {
-        // ── Validação dos dígitos verificadores antes de consultar a API ──
-        if (!Utils.validarCNPJ(reg)) {
+        // ── Validação dos dígitos verificadores ──
+        const cnpjValido = Utils.validarCNPJ(reg);
+        if (!cnpjValido) {
           inputReg.classList.add("is-invalid");
-          inputReg.title = "CNPJ inválido — verifique os dígitos";
-          return;
+          inputReg.title = "CNPJ com dígitos verificadores inválidos";
+          // Tenta consultar mesmo assim — a API dará o veredicto final
+        } else {
+          inputReg.classList.remove("is-invalid");
+          inputReg.title = "";
         }
-        inputReg.classList.remove("is-invalid");
-        inputReg.title = "";
 
         // Feedback visual de carregamento
         inputReg.disabled = true;
@@ -123,6 +146,9 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
         inputReg.placeholder = "";
 
         if (dados) {
+          // Remove marcação de inválido pois a API retornou dados
+          inputReg.classList.remove("is-invalid");
+          inputReg.title = "";
           // ── Preenchimento básico dos campos ──────────────────────────────
           document.querySelector("#nome").value = dados.razao_social || "";
           document.querySelector("#cep").value = dados.cep || "";
@@ -146,6 +172,10 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
 
           // ── Seção: Sócios QSA — renderização visual ──────────────────────
           FormController.renderizarSocios(dados.socios || []);
+        } else {
+          // API não encontrou o CNPJ ou retornou erro
+          inputReg.classList.add("is-invalid");
+          inputReg.title = "CNPJ não encontrado na base da Receita Federal. Verifique os dígitos.";
         }
       }
     });
