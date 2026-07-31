@@ -442,6 +442,8 @@ CNAE PRINCIPAL: ${dados.sugestaoSetor || "N/A"}`;
     document.querySelector("#municipio").value = emp.municipio || "";
     document.querySelector("#segmento").value = emp.segmento || "Outros";
     document.querySelector("#status").value = emp.status || "Ativo";
+    const elTipoCadastro = document.querySelector("#tipo-cadastro");
+    if (elTipoCadastro) elTipoCadastro.value = emp.tipoCadastro || "cliente";
     document.querySelector("#observacoes").value = emp.observacoes || "";
 
     const selectTipo = document.querySelector("#tipo-pessoa");

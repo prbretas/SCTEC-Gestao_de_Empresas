@@ -297,6 +297,41 @@ const DashboardController = {
       empresas.forEach((emp) => { (emp.tarefas || []).filter((t) => t.status !== "Concluida").forEach((t) => { if (pri[t.prioridade] !== undefined) pri[t.prioridade]++; }); });
       return { labels: Object.keys(pri), data: Object.values(pri), colors: ["#dc3545", "#ffc107", "#198754"] };
     }
+    // Produtos
+    case "produtos-total": {
+      const prods = window.ProdutosStorage ? ProdutosStorage.buscarTodos() : [];
+      return { valor: prods.length, cor: "text-primary" };
+    }
+    case "produtos-valor-estoque": {
+      const prods = window.ProdutosStorage ? ProdutosStorage.buscarTodos() : [];
+      const valorTotal = prods.reduce((s, p) => {
+        const est = window.EstoqueStorage ? EstoqueStorage.obterQuantidadeTotal(p.id) : 0;
+        return s + (est * (parseFloat(p.preco) || 0));
+      }, 0);
+      return { valor: fmt(valorTotal), cor: "text-success" };
+    }
+    case "produtos-categorias": {
+      const prods = window.ProdutosStorage ? ProdutosStorage.buscarTodos() : [];
+      const cats = {};
+      prods.forEach((p) => { cats[p.categoria || "outros"] = (cats[p.categoria || "outros"] || 0) + 1; });
+      return { labels: Object.keys(cats), data: Object.values(cats), colors: ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"] };
+    }
+    // Estoque
+    case "estoque-alertas": {
+      const posicoes = window.EstoqueStorage ? EstoqueStorage.buscarTodos() : [];
+      const alertas = posicoes.filter((p) => p.quantidade <= (p.estoqueMin || 5)).length;
+      return { valor: alertas, cor: alertas > 0 ? "text-danger" : "text-success" };
+    }
+    case "estoque-movimentacoes": {
+      const trintaDias = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const movs = window.EstoqueStorage ? EstoqueStorage.buscarMovimentacoes().filter((m) => m.data >= trintaDias) : [];
+      return { valor: movs.length, cor: "text-info" };
+    }
+    // Entrada
+    case "entrada-pendentes": {
+      const docs = window.EntradaStorage ? EntradaStorage.buscarTodos() : [];
+      return { valor: docs.filter((d) => d.status === "pendente").length, cor: "text-warning" };
+    }
     default:
       return { valor: "—", cor: "" };
     }
