@@ -409,6 +409,21 @@ function visualizarProposta(id) {
   if (!p) return;
   _carregarProposta(p);
 
+  // Renderiza links de vínculos
+  const vinculosEl = document.getElementById("prop-vinculos");
+  if (vinculosEl) {
+    let links = "";
+    if (window.CrmStorage) {
+      const opVinculada = CrmStorage.buscarTodos().find((o) => o.propostaId === p.id);
+      if (opVinculada) links += `<a href="crm.html" class="badge bg-primary text-decoration-none me-1">🎯 CRM: ${opVinculada.titulo || "Negócio"}</a>`;
+    }
+    if (window.FinanceiroStorage) {
+      const finVinculado = FinanceiroStorage.buscarTodos().find((t) => t.propostaId === p.id);
+      if (finVinculado) links += `<a href="financeiro.html" class="badge bg-success text-decoration-none me-1">💰 Financeiro: ${finVinculado.descricao || "Transação"}</a>`;
+    }
+    vinculosEl.innerHTML = links || "";
+  }
+
   // Exibe auditoria no footer
   const auditoriaEl = document.getElementById("auditoria-prop");
   if (auditoriaEl) auditoriaEl.textContent = _formatarAuditoria(p);
