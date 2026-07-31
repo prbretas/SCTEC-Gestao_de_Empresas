@@ -32,6 +32,15 @@ const WIDGETS_CATALOGO = [
   // Tarefas
   { id: "tarefas-vencidas", modulo: "cadastros", label: "Tarefas Vencidas", icon: "⚠️", tipo: "card", defaultAtivo: true },
   { id: "tarefas-prioridade", modulo: "cadastros", label: "Tarefas por Prioridade", icon: "🔴", tipo: "chart-doughnut", defaultAtivo: false },
+  // Produtos
+  { id: "produtos-total", modulo: "produtos", label: "Total de Produtos", icon: "📦", tipo: "card", defaultAtivo: true },
+  { id: "produtos-valor-estoque", modulo: "produtos", label: "Valor em Estoque", icon: "💰", tipo: "card", defaultAtivo: true },
+  { id: "produtos-categorias", modulo: "produtos", label: "Produtos por Categoria", icon: "🏷️", tipo: "chart-doughnut", defaultAtivo: false },
+  // Estoque
+  { id: "estoque-alertas", modulo: "estoque", label: "Alertas de Estoque Baixo", icon: "⚠️", tipo: "card", defaultAtivo: true },
+  { id: "estoque-movimentacoes", modulo: "estoque", label: "Movimentações (30d)", icon: "📊", tipo: "card", defaultAtivo: true },
+  // Entrada
+  { id: "entrada-pendentes", modulo: "entrada", label: "Docs. Entrada Pendentes", icon: "📥", tipo: "card", defaultAtivo: false },
 ];
 
 const DashboardConfigController = {

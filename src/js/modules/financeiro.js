@@ -152,13 +152,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const dados = _coletar();
     if (!dados) return;
 
+    const acao = id ? "salvar as alterações" : "registrar este lançamento";
+    if (!confirm(`Deseja ${acao}?`)) return;
+
     // Coleta anexos
     if (window.AttachmentsController) {
       dados.anexos = AttachmentsController.obterAnexos("trans-anexos-container");
     }
 
     id ? FinanceiroStorage.atualizar(id, dados) : FinanceiroStorage.adicionar(dados);
-    // Marca como visualização para que o hide.bs.modal não pergunte sobre descartar
     form.dataset.modoVisualizacao = "true";
     modal.hide();
     renderizar();

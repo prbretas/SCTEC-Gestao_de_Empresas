@@ -68,3 +68,59 @@ if (!window.FinanceiroStorage) {
     },
   };
 }
+
+if (!window.ProdutosStorage) {
+  window.ProdutosStorage = {
+    _obterChave() {
+      if (window.AuthService) {
+        const s = AuthService.obterSessao();
+        if (s) return `SCTEC_PRODUTOS_${s.orgId || s.id}`;
+      }
+      return "SCTEC_PRODUTOS_local";
+    },
+    buscarTodos() {
+      try { return JSON.parse(localStorage.getItem(this._obterChave()) || "[]"); }
+      catch { return []; }
+    },
+  };
+}
+
+if (!window.EstoqueStorage) {
+  window.EstoqueStorage = {
+    _obterChave() {
+      if (window.AuthService) {
+        const s = AuthService.obterSessao();
+        if (s) return `SCTEC_ESTOQUE_${s.orgId || s.id}`;
+      }
+      return "SCTEC_ESTOQUE_local";
+    },
+    _obterChaveMov() { return this._obterChave() + "_MOV"; },
+    buscarTodos() {
+      try { return JSON.parse(localStorage.getItem(this._obterChave()) || "[]"); }
+      catch { return []; }
+    },
+    buscarMovimentacoes() {
+      try { return JSON.parse(localStorage.getItem(this._obterChaveMov()) || "[]"); }
+      catch { return []; }
+    },
+    obterQuantidadeTotal(produtoId) {
+      return this.buscarTodos().filter((e) => e.produtoId === produtoId).reduce((s, e) => s + (e.quantidade || 0), 0);
+    },
+  };
+}
+
+if (!window.EntradaStorage) {
+  window.EntradaStorage = {
+    _obterChave() {
+      if (window.AuthService) {
+        const s = AuthService.obterSessao();
+        if (s) return `SCTEC_ENTRADA_${s.orgId || s.id}`;
+      }
+      return "SCTEC_ENTRADA_local";
+    },
+    buscarTodos() {
+      try { return JSON.parse(localStorage.getItem(this._obterChave()) || "[]"); }
+      catch { return []; }
+    },
+  };
+}

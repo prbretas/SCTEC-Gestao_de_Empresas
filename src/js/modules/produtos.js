@@ -126,11 +126,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const dados = _coletarProduto();
     if (!dados) return;
 
+    const acao = id ? "salvar as alterações" : "cadastrar este produto";
+    if (!confirm(`Deseja ${acao}?`)) return;
+
     if (id) {
       ProdutosStorage.atualizar(id, dados);
     } else {
       const novoProduto = ProdutosStorage.adicionar(dados);
-      // Cria posição de estoque inicial no endereço selecionado (ou padrão)
       if (window.EstoqueStorage && dados.estoqueInicial > 0) {
         EstoqueStorage.movimentar({
           produtoId: novoProduto.id,
