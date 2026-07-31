@@ -338,6 +338,7 @@ function _resetarFormProduto() {
   f.reset();
   delete f.dataset.editId;
   delete f.dataset.modoVisualizacao;
+  if (window.AttachmentsController) AttachmentsController.carregar("prod-anexos-container", [], false);
 }
 
 function _coletarProduto() {
@@ -355,6 +356,7 @@ function _coletarProduto() {
     empresaId: document.getElementById("prod-empresa").value,
     enderecoId: document.getElementById("prod-endereco")?.value || "",
     obs: document.getElementById("prod-obs").value.trim(),
+    anexos: window.AttachmentsController ? AttachmentsController.obterAnexos("prod-anexos-container") : [],
   };
 }
 
@@ -467,6 +469,11 @@ function visualizarProduto(id) {
   if (elEndereco) elEndereco.value = p.enderecoId || "";
   document.getElementById("prod-obs").value = p.obs || "";
   document.getElementById("form-produto").dataset.editId = id;
+
+  // Carrega anexos
+  if (window.AttachmentsController) {
+    AttachmentsController.carregar("prod-anexos-container", p.anexos || [], false);
+  }
 
   const auditoriaEl = document.getElementById("auditoria-prod");
   if (auditoriaEl) auditoriaEl.textContent = _formatarAuditoriaProd(p);

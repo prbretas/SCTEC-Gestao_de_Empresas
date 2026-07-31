@@ -44,6 +44,10 @@
       </div>
 
       <!-- TABELA DE USUÁRIOS -->
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 mb-0">👥 Usuários da Organização</h2>
+        <button class="btn btn-sm btn-success" id="btn-criar-usuario">➕ Cadastrar Usuário</button>
+      </div>
       <div class="card shadow-sm border-0">
         <div class="card-body p-0">
           <table class="table table-hover align-middle mb-0">
@@ -146,6 +150,59 @@
         </div>
       </div>
     </main>
+
+    <!-- MODAL: Cadastrar Novo Usuário (#110) -->
+    <div class="modal fade" id="modal-criar-usuario" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+          <div class="modal-header text-white">
+            <h5 class="modal-title">➕ Cadastrar Novo Usuário</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body p-4">
+            <form id="form-criar-usuario">
+              <div class="mb-3">
+                <label class="form-label fw-bold">Nickname *</label>
+                <input type="text" id="novo-user-nome" class="form-control" required minlength="3" maxlength="20" placeholder="Ex: joao_silva" pattern="[a-zA-Z0-9_]+" />
+                <div class="form-text small">3-20 caracteres. Apenas letras, números e _ (sem espaços)</div>
+              </div>
+              <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">Perfil</label>
+                  <select id="novo-user-role" class="form-select">
+                    <option value="user">👤 Usuário</option>
+                    <option value="admin">👑 Administrador</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">Papel de Trabalho</label>
+                  <select id="novo-user-papel" class="form-select">
+                    <option value="">— Sem papel —</option>
+                  </select>
+                </div>
+              </div>
+              <div class="alert alert-warning small mb-3">
+                <strong>ℹ️ Senha:</strong> Será gerada automaticamente. Informe ao usuário para que ele troque no primeiro acesso.
+              </div>
+              <button type="submit" class="btn btn-success w-100">✅ Criar Usuário</button>
+            </form>
+
+            <!-- Resultado com senha gerada -->
+            <div id="novo-user-resultado" class="d-none mt-4">
+              <div class="alert alert-success">
+                <h6 class="fw-bold mb-2">✅ Usuário criado com sucesso!</h6>
+                <p class="mb-1">Senha temporária:</p>
+                <div class="d-flex align-items-center gap-2">
+                  <code class="fs-4 fw-bold" id="novo-user-senha-gerada"></code>
+                  <button type="button" class="btn btn-sm btn-outline-primary" id="btn-copiar-senha-gerada">📋 Copiar</button>
+                </div>
+                <p class="mt-2 mb-0 small text-muted">Informe esta senha ao usuário. Ele deverá trocá-la no primeiro login.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="./src/js/core/config.js"></script>

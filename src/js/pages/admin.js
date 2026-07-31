@@ -54,9 +54,58 @@ document.addEventListener("DOMContentLoaded", () => {
   renderizarUsuarios();
   renderizarPapeis();
   renderizarAprovacoes();
+
+  // ─── Cadastrar Usuário pelo Admin (#110) ────────────────────────────────
+  document.getElementById("btn-criar-usuario")?.addEventListener("click", () => {
+    const modalEl = document.getElementById("modal-criar-usuario");
+    if (modalEl) {
+      document.getElementById("form-criar-usuario")?.reset();
+      _preencherPapeisNovoUsuario();
+      new bootstrap.Modal(modalEl).show();
+    }
+  });
+
+  document.getElementById("form-criar-usuario")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const nome = document.getElementById("novo-user-nome")?.value.trim();
+    const role = document.getElementById("novo-user-role")?.value || "user";
+    const papelId = document.getElementById("novo-user-papel")?.value || "";
+
+    const resultado = await AuthService.criarUsuarioPeloAdmin(nome, role, papelId);
+    if (!resultado.ok) {
+      alert(`⚠️ ${resultado.erro}`);
+      return;
+    }
+
+    // Mostra a senha gerada
+    const senhaDisplay = document.getElementById("novo-user-senha-gerada");
+    const senhaContainer = document.getElementById("novo-user-resultado");
+    if (senhaDisplay && senhaContainer) {
+      senhaDisplay.textContent = resultado.senhaGerada;
+      senhaContainer.classList.remove("d-none");
+    }
+
+    renderizarUsuarios();
+  });
+
+  document.getElementById("btn-copiar-senha-gerada")?.addEventListener("click", () => {
+    const senha = document.getElementById("novo-user-senha-gerada")?.textContent;
+    if (senha) {
+      navigator.clipboard.writeText(senha).then(() => alert("✅ Senha copiada!")).catch(() => prompt("Copie:", senha));
+    }
+  });
 });
 
 // ─── Usuários ─────────────────────────────────────────────────────────────────
+
+function _preencherPapeisNovoUsuario() {
+  const sessao = AuthService.obterSessao();
+  const sel = document.getElementById("novo-user-papel");
+  if (!sel || !sessao || !window.RolesController) return;
+  const papeis = RolesController.obterPorOrg(sessao.orgId);
+  sel.innerHTML = `<option value="">— Sem papel —</option>` +
+    papeis.map((p) => `<option value="${p.id}">${p.nome}</option>`).join("");
+}
 
 /**
  * Renderiza a lista de usuários da organização atual.
