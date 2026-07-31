@@ -35,37 +35,50 @@ const NavbarController = {
       if (mod) labelRotina = `${mod.icon} ${mod.label}`;
     }
 
-    // Identidade do usuário
-    const identidade = sessao
-      ? `<span class="text-white-50 small">${sessao.identidade || `${sessao.nome}#${sessao.id}`}</span>`
-      : "";
+    // Identidade mostrada inline no template
 
     container.innerHTML = `
-      <nav class="navbar navbar-dark shadow-sm mb-4">
+      <nav class="navbar navbar-dark shadow-sm mb-4" style="min-height:56px;">
         <div class="container-fluid px-3">
-          <div class="d-flex align-items-center w-100 gap-3">
+          <div class="d-flex align-items-center w-100">
 
-            <!-- ESQUERDA: Logo + Nome Sistema + Separador + Nome Rotina -->
-            <div class="d-flex align-items-center gap-2 flex-shrink-0">
+            <!-- ESQUERDA: Logo + Sistema + Rotina -->
+            <div class="d-flex align-items-center gap-2">
               ${logoHtml}
-              <span class="text-white fw-bold d-none d-md-inline" style="font-size:.95rem;white-space:nowrap;">${nomesSistema}</span>
-              ${labelRotina ? `
-                <span class="text-white-50 mx-1 d-none d-md-inline">|</span>
-                <span class="text-white" style="font-size:.9rem;white-space:nowrap;">${labelRotina}</span>
-              ` : ""}
+              <span class="text-white fw-semibold d-none d-md-inline" style="font-size:.9rem;">${nomesSistema}</span>
+              ${labelRotina ? `<span class="text-white-50 d-none d-md-inline mx-1">›</span><span class="text-white" style="font-size:.85rem;">${labelRotina}</span>` : ""}
             </div>
 
-            <!-- DIREITA: usuário + tarefas vencidas + home + dark mode + sair -->
-            <div class="d-flex align-items-center gap-2 ms-auto flex-shrink-0">
-              ${identidade}
-              <span id="navbar-tarefas-vencidas" class="badge bg-danger d-none" title="Tarefas vencidas" style="font-size:.7rem;"></span>
-              ${sessao && sessao.role === "admin" ? `<button class="btn btn-outline-light btn-sm" id="btn-params-rotina" title="Parâmetros da Rotina">⚙️</button>` : ""}
-              <a href="settings.html" class="btn btn-outline-light btn-sm" title="Minha Conta">🔒</a>
-              <a href="home.html" class="btn btn-outline-light btn-sm" title="Voltar para Home">🏠 Home</a>
-              <div class="form-check form-switch text-light mb-0" title="Modo Escuro">
-                <input class="form-check-input" type="checkbox" id="dark-mode-switch" />
+            <!-- DIREITA: Ações -->
+            <div class="d-flex align-items-center gap-1 ms-auto">
+              <!-- Identidade -->
+              ${sessao ? `<span class="text-white-50 small d-none d-lg-inline me-2">${sessao.nome}#${sessao.id}</span>` : ""}
+
+              <!-- Home -->
+              <a href="home.html" class="btn btn-link text-white p-1 nav-icon-btn" title="Home"><i class="bi bi-house" style="font-size:1.1rem;"></i></a>
+
+              <!-- Parâmetros (admin only) -->
+              ${sessao && sessao.role === "admin" ? `<button class="btn btn-link text-white p-1 nav-icon-btn" id="btn-params-rotina" title="Parâmetros"><i class="bi bi-sliders" style="font-size:1.1rem;"></i></button>` : ""}
+
+              <!-- Alertas -->
+              <button class="btn btn-link text-white position-relative p-1 nav-icon-btn" id="btn-alertas-nav" title="Alertas">
+                <i class="bi bi-bell" style="font-size:1.1rem;"></i>
+                <span id="badge-alertas-nav" class="d-none" style="position:absolute;top:0;right:0;background:#dc3545;color:#fff;font-size:.55rem;border-radius:50%;min-width:14px;height:14px;display:flex;align-items:center;justify-content:center;font-weight:700;line-height:1;"></span>
+              </button>
+
+              <!-- Minha Conta -->
+              <a href="settings.html" class="btn btn-link text-white p-1 nav-icon-btn" title="Minha Conta"><i class="bi bi-person-circle" style="font-size:1.1rem;"></i></a>
+
+              <!-- Separador -->
+              <span class="text-white-50 mx-1 d-none d-md-inline">|</span>
+
+              <!-- Dark Mode -->
+              <div class="form-check form-switch mb-0 ms-1" title="Modo Escuro">
+                <input class="form-check-input" type="checkbox" id="dark-mode-switch" role="switch" />
               </div>
-              <button class="btn btn-outline-light btn-sm" id="btn-logout-nav" title="Sair do sistema">🚪</button>
+
+              <!-- Sair -->
+              <button class="btn btn-link text-white p-1 ms-1 nav-icon-btn" id="btn-logout-nav" title="Sair"><i class="bi bi-box-arrow-right" style="font-size:1.1rem;"></i></button>
             </div>
 
           </div>
@@ -79,15 +92,23 @@ const NavbarController = {
       if (confirm("Deseja sair do sistema?") && window.AuthService) AuthService.logout();
     });
 
-    // Indicador de tarefas vencidas
-    if (window.TarefasController) {
-      const vencidas = TarefasController.contarVencidasGlobal();
-      const badge = document.getElementById("navbar-tarefas-vencidas");
-      if (badge && vencidas > 0) {
-        badge.textContent = `⚠️ ${vencidas} tarefa${vencidas > 1 ? "s" : ""} vencida${vencidas > 1 ? "s" : ""}`;
-        badge.classList.remove("d-none");
-      }
+    // Indicador de alertas (tarefas vencidas + aprovações pendentes)
+    const vencidas = window.TarefasController ? TarefasController.contarVencidasGlobal() : 0;
+    const aprovacoes = window.ApprovalsController ? ApprovalsController.contarPendentes() : 0;
+    const totalAlertas = vencidas + aprovacoes;
+    const badgeAlertas = document.getElementById("badge-alertas-nav");
+    if (badgeAlertas && totalAlertas > 0) {
+      badgeAlertas.textContent = totalAlertas;
+      badgeAlertas.classList.remove("d-none");
     }
+
+    document.getElementById("btn-alertas-nav")?.addEventListener("click", () => {
+      let msg = "🔔 Alertas:\n\n";
+      if (vencidas > 0) msg += `⚠️ ${vencidas} tarefa(s) vencida(s)\n`;
+      if (aprovacoes > 0) msg += `📋 ${aprovacoes} aprovação(ões) pendente(s)\n`;
+      if (totalAlertas === 0) msg += "✅ Nenhum alerta pendente!";
+      alert(msg);
+    });
 
     // Botão de parâmetros (admin only) — abre modal com config da rotina atual
     document.getElementById("btn-params-rotina")?.addEventListener("click", () => {
