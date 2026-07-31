@@ -110,8 +110,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("btn-nova-transacao").addEventListener("click", () => {
     _resetarForm();
-    document.getElementById("titulo-modal-transacao").textContent = "💰 Nova Transação";
+    _preencherParamsFinanceiro(); // Recarrega tipos fiscais, categorias e formas de pagamento dos params
+    document.getElementById("titulo-modal-transacao").textContent = "💰 Novo Lançamento";
     document.getElementById("trans-data").value = new Date().toISOString().split("T")[0];
+    // Gera número sequencial
+    // Gera número sequencial do lançamento
+    const numero = Utils.gerarProximoCodigo("financeiro", FinanceiroStorage.buscarTodos(), "numero");
+    const elNumero = document.getElementById("trans-numero");
+    if (elNumero && numero) elNumero.value = numero;
     // Reset anexos e itens
     if (window.AttachmentsController) AttachmentsController.carregar("trans-anexos-container", [], false);
     const itensSection = document.getElementById("trans-itens-section");
@@ -222,14 +228,24 @@ function _preencherParamsFinanceiro() {
   if (!window.ParamsController) return;
   const params = ParamsController.obter("financeiro");
 
-  // Tipos Fiscais
+  // Tipos Fiscais — suporta tipos personalizados dos parâmetros
   const selFiscal = document.getElementById("trans-tipo-fiscal");
   if (selFiscal && params.tiposFiscais) {
-    const labels = { nfs: "NFs — Nota Fiscal de Saída (Venda = Entrada $)", nfe: "NFe — Nota Fiscal de Entrada (Compra = Saída $)" };
+    const labelsBase = {
+      nfs: "NFs — Nota Fiscal de Saída (Venda = Entrada $)",
+      nfe: "NFe — Nota Fiscal de Entrada (Compra = Saída $)",
+      nfce: "NFCe — Nota Fiscal Consumidor Eletrônica",
+      recibo: "Recibo",
+      cupom: "Cupom Fiscal",
+    };
+    const valorAtual = selFiscal.value; // Preserva seleção atual
     selFiscal.innerHTML = `<option value="">— Sem nota fiscal —</option>`;
     params.tiposFiscais.forEach((t) => {
-      selFiscal.innerHTML += `<option value="${t}">${labels[t] || t}</option>`;
+      const label = labelsBase[t] || t.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+      selFiscal.innerHTML += `<option value="${t}">${label}</option>`;
     });
+    // Restaura valor selecionado (se existia)
+    if (valorAtual) selFiscal.value = valorAtual;
   }
 
   // Categorias
@@ -263,6 +279,22 @@ function _preencherParamsFinanceiro() {
       }
     });
   }
+
+  // Auto-derivar tipo (entrada/saída) a partir do Tipo Fiscal selecionado
+  if (selFiscal) {
+    selFiscal.addEventListener("change", () => {
+      const fiscal = selFiscal.value;
+      const hiddenTipo = document.getElementById("trans-tipo-hidden");
+      if (!hiddenTipo) return;
+      // NFs (venda) = entrada de dinheiro; NFe (compra) = saída de dinheiro
+      // Tipos personalizados: se contém "saida" ou "compra" ou "nfe" → saída; senão → entrada
+      if (fiscal.includes("nfe") || fiscal.includes("compra") || fiscal.includes("despesa")) {
+        hiddenTipo.value = "saida";
+      } else {
+        hiddenTipo.value = "entrada";
+      }
+    });
+  }
 }
 
 function _preencherEmpresas() {
@@ -277,7 +309,8 @@ function _preencherEmpresas() {
 function _resetarForm() {
   const f = document.getElementById("form-transacao");
   f.reset(); delete f.dataset.editId; delete f.dataset.modoVisualizacao;
-  document.getElementById("tipo-entrada").checked = true;
+  const hiddenTipo = document.getElementById("trans-tipo-hidden");
+  if (hiddenTipo) hiddenTipo.value = "entrada";
 }
 
 function _coletar() {
@@ -286,7 +319,8 @@ function _coletar() {
   const data = document.getElementById("trans-data").value;
   if (!desc || !valor || !data) { alert("Descrição, Valor e Data são obrigatórios."); return null; }
   return {
-    tipo: document.querySelector('input[name="trans-tipo"]:checked').value,
+    numero: document.getElementById("trans-numero")?.value || "",
+    tipo: document.getElementById("trans-tipo-hidden")?.value || "entrada",
     tipoFiscal: document.getElementById("trans-tipo-fiscal")?.value || "",
     descricao: desc,
     valor,
@@ -460,7 +494,10 @@ function renderizar() {
 function visualizarTransacao(id) {
   const t = FinanceiroStorage.buscarTodos().find((x) => x.id === id);
   if (!t) return;
-  document.querySelector(`input[name="trans-tipo"][value="${t.tipo}"]`).checked = true;
+  const elNumero = document.getElementById("trans-numero");
+  if (elNumero) elNumero.value = t.numero || "";
+  const hiddenTipo = document.getElementById("trans-tipo-hidden");
+  if (hiddenTipo) hiddenTipo.value = t.tipo || "entrada";
   document.getElementById("trans-descricao").value = t.descricao || "";
   document.getElementById("trans-valor").value = t.valor || "";
   document.getElementById("trans-data").value = t.data || "";
@@ -475,7 +512,10 @@ function visualizarTransacao(id) {
   const elStatus = document.getElementById("trans-status-pagamento");
   if (elStatus) elStatus.value = t.statusPagamento || "pendente";
   const elFiscal = document.getElementById("trans-tipo-fiscal");
-  if (elFiscal) elFiscal.value = t.tipoFiscal || "";
+  if (elFiscal) {
+    _preencherParamsFinanceiro(); // Garante que o select tem todas as opções atualizadas
+    elFiscal.value = t.tipoFiscal || "";
+  }
   const elForma = document.getElementById("trans-forma-pagamento");
   if (elForma) elForma.value = t.formaPagamento || "";
   const elParcelas = document.getElementById("trans-parcelas");

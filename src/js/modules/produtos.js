@@ -105,6 +105,9 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-novo-produto").addEventListener("click", () => {
     _resetarFormProduto();
     document.getElementById("titulo-modal-produto").textContent = "📦 Novo Produto";
+    // Gera código automaticamente conforme parâmetro de numeração
+    const codigo = Utils.gerarProximoCodigo("produtos", ProdutosStorage.buscarTodos(), "codigo");
+    if (codigo) document.getElementById("prod-codigo").value = codigo;
     _prodSetModo("edicao");
     modal.show();
   });
@@ -227,8 +230,13 @@ document.addEventListener("DOMContentLoaded", () => {
   // ─── Gerenciar Endereços de Estoque ───────────────────────────────────────
   document.getElementById("btn-gerenciar-enderecos")?.addEventListener("click", () => {
     _renderizarEnderecos();
-    new bootstrap.Modal(document.getElementById("modal-enderecos")).show();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-enderecos")).show();
   });
+
+  // ─── Navegação e Duplicar (#119) ────────────────────────────────────────
+  document.getElementById("btn-prev-produto")?.addEventListener("click", () => _navProduto("prev"));
+  document.getElementById("btn-next-produto")?.addEventListener("click", () => _navProduto("next"));
+  document.getElementById("btn-duplicar-produto")?.addEventListener("click", _duplicarProduto);
 
   document.getElementById("form-endereco")?.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -398,7 +406,18 @@ function renderizarProdutos() {
     });
   }
 
-  dados.sort((a, b) => (a.nome || "").localeCompare(b.nome || ""));
+  dados.sort((a, b) => {
+    const col = _prodOrdenacao.coluna;
+    const dir = _prodOrdenacao.direcao === "asc" ? 1 : -1;
+    let va = a[col] || a["_" + col] || "";
+    let vb = b[col] || b["_" + col] || "";
+    if (col === "preco" || col === "_estoque") {
+      va = parseFloat(va) || 0;
+      vb = parseFloat(vb) || 0;
+      return (va - vb) * dir;
+    }
+    return String(va).localeCompare(String(vb)) * dir;
+  });
 
   // Resumo
   const todosRaw = ProdutosStorage.buscarTodos();
@@ -479,7 +498,11 @@ function visualizarProduto(id) {
   if (auditoriaEl) auditoriaEl.textContent = _formatarAuditoriaProd(p);
 
   _prodSetModo("visualizacao");
-  new bootstrap.Modal(document.getElementById("modal-produto")).show();
+  const modalEl = document.getElementById("modal-produto");
+  const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+  if (!modalEl.classList.contains("show")) {
+    modalInstance.show();
+  }
 }
 
 function abrirMovimentacao(id) {
@@ -494,13 +517,69 @@ function abrirMovimentacao(id) {
   _preencherEnderecos();
   const destContainer = document.getElementById("mov-destino-container");
   if (destContainer) destContainer.classList.add("d-none");
-  new bootstrap.Modal(document.getElementById("modal-movimentacao")).show();
+  bootstrap.Modal.getOrCreateInstance(document.getElementById("modal-movimentacao")).show();
 }
 
 function excluirProduto(id) {
   if (!confirm("Remover este produto?")) return;
   ProdutosStorage.excluir(id);
   renderizarProdutos();
+}
+
+// ─── Renderização de Endereços ──────────────────────────────────────────────
+
+// ─── Ordenação de Produtos (#119) ───────────────────────────────────────────
+const _prodOrdenacao = { coluna: "nome", direcao: "asc" };
+
+function _ordenarProdutos(coluna) {
+  if (_prodOrdenacao.coluna === coluna) {
+    _prodOrdenacao.direcao = _prodOrdenacao.direcao === "asc" ? "desc" : "asc";
+  } else {
+    _prodOrdenacao.coluna = coluna;
+    _prodOrdenacao.direcao = "asc";
+  }
+  renderizarProdutos();
+}
+
+// ─── Navegação entre Produtos (#119) ────────────────────────────────────────
+
+function _navProduto(direcao) {
+  const form = document.getElementById("form-produto");
+  const idAtual = form?.dataset.editId;
+  if (!idAtual) return;
+
+  const dados = ProdutosStorage.buscarTodos();
+  const idx = dados.findIndex((p) => p.id === idAtual);
+  if (idx === -1) return;
+
+  const novoIdx = direcao === "next" ? idx + 1 : idx - 1;
+  if (novoIdx < 0 || novoIdx >= dados.length) return;
+
+  visualizarProduto(dados[novoIdx].id);
+}
+
+function _duplicarProduto() {
+  const form = document.getElementById("form-produto");
+  const idAtual = form?.dataset.editId;
+  if (!idAtual) return;
+
+  const original = ProdutosStorage.buscarTodos().find((p) => p.id === idAtual);
+  if (!original) return;
+
+  const copia = { ...original };
+  delete copia.id;
+  delete copia.criadoEm;
+  delete copia.criadoPor;
+  delete copia.criadoPorId;
+  delete copia.atualizadoEm;
+  delete copia.atualizadoPor;
+  copia.nome = `${original.nome} (cópia)`;
+  copia.codigo = original.codigo ? `${original.codigo}-COPIA` : "";
+
+  const novo = ProdutosStorage.adicionar(copia);
+  alert(`✅ Produto duplicado: ${novo.nome}`);
+  renderizarProdutos();
+  visualizarProduto(novo.id);
 }
 
 // ─── Renderização de Endereços ──────────────────────────────────────────────

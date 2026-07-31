@@ -404,4 +404,66 @@ const Utils = {
     leitor.onerror = () => alert("Erro ao ler o arquivo de backup.");
     leitor.readAsText(arquivo, "UTF-8");
   },
+
+  /**
+   * Gera o próximo código/número de registro para uma rotina.
+   * Suporta 3 modos (configurável por parâmetro):
+   * - "sequencial": PRD-001, PRD-002, PRD-003...
+   * - "aleatorio": PRD-A7K3M
+   * - "manual": retorna "" (usuário preenche)
+   *
+   * Garante unicidade verificando registros existentes.
+   *
+   * @param {string} rotina - nome da rotina ("produtos", "financeiro", "propostas", "entrada")
+   * @param {Array} registrosExistentes - lista de registros já cadastrados
+   * @param {string} campoCodigo - nome do campo que contém o código (ex: "codigo", "numero")
+   * @returns {string} próximo código gerado (ou "" se manual)
+   */
+  gerarProximoCodigo(rotina, registrosExistentes = [], campoCodigo = "codigo") {
+    const params = window.ParamsController ? ParamsController.obter(rotina) : {};
+    const modo = params.numeracao || "sequencial";
+    const prefixo = params.prefixoCodigo || rotina.substring(0, 3).toUpperCase();
+
+    if (modo === "manual") return "";
+
+    const codigosExistentes = new Set(
+      registrosExistentes.map((r) => r[campoCodigo] || "").filter(Boolean)
+    );
+
+    if (modo === "sequencial") {
+      // Encontra o maior número sequencial existente
+      let maiorSeq = 0;
+      codigosExistentes.forEach((cod) => {
+        const match = cod.match(/(\d+)$/);
+        if (match) {
+          const num = parseInt(match[1]);
+          if (num > maiorSeq) maiorSeq = num;
+        }
+      });
+      const proximoSeq = maiorSeq + 1;
+      const codigo = `${prefixo}-${String(proximoSeq).padStart(3, "0")}`;
+      // Garante unicidade (caso de conflito extremo)
+      if (codigosExistentes.has(codigo)) {
+        return `${prefixo}-${String(proximoSeq + 1).padStart(3, "0")}`;
+      }
+      return codigo;
+    }
+
+    if (modo === "aleatorio") {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let codigo;
+      let tentativas = 0;
+      do {
+        let aleatorio = "";
+        for (let i = 0; i < 5; i++) {
+          aleatorio += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        codigo = `${prefixo}-${aleatorio}`;
+        tentativas++;
+      } while (codigosExistentes.has(codigo) && tentativas < 100);
+      return codigo;
+    }
+
+    return "";
+  },
 };
