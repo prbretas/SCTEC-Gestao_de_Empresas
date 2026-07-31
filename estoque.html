@@ -223,11 +223,34 @@
                   <input type="text" id="end-est-posicao" class="form-control form-control-sm" required placeholder="Ex: P2" />
                 </div>
               </div>
-              <div class="mb-2">
-                <label class="form-label small fw-bold">Observação</label>
-                <input type="text" id="end-est-descricao" class="form-control form-control-sm" placeholder="Descrição livre..." />
+              <div class="row g-2 mb-2">
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold">Tipo de Local *</label>
+                  <select id="end-est-tipo-local" class="form-select form-select-sm" required>
+                    <option value="prateleira">📚 Prateleira</option>
+                    <option value="gaveta">🗄️ Gaveta</option>
+                    <option value="estante">🏗️ Estante</option>
+                    <option value="pallet">📦 Pallet</option>
+                    <option value="container">🚢 Container</option>
+                    <option value="rack">🔩 Rack</option>
+                    <option value="chao">⬛ Chão / Área aberta</option>
+                    <option value="outro">📌 Outro</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold">Capacidade (unidades)</label>
+                  <input type="number" id="end-est-capacidade" class="form-control form-control-sm" min="0" placeholder="Ex: 100" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold">Observação</label>
+                  <input type="text" id="end-est-descricao" class="form-control form-control-sm" placeholder="Descrição livre..." />
+                </div>
               </div>
-              <button type="submit" class="btn btn-sm btn-success">Cadastrar Endereço</button>
+              <input type="hidden" id="end-est-edit-id" value="" />
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-sm btn-success" id="btn-salvar-endereco">Cadastrar Endereço</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary d-none" id="btn-cancelar-edicao-end">Cancelar Edição</button>
+              </div>
             </form>
             <hr />
             <h6 class="fw-bold mb-2">Endereços Cadastrados</h6>
@@ -239,8 +262,10 @@
                     <th>Galpão</th>
                     <th>Corredor</th>
                     <th>Estante</th>
-                    <th>Coluna</th>
-                    <th>Posição</th>
+                    <th>Col.</th>
+                    <th>Pos.</th>
+                    <th>Tipo Local</th>
+                    <th>Capac.</th>
                     <th class="text-center">Ações</th>
                   </tr>
                 </thead>

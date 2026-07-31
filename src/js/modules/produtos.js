@@ -127,11 +127,11 @@ document.addEventListener("DOMContentLoaded", () => {
       ProdutosStorage.atualizar(id, dados);
     } else {
       const novoProduto = ProdutosStorage.adicionar(dados);
-      // Cria posição de estoque inicial no endereço padrão
+      // Cria posição de estoque inicial no endereço selecionado (ou padrão)
       if (window.EstoqueStorage && dados.estoqueInicial > 0) {
         EstoqueStorage.movimentar({
           produtoId: novoProduto.id,
-          enderecoId: "end_geral",
+          enderecoId: dados.enderecoId || "end_geral",
           tipo: "entrada",
           quantidade: dados.estoqueInicial,
           motivo: "Estoque inicial ao cadastrar produto",
@@ -284,6 +284,22 @@ function _preencherEmpresasProduto() {
     const o = document.createElement("option");
     o.value = e.id; o.textContent = e.nome; sel.appendChild(o);
   });
+
+  // Preenche select de endereços de estoque
+  const selEnd = document.getElementById("prod-endereco");
+  if (selEnd && window.EnderecosStorage) {
+    const enderecos = EnderecosStorage.buscarTodos();
+    selEnd.innerHTML = `<option value="">— Sem endereço vinculado —</option>`;
+    enderecos.forEach((e) => {
+      const label = e.id === "end_geral" ? "Geral (padrão)"
+        : [e.instalacao, e.galpao, e.corredor, e.estante, e.coluna, e.posicao].filter(Boolean).join(" › ");
+      const tipo = e.tipoLocal ? ` (${e.tipoLocal})` : "";
+      const o = document.createElement("option");
+      o.value = e.id;
+      o.textContent = `${label}${tipo}`;
+      selEnd.appendChild(o);
+    });
+  }
 }
 
 function _preencherCategoriasFiltro() {
@@ -337,6 +353,7 @@ function _coletarProduto() {
     preco,
     estoqueInicial: parseInt(document.getElementById("prod-estoque")?.value) || 0,
     empresaId: document.getElementById("prod-empresa").value,
+    enderecoId: document.getElementById("prod-endereco")?.value || "",
     obs: document.getElementById("prod-obs").value.trim(),
   };
 }
@@ -446,6 +463,8 @@ function visualizarProduto(id) {
   const elEstoque = document.getElementById("prod-estoque");
   if (elEstoque) elEstoque.value = estoque;
   document.getElementById("prod-empresa").value = p.empresaId || "";
+  const elEndereco = document.getElementById("prod-endereco");
+  if (elEndereco) elEndereco.value = p.enderecoId || "";
   document.getElementById("prod-obs").value = p.obs || "";
   document.getElementById("form-produto").dataset.editId = id;
 

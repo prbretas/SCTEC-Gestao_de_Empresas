@@ -118,6 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("form-endereco-est").addEventListener("submit", (e) => {
     e.preventDefault();
+    const editId = document.getElementById("end-est-edit-id").value;
     const endereco = {
       instalacao: document.getElementById("end-est-instalacao").value.trim(),
       galpao: document.getElementById("end-est-galpao").value.trim(),
@@ -126,17 +127,32 @@ document.addEventListener("DOMContentLoaded", () => {
       estante: document.getElementById("end-est-estante").value.trim(),
       coluna: document.getElementById("end-est-coluna").value.trim(),
       posicao: document.getElementById("end-est-posicao").value.trim(),
+      tipoLocal: document.getElementById("end-est-tipo-local").value,
+      capacidade: parseInt(document.getElementById("end-est-capacidade").value) || 0,
       descricao: document.getElementById("end-est-descricao").value.trim(),
     };
     if (!endereco.instalacao || !endereco.estante || !endereco.coluna || !endereco.posicao) {
       alert("Instalação, Estante, Coluna e Posição são obrigatórios.");
       return;
     }
-    EnderecosStorage.adicionar(endereco);
-    document.getElementById("form-endereco-est").reset();
+
+    if (editId) {
+      // Modo edição
+      EnderecosStorage.atualizar(editId, endereco);
+    } else {
+      // Modo criação
+      EnderecosStorage.adicionar(endereco);
+    }
+
+    _resetarFormEndereco();
     _renderizarEnderecosLista();
     _preencherFiltroEnderecos();
     _preencherSelectEnderecos();
+    _renderizarEstoque();
+  });
+
+  document.getElementById("btn-cancelar-edicao-end")?.addEventListener("click", () => {
+    _resetarFormEndereco();
   });
 
   // ─── Filtros ────────────────────────────────────────────────────────────
@@ -397,13 +413,31 @@ function _renderizarMovimentacoes(todas) {
 
 // ─── Renderização de Endereços ──────────────────────────────────────────────
 
+function _resetarFormEndereco() {
+  document.getElementById("form-endereco-est").reset();
+  document.getElementById("end-est-edit-id").value = "";
+  document.getElementById("btn-salvar-endereco").textContent = "Cadastrar Endereço";
+  document.getElementById("btn-cancelar-edicao-end")?.classList.add("d-none");
+}
+
 function _renderizarEnderecosLista() {
   const tbody = document.getElementById("enderecos-lista-est");
   if (!tbody || !window.EnderecosStorage) return;
   const enderecos = EnderecosStorage.buscarTodos().filter((e) => e.id !== "end_geral");
 
+  const TIPOS_LABEL = {
+    prateleira: "📚 Prateleira",
+    gaveta: "🗄️ Gaveta",
+    estante: "🏗️ Estante",
+    pallet: "📦 Pallet",
+    container: "🚢 Container",
+    rack: "🔩 Rack",
+    chao: "⬛ Chão",
+    outro: "📌 Outro",
+  };
+
   if (enderecos.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-3">Nenhum endereço cadastrado além do padrão.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-3">Nenhum endereço cadastrado além do padrão.</td></tr>`;
     return;
   }
 
@@ -415,7 +449,10 @@ function _renderizarEnderecosLista() {
       <td class="small">${e.estante || "—"}</td>
       <td class="small">${e.coluna || "—"}</td>
       <td class="small">${e.posicao || "—"}</td>
-      <td class="text-center">
+      <td class="small">${TIPOS_LABEL[e.tipoLocal] || "—"}</td>
+      <td class="small text-center">${e.capacidade || "—"}</td>
+      <td class="text-center text-nowrap">
+        <button class="btn btn-xs btn-outline-primary me-1" onclick="editarEnderecoEst('${e.id}')" title="Editar">✏️</button>
         <button class="btn btn-xs btn-outline-danger" onclick="excluirEnderecoEst('${e.id}')" title="Excluir">🗑️</button>
       </td>
     </tr>`).join("");
@@ -442,4 +479,31 @@ function excluirEnderecoEst(id) {
   _renderizarEnderecosLista();
   _preencherFiltroEnderecos();
   _preencherSelectEnderecos();
+  _renderizarEstoque();
+}
+
+function editarEnderecoEst(id) {
+  const enderecos = EnderecosStorage.buscarTodos();
+  const end = enderecos.find((e) => e.id === id);
+  if (!end) return;
+
+  // Preenche o formulário com os dados do endereço
+  document.getElementById("end-est-instalacao").value = end.instalacao || "";
+  document.getElementById("end-est-galpao").value = end.galpao || "";
+  document.getElementById("end-est-andar").value = end.andar || "";
+  document.getElementById("end-est-corredor").value = end.corredor || "";
+  document.getElementById("end-est-estante").value = end.estante || "";
+  document.getElementById("end-est-coluna").value = end.coluna || "";
+  document.getElementById("end-est-posicao").value = end.posicao || "";
+  document.getElementById("end-est-tipo-local").value = end.tipoLocal || "prateleira";
+  document.getElementById("end-est-capacidade").value = end.capacidade || "";
+  document.getElementById("end-est-descricao").value = end.descricao || "";
+  document.getElementById("end-est-edit-id").value = id;
+
+  // Muda visual para modo edição
+  document.getElementById("btn-salvar-endereco").textContent = "Salvar Alterações";
+  document.getElementById("btn-cancelar-edicao-end")?.classList.remove("d-none");
+
+  // Scroll para o formulário
+  document.getElementById("form-endereco-est").scrollIntoView({ behavior: "smooth" });
 }
