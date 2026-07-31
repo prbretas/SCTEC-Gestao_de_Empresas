@@ -287,16 +287,39 @@ function _preencherParamsFinanceiro() {
     selFiscal.addEventListener("change", () => {
       const fiscal = selFiscal.value;
       const hiddenTipo = document.getElementById("trans-tipo-hidden");
+      const selNatureza = document.getElementById("trans-natureza");
       if (!hiddenTipo) return;
       // NFs (venda) = entrada de dinheiro; NFe (compra) = saída de dinheiro
-      // Tipos personalizados: se contém "saida" ou "compra" ou "nfe" → saída; senão → entrada
       if (fiscal.includes("nfe") || fiscal.includes("compra") || fiscal.includes("despesa")) {
         hiddenTipo.value = "saida";
-      } else {
+        if (selNatureza) selNatureza.value = "saida";
+      } else if (fiscal) {
         hiddenTipo.value = "entrada";
+        if (selNatureza) selNatureza.value = "entrada";
       }
+      _atualizarHintNatureza();
     });
   }
+
+  // Natureza: atualiza hidden tipo e hint ao mudar
+  const selNatureza = document.getElementById("trans-natureza");
+  if (selNatureza) {
+    selNatureza.addEventListener("change", () => {
+      const hiddenTipo = document.getElementById("trans-tipo-hidden");
+      if (hiddenTipo && selNatureza.value !== "ambos") hiddenTipo.value = selNatureza.value;
+      _atualizarHintNatureza();
+    });
+  }
+}
+
+function _atualizarHintNatureza() {
+  const selNatureza = document.getElementById("trans-natureza");
+  const hint = document.getElementById("trans-natureza-hint");
+  if (!selNatureza || !hint) return;
+  const val = selNatureza.value;
+  if (val === "entrada") hint.textContent = "Vincula a: Pedido de Venda";
+  else if (val === "saida") hint.textContent = "Vincula a: Documento de Entrada";
+  else hint.textContent = "Vincula a: Pedido de Venda ou Doc. Entrada";
 }
 
 function _preencherEmpresas() {
@@ -323,6 +346,7 @@ function _coletar() {
   return {
     numero: document.getElementById("trans-numero")?.value || "",
     tipo: document.getElementById("trans-tipo-hidden")?.value || "entrada",
+    natureza: document.getElementById("trans-natureza")?.value || "entrada",
     tipoFiscal: document.getElementById("trans-tipo-fiscal")?.value || "",
     descricao: desc,
     valor,
@@ -500,6 +524,8 @@ function visualizarTransacao(id) {
   if (elNumero) elNumero.value = t.numero || "";
   const hiddenTipo = document.getElementById("trans-tipo-hidden");
   if (hiddenTipo) hiddenTipo.value = t.tipo || "entrada";
+  const elNatureza = document.getElementById("trans-natureza");
+  if (elNatureza) { elNatureza.value = t.natureza || t.tipo || "entrada"; _atualizarHintNatureza(); }
   document.getElementById("trans-descricao").value = t.descricao || "";
   document.getElementById("trans-valor").value = t.valor || "";
   document.getElementById("trans-data").value = t.data || "";

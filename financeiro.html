@@ -125,11 +125,11 @@
           <div class="modal-body p-4">
             <form id="form-transacao">
               <div class="row g-3 mb-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
                   <label class="form-label fw-bold">Nº Registro</label>
                   <input type="text" id="trans-numero" class="form-control" placeholder="Auto" readonly />
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-5">
                   <label class="form-label fw-bold">Tipo Fiscal *</label>
                   <select id="trans-tipo-fiscal" class="form-select">
                     <option value="">— Selecione o tipo —</option>
@@ -137,6 +137,15 @@
                     <option value="nfe">NFe — Nota Fiscal de Entrada (Compra = Saída $)</option>
                   </select>
                   <input type="hidden" name="trans-tipo" id="trans-tipo-hidden" value="entrada" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold">Natureza *</label>
+                  <select id="trans-natureza" class="form-select">
+                    <option value="entrada">⬆️ Entrada (Receita)</option>
+                    <option value="saida">⬇️ Saída (Despesa)</option>
+                    <option value="ambos">🔄 Ambos</option>
+                  </select>
+                  <div class="form-text small" id="trans-natureza-hint">Vincula a: Pedido de Venda</div>
                 </div>
               </div>
               <div class="mb-3">
