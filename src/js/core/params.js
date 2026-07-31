@@ -25,6 +25,7 @@ const PARAMS_PADRAO = {
   financeiro: {
     valorMinParcela: 50,
     diasVencimento: 15,
+    tiposFiscais: ["nfs", "nfe"],
     categorias: ["servicos", "produtos", "salarios", "impostos", "aluguel", "marketing", "outros"],
     formasPagamento: ["boleto", "pix", "cartao_credito", "cartao_debito", "transferencia", "dinheiro", "cheque"],
   },

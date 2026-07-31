@@ -27,7 +27,7 @@ O SCTEC v2.0 "Orion" entregou uma plataforma funcional com 8 módulos integrados
 │                                                             │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
 │  │Cadastros │  │   CRM    │  │Propostas │  │Financeiro│   │
-│  │(Empresas)│  │  (Funil) │  │(Orçamento│  │(Caixa)   │   │
+│  │(Empresas)│  │  (Funil) │  │(Orçamento)│  │(Caixa)   │   │
 │  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘   │
 │       │              │              │              │         │
 │  ┌────┴─────┐  ┌────┴─────┐  ┌────┴─────┐  ┌────┴─────┐   │

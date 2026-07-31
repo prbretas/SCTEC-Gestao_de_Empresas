@@ -222,6 +222,16 @@ function _preencherParamsFinanceiro() {
   if (!window.ParamsController) return;
   const params = ParamsController.obter("financeiro");
 
+  // Tipos Fiscais
+  const selFiscal = document.getElementById("trans-tipo-fiscal");
+  if (selFiscal && params.tiposFiscais) {
+    const labels = { nfs: "NFs — Nota Fiscal de Saída (Venda = Entrada $)", nfe: "NFe — Nota Fiscal de Entrada (Compra = Saída $)" };
+    selFiscal.innerHTML = `<option value="">— Sem nota fiscal —</option>`;
+    params.tiposFiscais.forEach((t) => {
+      selFiscal.innerHTML += `<option value="${t}">${labels[t] || t}</option>`;
+    });
+  }
+
   // Categorias
   const selCat = document.getElementById("trans-categoria");
   if (selCat && params.categorias) {
@@ -240,6 +250,17 @@ function _preencherParamsFinanceiro() {
       const icon = icones[f] || "";
       const label = f.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
       selForma.innerHTML += `<option value="${f}">${icon} ${label}</option>`;
+    });
+  }
+
+  // Auto-calcular vencimento ao clicar no campo (se vazio)
+  const elVenc = document.getElementById("trans-vencimento");
+  if (elVenc) {
+    elVenc.addEventListener("focus", () => {
+      if (!elVenc.value) {
+        const diasVenc = params.diasVencimento || 15;
+        _calcularVencimento(diasVenc);
+      }
     });
   }
 }
