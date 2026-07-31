@@ -27,6 +27,34 @@
         <button class="btn btn-success" id="btn-nova-proposta">+ Nova Proposta</button>
       </div>
 
+      <!-- FILTROS + TOGGLE VISUALIZAÇÃO -->
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-3">
+          <div class="row g-2 align-items-center">
+            <div class="col-auto"><input type="date" id="prop-filtro-inicio" class="form-control form-control-sm" /></div>
+            <div class="col-auto"><span class="text-muted">até</span></div>
+            <div class="col-auto"><input type="date" id="prop-filtro-fim" class="form-control form-control-sm" /></div>
+            <div class="col-auto">
+              <select id="prop-filtro-status" class="form-select form-select-sm" style="width:auto;">
+                <option value="">Todos os Status</option>
+                <option value="rascunho">📝 Rascunho</option>
+                <option value="enviada">📤 Enviada</option>
+                <option value="aceita">✅ Aceita</option>
+                <option value="recusada">❌ Recusada</option>
+              </select>
+            </div>
+            <div class="col-auto"><button class="btn btn-sm btn-primary" id="btn-filtrar-prop">Filtrar</button></div>
+            <div class="col-auto"><button class="btn btn-sm btn-outline-secondary" id="btn-limpar-filtro-prop">Limpar</button></div>
+            <div class="col-auto ms-auto">
+              <div class="btn-group btn-group-sm" role="group">
+                <button class="btn btn-outline-secondary active" id="btn-view-cards" title="Cards">🃏</button>
+                <button class="btn btn-outline-secondary" id="btn-view-linhas" title="Linhas">☰</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- MINI-DASHBOARD PROPOSTAS -->
       <div class="row g-3 mb-4" id="prop-mini-dashboard">
         <div class="col-md-3">
