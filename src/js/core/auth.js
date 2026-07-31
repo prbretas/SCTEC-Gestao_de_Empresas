@@ -493,6 +493,56 @@ const AuthService = {
 
     return { ok: true };
   },
+  /**
+   * Cria um novo usuário diretamente pelo Admin (#110).
+   * Gera senha aleatória e marca como 'primeiroAcesso' para forçar troca na primeira login.
+   * @param {string} nome - nickname
+   * @param {string} role - 'user' ou 'admin'
+   * @param {string} [papelId] - papel de trabalho opcional
+   * @returns {Promise<{ok: boolean, erro?: string, usuario?: Object, senhaGerada?: string}>}
+   */
+  async criarUsuarioPeloAdmin(nome, role = "user", papelId = "") {
+    nome = nome.trim();
+    const sessao = this.obterSessao();
+    if (!sessao || sessao.role !== "admin") {
+      return { ok: false, erro: "Apenas administradores podem criar usuários." };
+    }
+
+    if (!nome || nome.length < 3) return { ok: false, erro: "Nickname deve ter ao menos 3 caracteres." };
+    if (nome.length > 20) return { ok: false, erro: "Nickname máximo 20 caracteres." };
+    if (!/^[a-zA-Z0-9_]+$/.test(nome)) return { ok: false, erro: "Nickname aceita apenas letras, números e _ (sem espaços)." };
+    if (this.buscarPorNome(nome)) return { ok: false, erro: `Nickname "${nome}" já está em uso.` };
+
+    // Gera senha aleatória de 8 caracteres
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+    let senhaGerada = "";
+    for (let i = 0; i < 8; i++) {
+      senhaGerada += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    const senhaHash = await this.hashSenha(senhaGerada);
+    const id = this.gerarId();
+
+    const novoUsuario = {
+      id,
+      nome,
+      senhaHash,
+      perguntaSecreta: "Qual sua cor favorita?",
+      respostaHash: await this.hashSenha("trocar"),
+      role: role || "user",
+      orgId: sessao.orgId,
+      papelId: papelId || null,
+      dataCadastro: new Date().toISOString(),
+      criadoPor: sessao.id,
+      primeiroAcesso: true,
+    };
+
+    const usuarios = this.obterUsuarios();
+    usuarios.push(novoUsuario);
+    this.salvarUsuarios(usuarios);
+
+    return { ok: true, usuario: novoUsuario, senhaGerada };
+  },
 };
 
 window.AuthService = AuthService;

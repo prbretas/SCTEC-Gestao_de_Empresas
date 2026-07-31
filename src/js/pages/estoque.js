@@ -129,6 +129,9 @@ document.addEventListener("DOMContentLoaded", () => {
       posicao: document.getElementById("end-est-posicao").value.trim(),
       tipoLocal: document.getElementById("end-est-tipo-local").value,
       capacidade: parseInt(document.getElementById("end-est-capacidade").value) || 0,
+      altura: parseFloat(document.getElementById("end-est-altura").value) || 0,
+      largura: parseFloat(document.getElementById("end-est-largura").value) || 0,
+      comprimento: parseFloat(document.getElementById("end-est-comprimento").value) || 0,
       descricao: document.getElementById("end-est-descricao").value.trim(),
     };
     if (!endereco.instalacao || !endereco.estante || !endereco.coluna || !endereco.posicao) {
@@ -497,6 +500,9 @@ function editarEnderecoEst(id) {
   document.getElementById("end-est-posicao").value = end.posicao || "";
   document.getElementById("end-est-tipo-local").value = end.tipoLocal || "prateleira";
   document.getElementById("end-est-capacidade").value = end.capacidade || "";
+  document.getElementById("end-est-altura").value = end.altura || "";
+  document.getElementById("end-est-largura").value = end.largura || "";
+  document.getElementById("end-est-comprimento").value = end.comprimento || "";
   document.getElementById("end-est-descricao").value = end.descricao || "";
   document.getElementById("end-est-edit-id").value = id;
 
