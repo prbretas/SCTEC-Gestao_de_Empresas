@@ -115,6 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const modal = new bootstrap.Modal(modalEl);
 
   _preencherEmpresas();
+  _preencherTiposAgenda();
 
   const hoje = new Date();
   document.getElementById("filtro-mes").value = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}`;
@@ -181,6 +182,34 @@ document.addEventListener("DOMContentLoaded", () => {
     renderizarLista();
   });
 });
+
+function _preencherTiposAgenda() {
+  if (!window.ParamsController) return;
+  const params = ParamsController.obter("agenda");
+  const tipos = params.tipos || ["reuniao", "visita", "ligacao", "prazo", "outro"];
+
+  const select = document.getElementById("comp-tipo");
+  const filtroTipo = document.getElementById("filtro-tipo");
+  if (!select) return;
+
+  const icones = { reuniao: "🤝", visita: "🏢", ligacao: "📞", prazo: "⏰", outro: "📌" };
+
+  select.innerHTML = tipos.map((t) => {
+    const icon = icones[t] || "📌";
+    const label = t.charAt(0).toUpperCase() + t.slice(1);
+    return `<option value="${t}">${icon} ${label}</option>`;
+  }).join("");
+
+  // Atualiza filtro também
+  if (filtroTipo) {
+    filtroTipo.innerHTML = `<option value="">Todos os tipos</option>`;
+    tipos.forEach((t) => {
+      const icon = icones[t] || "📌";
+      const label = t.charAt(0).toUpperCase() + t.slice(1);
+      filtroTipo.innerHTML += `<option value="${t}">${icon} ${label}</option>`;
+    });
+  }
+}
 
 function _preencherEmpresas() {
   const select = document.getElementById("comp-empresa");

@@ -100,6 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const modalEl = document.getElementById("modal-transacao");
   const modal = new bootstrap.Modal(modalEl);
   _preencherEmpresas();
+  _preencherParamsFinanceiro();
 
   const hoje = new Date();
   document.getElementById("filtro-mes").value = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}`;
@@ -181,8 +182,9 @@ document.addEventListener("DOMContentLoaded", () => {
         // Tipo fiscal = NFs (venda)
         const elFiscal = document.getElementById("trans-tipo-fiscal");
         if (elFiscal) elFiscal.value = "nfs";
-        // Vencimento = +15 dias úteis
-        _calcularVencimento(15);
+        // Vencimento = dias úteis dos parâmetros
+        const diasVenc = window.ParamsController ? ParamsController.obter("financeiro").diasVencimento || 15 : 15;
+        _calcularVencimento(diasVenc);
         _calcularParcelas();
       }
     }
@@ -215,6 +217,32 @@ document.addEventListener("DOMContentLoaded", () => {
     renderizar();
   });
 });
+
+function _preencherParamsFinanceiro() {
+  if (!window.ParamsController) return;
+  const params = ParamsController.obter("financeiro");
+
+  // Categorias
+  const selCat = document.getElementById("trans-categoria");
+  if (selCat && params.categorias) {
+    selCat.innerHTML = params.categorias.map((c) => {
+      const label = c.charAt(0).toUpperCase() + c.slice(1).replace(/_/g, " ");
+      return `<option value="${c}">${label}</option>`;
+    }).join("");
+  }
+
+  // Formas de pagamento
+  const selForma = document.getElementById("trans-forma-pagamento");
+  if (selForma && params.formasPagamento) {
+    const icones = { boleto: "📋", pix: "⚡", cartao_credito: "💳", cartao_debito: "💳", transferencia: "🏦", dinheiro: "💵", cheque: "📄" };
+    selForma.innerHTML = `<option value="">— Selecione —</option>`;
+    params.formasPagamento.forEach((f) => {
+      const icon = icones[f] || "";
+      const label = f.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+      selForma.innerHTML += `<option value="${f}">${icon} ${label}</option>`;
+    });
+  }
+}
 
 function _preencherEmpresas() {
   const sel = document.getElementById("trans-empresa");
@@ -275,7 +303,7 @@ function _calcularParcelas() {
   const displayParcela = document.getElementById("trans-valor-parcela-display");
   if (!selectParcelas) return;
 
-  const VALOR_MIN_PARCELA = 50; // Padrão — futuro: vem do ParamsController
+  const VALOR_MIN_PARCELA = window.ParamsController ? ParamsController.obter("financeiro").valorMinParcela || 50 : 50;
   const formasParcelaveis = ["boleto", "cartao_credito", "cheque"];
 
   let maxParcelas = 1;
