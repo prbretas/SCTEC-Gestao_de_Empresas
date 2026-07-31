@@ -54,6 +54,11 @@ function gerarRelatorio() {
   const container = document.getElementById("relatorio-conteudo");
   if (!container) return;
 
+  // Módulos selecionados
+  const modulosSelecionados = new Set(
+    Array.from(document.querySelectorAll(".rel-modulo-check:checked")).map((cb) => cb.value)
+  );
+
   const fmt = (v) => Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   const periodoLabel = `${dataInicio ? new Date(dataInicio + "T12:00:00").toLocaleDateString("pt-BR") : "início"} a ${dataFim ? new Date(dataFim + "T12:00:00").toLocaleDateString("pt-BR") : "hoje"}`;
 
@@ -78,7 +83,6 @@ function gerarRelatorio() {
   // Propostas
   const propAceitas = propostas.filter((p) => p.status === "aceita");
   const propEnviadas = propostas.filter((p) => p.status === "enviada");
-  const propRecusadas = propostas.filter((p) => p.status === "recusada");
   const valorAceitas = propAceitas.reduce((s, p) => s + (p.total || 0), 0);
 
   // Agenda
@@ -86,140 +90,91 @@ function gerarRelatorio() {
   const agConcluidos = agenda.filter((c) => c.status === "concluido").length;
   const agCancelados = agenda.filter((c) => c.status === "cancelado").length;
 
-  container.innerHTML = `
+  let html = `
     <div class="text-center mb-4">
       <h4 class="fw-bold">Relatório Consolidado</h4>
       <p class="text-muted">Período: ${periodoLabel}</p>
-    </div>
+    </div>`;
 
-    <!-- FINANCEIRO -->
+  if (modulosSelecionados.has("financeiro")) {
+    html += `
     <div class="card shadow-sm border-0 mb-4">
       <div class="card-header bg-light"><h5 class="mb-0">💰 Resumo Financeiro</h5></div>
       <div class="card-body">
         <div class="row g-3 text-center">
-          <div class="col-md-3">
-            <div class="fw-bold text-muted small">Transações</div>
-            <h4>${financeiro.length}</h4>
-          </div>
-          <div class="col-md-3">
-            <div class="fw-bold text-muted small">Entradas</div>
-            <h4 class="text-success">${fmt(entradas)}</h4>
-          </div>
-          <div class="col-md-3">
-            <div class="fw-bold text-muted small">Saídas</div>
-            <h4 class="text-danger">${fmt(saidas)}</h4>
-          </div>
-          <div class="col-md-3">
-            <div class="fw-bold text-muted small">Saldo</div>
-            <h4 class="${saldo >= 0 ? "text-primary" : "text-danger"}">${fmt(saldo)}</h4>
-          </div>
+          <div class="col-md-3"><div class="fw-bold text-muted small">Transações</div><h4>${financeiro.length}</h4></div>
+          <div class="col-md-3"><div class="fw-bold text-muted small">Entradas</div><h4 class="text-success">${fmt(entradas)}</h4></div>
+          <div class="col-md-3"><div class="fw-bold text-muted small">Saídas</div><h4 class="text-danger">${fmt(saidas)}</h4></div>
+          <div class="col-md-3"><div class="fw-bold text-muted small">Saldo</div><h4 class="${saldo >= 0 ? "text-primary" : "text-danger"}">${fmt(saldo)}</h4></div>
         </div>
       </div>
-    </div>
+    </div>`;
+  }
 
-    <!-- CRM -->
+  if (modulosSelecionados.has("crm")) {
+    html += `
     <div class="card shadow-sm border-0 mb-4">
       <div class="card-header bg-light"><h5 class="mb-0">🎯 Pipeline CRM</h5></div>
       <div class="card-body">
         <div class="row g-3 text-center">
-          <div class="col-md-3">
-            <div class="fw-bold text-muted small">Em Aberto</div>
-            <h4>${crmAberto}</h4>
-          </div>
-          <div class="col-md-3">
-            <div class="fw-bold text-muted small">Fechados</div>
-            <h4 class="text-success">${crmFechado}</h4>
-          </div>
-          <div class="col-md-3">
-            <div class="fw-bold text-muted small">Perdidos</div>
-            <h4 class="text-danger">${crmPerdido}</h4>
-          </div>
-          <div class="col-md-3">
-            <div class="fw-bold text-muted small">Valor Pipeline</div>
-            <h4 class="text-primary">${fmt(pipelineValor)}</h4>
-          </div>
+          <div class="col-md-3"><div class="fw-bold text-muted small">Em Aberto</div><h4>${crmAberto}</h4></div>
+          <div class="col-md-3"><div class="fw-bold text-muted small">Fechados</div><h4 class="text-success">${crmFechado}</h4></div>
+          <div class="col-md-3"><div class="fw-bold text-muted small">Perdidos</div><h4 class="text-danger">${crmPerdido}</h4></div>
+          <div class="col-md-3"><div class="fw-bold text-muted small">Valor Pipeline</div><h4 class="text-primary">${fmt(pipelineValor)}</h4></div>
         </div>
-        ${crm.length > 0 ? `<div class="small text-muted mt-2">Taxa de conversão: ${crm.length > 0 ? Math.round((crmFechado / crm.length) * 100) : 0}%</div>` : ""}
+        ${crm.length > 0 ? `<div class="small text-muted mt-2">Taxa de conversão: ${Math.round((crmFechado / crm.length) * 100)}%</div>` : ""}
       </div>
-    </div>
+    </div>`;
+  }
 
-    <!-- PROPOSTAS -->
+  if (modulosSelecionados.has("propostas")) {
+    html += `
     <div class="card shadow-sm border-0 mb-4">
       <div class="card-header bg-light"><h5 class="mb-0">📄 Propostas e Orçamentos</h5></div>
       <div class="card-body">
         <div class="row g-3 text-center">
-          <div class="col-md-3">
-            <div class="fw-bold text-muted small">Total</div>
-            <h4>${propostas.length}</h4>
-          </div>
-          <div class="col-md-3">
-            <div class="fw-bold text-muted small">Enviadas</div>
-            <h4 class="text-primary">${propEnviadas.length}</h4>
-          </div>
-          <div class="col-md-3">
-            <div class="fw-bold text-muted small">Aceitas</div>
-            <h4 class="text-success">${propAceitas.length}</h4>
-          </div>
-          <div class="col-md-3">
-            <div class="fw-bold text-muted small">Valor Aceitas</div>
-            <h4 class="text-success">${fmt(valorAceitas)}</h4>
-          </div>
+          <div class="col-md-3"><div class="fw-bold text-muted small">Total</div><h4>${propostas.length}</h4></div>
+          <div class="col-md-3"><div class="fw-bold text-muted small">Enviadas</div><h4 class="text-primary">${propEnviadas.length}</h4></div>
+          <div class="col-md-3"><div class="fw-bold text-muted small">Aceitas</div><h4 class="text-success">${propAceitas.length}</h4></div>
+          <div class="col-md-3"><div class="fw-bold text-muted small">Valor Aceitas</div><h4 class="text-success">${fmt(valorAceitas)}</h4></div>
         </div>
-        ${propRecusadas.length > 0 ? `<div class="small text-muted mt-2">Recusadas: ${propRecusadas.length}</div>` : ""}
       </div>
-    </div>
+    </div>`;
+  }
 
-    <!-- AGENDA -->
+  if (modulosSelecionados.has("agenda")) {
+    html += `
     <div class="card shadow-sm border-0 mb-4">
       <div class="card-header bg-light"><h5 class="mb-0">📅 Compromissos</h5></div>
       <div class="card-body">
         <div class="row g-3 text-center">
-          <div class="col-md-3">
-            <div class="fw-bold text-muted small">Total</div>
-            <h4>${agenda.length}</h4>
-          </div>
-          <div class="col-md-3">
-            <div class="fw-bold text-muted small">Pendentes</div>
-            <h4 class="text-warning">${agPendentes}</h4>
-          </div>
-          <div class="col-md-3">
-            <div class="fw-bold text-muted small">Concluídos</div>
-            <h4 class="text-success">${agConcluidos}</h4>
-          </div>
-          <div class="col-md-3">
-            <div class="fw-bold text-muted small">Cancelados</div>
-            <h4 class="text-danger">${agCancelados}</h4>
-          </div>
+          <div class="col-md-3"><div class="fw-bold text-muted small">Total</div><h4>${agenda.length}</h4></div>
+          <div class="col-md-3"><div class="fw-bold text-muted small">Pendentes</div><h4 class="text-warning">${agPendentes}</h4></div>
+          <div class="col-md-3"><div class="fw-bold text-muted small">Concluídos</div><h4 class="text-success">${agConcluidos}</h4></div>
+          <div class="col-md-3"><div class="fw-bold text-muted small">Cancelados</div><h4 class="text-danger">${agCancelados}</h4></div>
         </div>
         ${agenda.length > 0 ? `<div class="small text-muted mt-2">Taxa de conclusão: ${Math.round((agConcluidos / agenda.length) * 100)}%</div>` : ""}
       </div>
-    </div>
+    </div>`;
+  }
 
-    <!-- CADASTROS -->
+  if (modulosSelecionados.has("cadastros")) {
+    html += `
     <div class="card shadow-sm border-0 mb-4">
       <div class="card-header bg-light"><h5 class="mb-0">📋 Base de Cadastros</h5></div>
       <div class="card-body">
         <div class="row g-3 text-center">
-          <div class="col-md-4">
-            <div class="fw-bold text-muted small">Total Empresas</div>
-            <h4>${empresas.length}</h4>
-          </div>
-          <div class="col-md-4">
-            <div class="fw-bold text-muted small">Ativos</div>
-            <h4 class="text-success">${empresas.filter((e) => e.status === "Ativo").length}</h4>
-          </div>
-          <div class="col-md-4">
-            <div class="fw-bold text-muted small">Inativos</div>
-            <h4 class="text-danger">${empresas.filter((e) => e.status !== "Ativo").length}</h4>
-          </div>
+          <div class="col-md-4"><div class="fw-bold text-muted small">Total Empresas</div><h4>${empresas.length}</h4></div>
+          <div class="col-md-4"><div class="fw-bold text-muted small">Ativos</div><h4 class="text-success">${empresas.filter((e) => e.status === "Ativo").length}</h4></div>
+          <div class="col-md-4"><div class="fw-bold text-muted small">Inativos</div><h4 class="text-danger">${empresas.filter((e) => e.status !== "Ativo").length}</h4></div>
         </div>
       </div>
-    </div>
+    </div>`;
+  }
 
-    <div class="text-center text-muted small mt-4">
-      Gerado em ${new Date().toLocaleString("pt-BR")} — SCTEC Gestão Empresarial
-    </div>
-  `;
+  html += `<div class="text-center text-muted small mt-4">Gerado em ${new Date().toLocaleString("pt-BR")} — SCTEC Gestão Empresarial</div>`;
+
+  container.innerHTML = html;
 }
 
 function exportarCsvRelatorio() {

@@ -110,6 +110,27 @@ document.addEventListener("DOMContentLoaded", () => {
   _preencherEmpresas();
   renderizarLista();
 
+  // Filtros e toggle de visualização (#89)
+  document.getElementById("btn-filtrar-prop")?.addEventListener("click", renderizarLista);
+  document.getElementById("btn-limpar-filtro-prop")?.addEventListener("click", () => {
+    document.getElementById("prop-filtro-inicio").value = "";
+    document.getElementById("prop-filtro-fim").value = "";
+    document.getElementById("prop-filtro-status").value = "";
+    renderizarLista();
+  });
+  document.getElementById("btn-view-cards")?.addEventListener("click", () => {
+    document.getElementById("btn-view-cards").classList.add("active");
+    document.getElementById("btn-view-linhas").classList.remove("active");
+    window._propViewMode = "cards";
+    renderizarLista();
+  });
+  document.getElementById("btn-view-linhas")?.addEventListener("click", () => {
+    document.getElementById("btn-view-linhas").classList.add("active");
+    document.getElementById("btn-view-cards").classList.remove("active");
+    window._propViewMode = "linhas";
+    renderizarLista();
+  });
+
   document.getElementById("btn-nova-proposta").addEventListener("click", () => {
     _resetarForm();
     document.getElementById("titulo-modal-proposta").textContent = "📄 Nova Proposta";
@@ -281,17 +302,53 @@ function renderizarLista() {
   const vazio = document.getElementById("propostas-vazio");
   const empresas = window.EmpreendimentoStorage ? EmpreendimentoStorage.buscarTodos() : [];
   const todasBruto = PropostasStorage.buscarTodos();
-  const todas = window.RolesController
+  const todasVisiveis = window.RolesController
     ? RolesController.filtrarPorVisibilidade(todasBruto)
     : todasBruto;
+
+  // Aplica filtros
+  const dataIni = document.getElementById("prop-filtro-inicio")?.value || "";
+  const dataFim = document.getElementById("prop-filtro-fim")?.value || "";
+  const statusFiltro = document.getElementById("prop-filtro-status")?.value || "";
+
+  let todas = todasVisiveis;
+  if (dataIni || dataFim) {
+    todas = todas.filter((p) => {
+      const d = (p.criadoEm || "").slice(0, 10);
+      if (!d) return true;
+      if (dataIni && d < dataIni) return false;
+      if (dataFim && d > dataFim) return false;
+      return true;
+    });
+  }
+  if (statusFiltro) todas = todas.filter((p) => p.status === statusFiltro);
 
   // Atualiza KPIs
   _atualizarKpisPropostas(todas);
 
-  const sorted = todas.sort((a, b) => b.criadoEm?.localeCompare(a.criadoEm));
+  const sorted = todas.sort((a, b) => (b.criadoEm || "").localeCompare(a.criadoEm || ""));
 
   if (sorted.length === 0) { container.innerHTML = ""; vazio?.classList.remove("d-none"); return; }
   vazio?.classList.add("d-none");
+
+  // Modo linhas
+  if (window._propViewMode === "linhas") {
+    container.innerHTML = `<div class="col-12"><div class="table-responsive"><table class="table table-hover table-sm align-middle">
+      <thead class="table-light"><tr><th>#</th><th>Título</th><th>Empresa</th><th>Status</th><th>Valor</th><th>Criada</th></tr></thead>
+      <tbody>${sorted.map((p) => {
+        const emp = empresas.find((e) => String(e.id) === String(p.empresaId));
+        const dataCriacao = p.criadoEm ? new Date(p.criadoEm).toLocaleDateString("pt-BR") : "—";
+        return `<tr style="cursor:pointer;" onclick="visualizarProposta('${p.id}')">
+          <td class="small text-muted">${p.numero || "—"}</td>
+          <td class="fw-semibold">${p.titulo}</td>
+          <td class="small">${emp ? emp.nome : "—"}</td>
+          <td><span class="badge ${p.status === "aceita" ? "bg-success" : p.status === "enviada" ? "bg-primary" : p.status === "recusada" ? "bg-danger" : "bg-secondary"}">${p.status}</span></td>
+          <td class="fw-bold text-success">${_fmt(p.total || 0)}</td>
+          <td class="small">${dataCriacao}</td>
+        </tr>`;
+      }).join("")}</tbody></table></div></div>`;
+    return;
+  }
 
   const statusConfig = {
     rascunho: { badge: "bg-secondary", icon: "📝" },

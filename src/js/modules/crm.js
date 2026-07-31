@@ -155,6 +155,15 @@ document.addEventListener("DOMContentLoaded", () => {
     _crmSetModo("edicao");
   });
 
+  // Filtro de período CRM
+  document.getElementById("btn-filtrar-crm")?.addEventListener("click", renderizarKanban);
+  document.getElementById("btn-limpar-filtro-crm")?.addEventListener("click", () => {
+    document.getElementById("crm-filtro-inicio").value = "";
+    document.getElementById("crm-filtro-fim").value = "";
+    renderizarKanban();
+  });
+  document.getElementById("btn-arquivar-crm")?.addEventListener("click", _arquivarFinalizadas);
+
   modalEl.addEventListener("hide.bs.modal", (e) => {
     const form = document.getElementById("form-oportunidade");
     if (form.dataset.modoVisualizacao !== "true" && form.dataset.editId) {
@@ -246,12 +255,28 @@ function _validarEtapaComProposta(novaEtapa, oportunidadeId) {
 
 function renderizarKanban() {
   const todasBruto = CrmStorage.buscarTodos();
-  const todas = window.RolesController
+  const todasVisiveis = window.RolesController
     ? RolesController.filtrarPorVisibilidade(todasBruto)
     : todasBruto;
+
+  // Filtra por período
+  const dataIni = document.getElementById("crm-filtro-inicio")?.value || "";
+  const dataFim = document.getElementById("crm-filtro-fim")?.value || "";
+  let todas = todasVisiveis.filter((o) => !o.arquivado);
+  if (dataIni || dataFim) {
+    todas = todas.filter((o) => {
+      const d = (o.criadoEm || "").slice(0, 10);
+      if (!d) return true;
+      if (dataIni && d < dataIni) return false;
+      if (dataFim && d > dataFim) return false;
+      return true;
+    });
+  }
+
   const empresas = window.EmpreendimentoStorage ? EmpreendimentoStorage.buscarTodos() : [];
 
   _atualizarKpisCrm(todas);
+  _renderizarArquivados(todasVisiveis.filter((o) => o.arquivado), empresas);
 
   ETAPAS.forEach((etapa) => {
     const col = document.getElementById(etapa.col);
@@ -295,6 +320,54 @@ function renderizarKanban() {
         </div>`;
     }).join("");
   });
+}
+
+function _arquivarFinalizadas() {
+  const todas = CrmStorage.buscarTodos();
+  let arquivadas = 0;
+  todas.forEach((o) => {
+    if (["fechado", "perdido"].includes(o.etapa) && !o.arquivado) {
+      o.arquivado = true;
+      arquivadas++;
+    }
+  });
+  if (arquivadas === 0) return alert("Nenhuma oportunidade finalizada para arquivar.");
+  CrmStorage.salvarTodos(todas);
+  alert(`📦 ${arquivadas} oportunidade(s) arquivada(s).`);
+  renderizarKanban();
+}
+
+function _desarquivar(id) {
+  const todas = CrmStorage.buscarTodos();
+  const idx = todas.findIndex((o) => o.id === id);
+  if (idx !== -1) {
+    todas[idx].arquivado = false;
+    CrmStorage.salvarTodos(todas);
+    renderizarKanban();
+  }
+}
+
+function _renderizarArquivados(arquivados, empresas) {
+  const section = document.getElementById("crm-arquivados-section");
+  const tbody = document.getElementById("crm-arquivados-lista");
+  if (!section || !tbody) return;
+  const fmt = (v) => Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  if (arquivados.length === 0) {
+    section.classList.add("d-none");
+    return;
+  }
+  section.classList.remove("d-none");
+  tbody.innerHTML = arquivados.map((o) => {
+    const emp = empresas.find((e) => String(e.id) === String(o.empresaId));
+    return `<tr>
+      <td class="fw-semibold">${o.titulo}</td>
+      <td class="small">${emp ? emp.nome : "—"}</td>
+      <td><span class="badge ${o.etapa === "fechado" ? "bg-success" : "bg-danger"}">${o.etapa}</span></td>
+      <td class="small">${fmt(o.valor)}</td>
+      <td><button class="btn btn-xs btn-outline-primary" onclick="_desarquivar('${o.id}')">↩️ Desarquivar</button></td>
+    </tr>`;
+  }).join("");
 }
 
 function _atualizarKpisCrm(todas) {

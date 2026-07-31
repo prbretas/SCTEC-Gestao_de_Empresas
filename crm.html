@@ -37,6 +37,23 @@
         <button class="btn btn-success" id="btn-nova-oportunidade">+ Nova Oportunidade</button>
       </div>
 
+      <!-- FILTRO DE PERÍODO + ARQUIVAR -->
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-3">
+          <div class="row g-2 align-items-center">
+            <div class="col-auto"><label class="small fw-bold mb-0">📅 Período:</label></div>
+            <div class="col-auto"><input type="date" id="crm-filtro-inicio" class="form-control form-control-sm" /></div>
+            <div class="col-auto"><span class="text-muted">até</span></div>
+            <div class="col-auto"><input type="date" id="crm-filtro-fim" class="form-control form-control-sm" /></div>
+            <div class="col-auto"><button class="btn btn-sm btn-primary" id="btn-filtrar-crm">Filtrar</button></div>
+            <div class="col-auto"><button class="btn btn-sm btn-outline-secondary" id="btn-limpar-filtro-crm">Limpar</button></div>
+            <div class="col-auto ms-auto">
+              <button class="btn btn-sm btn-outline-warning" id="btn-arquivar-crm">📦 Arquivar Finalizadas</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- MINI-DASHBOARD CRM -->
       <div class="row g-3 mb-4" id="crm-mini-dashboard">
         <div class="col-md-2">
@@ -114,6 +131,18 @@
             <div class="kanban-col-title" style="color:#dc3545;">❌ Perdido</div>
             <div id="col-perdido"></div>
           </div>
+        </div>
+      </div>
+      <!-- SEÇÃO ARQUIVADOS -->
+      <div class="mt-5 d-none" id="crm-arquivados-section">
+        <h5 class="text-muted mb-3">📦 Oportunidades Arquivadas</h5>
+        <div class="table-responsive">
+          <table class="table table-sm table-hover">
+            <thead class="table-light">
+              <tr><th>Título</th><th>Empresa</th><th>Etapa</th><th>Valor</th><th>Ações</th></tr>
+            </thead>
+            <tbody id="crm-arquivados-lista"></tbody>
+          </table>
         </div>
       </div>
     </main>
