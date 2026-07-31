@@ -85,7 +85,7 @@ function _propSetModo(modo) {
     btnEditar?.classList.remove("d-none");
     btnAddItem?.classList.add("d-none");
     form.dataset.modoVisualizacao = "true";
-    document.getElementById("titulo-modal-proposta").textContent = "👁️ Visualizar Proposta";
+    document.getElementById("titulo-modal-proposta").textContent = "👁️ Visualizar Pedido";
   } else {
     campos.forEach((c) => c.removeAttribute("disabled"));
     form.querySelectorAll(".btn-outline-danger").forEach((b) => b.removeAttribute("disabled"));
@@ -93,7 +93,7 @@ function _propSetModo(modo) {
     btnEditar?.classList.add("d-none");
     btnAddItem?.classList.remove("d-none");
     form.dataset.modoVisualizacao = "";
-    document.getElementById("titulo-modal-proposta").textContent = "✏️ Editar Proposta";
+    document.getElementById("titulo-modal-proposta").textContent = "✏️ Editar Pedido";
   }
 }
 
@@ -133,7 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("btn-nova-proposta").addEventListener("click", () => {
     _resetarForm();
-    document.getElementById("titulo-modal-proposta").textContent = "📄 Nova Proposta";
+    document.getElementById("titulo-modal-proposta").textContent = "📄 Novo Pedido";
     const total = PropostasStorage.buscarTodos().length + 1;
     document.getElementById("prop-numero").value = `${new Date().getFullYear()}-${String(total).padStart(3, "0")}`;
     _propSetModo("edicao");
@@ -433,7 +433,7 @@ function imprimirProposta(id) {
 }
 
 function excluirProposta(id) {
-  if (!confirm("Remover esta proposta?")) return;
+  if (!confirm("Remover este pedido?")) return;
   PropostasStorage.excluir(id);
   renderizarLista();
 }

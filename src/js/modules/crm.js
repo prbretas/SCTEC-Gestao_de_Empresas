@@ -99,13 +99,13 @@ function _crmSetModo(modo) {
     btnSalvar?.classList.add("d-none");
     btnEditar?.classList.remove("d-none");
     form.dataset.modoVisualizacao = "true";
-    document.getElementById("titulo-modal-oportunidade").textContent = "👁️ Visualizar Oportunidade";
+    document.getElementById("titulo-modal-oportunidade").textContent = "👁️ Visualizar Negócio";
   } else {
     campos.forEach((c) => c.removeAttribute("disabled"));
     btnSalvar?.classList.remove("d-none");
     btnEditar?.classList.add("d-none");
     form.dataset.modoVisualizacao = "";
-    document.getElementById("titulo-modal-oportunidade").textContent = "✏️ Editar Oportunidade";
+    document.getElementById("titulo-modal-oportunidade").textContent = "✏️ Editar Negócio";
   }
 }
 
@@ -128,7 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("btn-nova-oportunidade").addEventListener("click", () => {
     _resetarForm();
-    document.getElementById("titulo-modal-oportunidade").textContent = "🎯 Nova Oportunidade";
+    document.getElementById("titulo-modal-oportunidade").textContent = "🎯 Novo Negócio";
     document.getElementById("op-previsao").value = new Date().toISOString().split("T")[0];
     _preencherPropostas("", null);
     _crmSetModo("edicao");
@@ -249,7 +249,7 @@ function _validarEtapaComProposta(novaEtapa, oportunidadeId) {
   if (!["negociacao", "fechado"].includes(novaEtapa)) return true;
   const op = CrmStorage.buscarTodos().find((o) => o.id === oportunidadeId);
   if (op && op.propostaId) return true;
-  alert(`⚠️ Para mover para "${novaEtapa === "negociacao" ? "Negociação" : "Fechado"}", é obrigatório vincular uma proposta à oportunidade.\n\nAbra a oportunidade e selecione uma proposta no campo "Proposta Vinculada".`);
+  alert(`⚠️ Para mover para "${novaEtapa === "negociacao" ? "Negociação" : "Fechado"}", é obrigatório vincular um pedido de venda ao negócio.\n\nAbra o negócio e selecione uma proposta no campo "Proposta Vinculada".`);
   return false;
 }
 
@@ -285,7 +285,7 @@ function renderizarKanban() {
     const oportunidades = todas.filter((o) => o.etapa === etapa.id);
 
     if (oportunidades.length === 0) {
-      col.innerHTML = `<div class="text-muted small text-center py-3">Nenhuma oportunidade</div>`;
+      col.innerHTML = `<div class="text-muted small text-center py-3">Nenhum negócio</div>`;
       return;
     }
 
@@ -331,9 +331,9 @@ function _arquivarFinalizadas() {
       arquivadas++;
     }
   });
-  if (arquivadas === 0) return alert("Nenhuma oportunidade finalizada para arquivar.");
+  if (arquivadas === 0) return alert("Nenhum negócio finalizada para arquivar.");
   CrmStorage.salvarTodos(todas);
-  alert(`📦 ${arquivadas} oportunidade(s) arquivada(s).`);
+  alert(`📦 ${arquivadas} negócio(s) arquivado(s).`);
   renderizarKanban();
 }
 
@@ -424,7 +424,7 @@ function moverEtapa(id, novaEtapa) {
     if (op) {
       const resultado = IntegrationsController.onCrmFechado(op);
       if (!resultado.aprovado) {
-        alert("📋 Oportunidade fechada! Uma pendência de aprovação foi criada para geração da entrada financeira.");
+        alert("📋 Negócio fechado! Uma pendência de aprovação foi criada para geração da entrada financeira.");
       }
     }
   }
@@ -433,7 +433,7 @@ function moverEtapa(id, novaEtapa) {
 }
 
 function excluirOportunidade(id) {
-  if (!confirm("Remover esta oportunidade?")) return;
+  if (!confirm("Remover este negócio?")) return;
   CrmStorage.excluir(id);
   renderizarKanban();
 }
