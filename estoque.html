@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestão de Estoque — SCTEC</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="./src/css/styles.css" />
+    <script>
+      (function () {
+        try {
+          var cfg = JSON.parse(localStorage.getItem("SCTEC_CONFIG") || "{}");
+          var cores = cfg.cores || {};
+          var r = document.documentElement;
+          if (cores.header) r.style.setProperty("--sc-header", cores.header);
+          if (cores.btn) r.style.setProperty("--sc-btn", cores.btn);
+          if (cores.destaque) r.style.setProperty("--sc-header2", cores.destaque);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body class="bg-light">
+    <div id="app-navbar"></div>
+    <main class="container pb-5">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 id="rotinaTitle">🏗️ Gestão de Estoque</h1>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-primary" id="btn-gerenciar-enderecos">📍 Endereços</button>
+          <button class="btn btn-success" id="btn-nova-movimentacao">+ Nova Movimentação</button>
+        </div>
+      </div>
+
+      <!-- CARDS DE RESUMO -->
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm text-center py-2">
+            <div class="small text-muted">Total Posições</div>
+            <h5 class="mb-0 fw-bold" id="resumo-total-posicoes">0</h5>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm text-center py-2">
+            <div class="small text-muted">Endereços Ativos</div>
+            <h5 class="mb-0 fw-bold text-primary" id="resumo-enderecos-ativos">0</h5>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm text-center py-2">
+            <div class="small text-muted">⚠️ Abaixo do Mínimo</div>
+            <h5 class="mb-0 fw-bold text-warning" id="resumo-abaixo-minimo">0</h5>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card border-0 shadow-sm text-center py-2">
+            <div class="small text-muted">📊 Movimentações (30d)</div>
+            <h5 class="mb-0 fw-bold text-info" id="resumo-movimentacoes-30d">0</h5>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILTROS -->
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-3">
+          <div class="row g-2">
+            <div class="col-md-4">
+              <input type="text" id="filtro-busca-estoque" class="form-control" placeholder="Buscar produto por nome ou código..." />
+            </div>
+            <div class="col-md-3">
+              <select id="filtro-endereco-estoque" class="form-select">
+                <option value="">Todos os Endereços</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <select id="filtro-status-estoque" class="form-select">
+                <option value="">Todos</option>
+                <option value="normal">✅ Normal</option>
+                <option value="baixo">⚠️ Abaixo do Mínimo</option>
+                <option value="zerado">❌ Sem Estoque</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <button class="btn btn-outline-secondary w-100" id="btn-limpar-filtro-estoque">🔄</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABELA DE POSIÇÕES DE ESTOQUE -->
+      <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="thead-sctec">
+              <tr>
+                <th>Produto</th>
+                <th>Endereço</th>
+                <th class="text-center">Quantidade</th>
+                <th class="text-center">Mín.</th>
+                <th class="text-center">Status</th>
+                <th class="text-center">Última Mov.</th>
+                <th class="text-center">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="estoque-lista"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="estoque-vazio" class="text-center py-5 d-none">
+        <div style="font-size:3rem;">🏗️</div>
+        <h5 class="mt-3 text-muted">Nenhuma posição de estoque registrada</h5>
+        <p class="text-muted small">Cadastre produtos e faça movimentações para popular o estoque.</p>
+      </div>
+
+      <!-- HISTÓRICO DE MOVIMENTAÇÕES -->
+      <div class="card shadow-sm border-0 mt-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <h6 class="mb-0 fw-bold">📜 Últimas Movimentações</h6>
+          <button class="btn btn-sm btn-outline-secondary" id="btn-ver-todas-mov">Ver todas</button>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Data</th>
+                <th>Produto</th>
+                <th>Tipo</th>
+                <th>Qtd</th>
+                <th>Endereço</th>
+                <th>Motivo</th>
+                <th>Usuário</th>
+              </tr>
+            </thead>
+            <tbody id="movimentacoes-lista"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <!-- MODAL: Nova Movimentação -->
+    <div class="modal fade" id="modal-movimentacao-est" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+          <div class="modal-header text-white">
+            <h5 class="modal-title">📊 Nova Movimentação de Estoque</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body p-4">
+            <form id="form-movimentacao-est">
+              <div class="mb-3">
+                <label class="form-label fw-bold">Produto *</label>
+                <div class="input-group">
+                  <input type="text" id="mov-est-produto-nome" class="form-control" readonly placeholder="Clique para selecionar..." />
+                  <button type="button" class="btn btn-outline-primary" id="btn-selecionar-produto-mov">📦 Selecionar</button>
+                </div>
+                <input type="hidden" id="mov-est-produto-id" />
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Tipo *</label>
+                <div class="d-flex gap-3">
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="mov-est-tipo" id="mov-est-entrada" value="entrada" checked />
+                    <label class="form-check-label text-success fw-bold" for="mov-est-entrada">⬆️ Entrada</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="mov-est-tipo" id="mov-est-saida" value="saida" />
+                    <label class="form-check-label text-danger fw-bold" for="mov-est-saida">⬇️ Saída</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="mov-est-tipo" id="mov-est-transferencia" value="transferencia" />
+                    <label class="form-check-label text-primary fw-bold" for="mov-est-transferencia">🔄 Transferência</label>
+                  </div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Endereço (origem) *</label>
+                <select id="mov-est-endereco" class="form-select"></select>
+              </div>
+              <div class="mb-3 d-none" id="mov-est-destino-container">
+                <label class="form-label fw-bold">Endereço (destino) *</label>
+                <select id="mov-est-endereco-destino" class="form-select"></select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Quantidade *</label>
+                <input type="number" id="mov-est-quantidade" class="form-control" min="1" value="1" required />
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-bold">Motivo</label>
+                <input type="text" id="mov-est-motivo" class="form-control" placeholder="Ex: Compra, Venda, Ajuste de inventário..." />
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" form="form-movimentacao-est" class="btn btn-success">✅ Confirmar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: Gerenciar Endereços -->
+    <div class="modal fade" id="modal-enderecos-est" tabindex="-1">
+      <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
+          <div class="modal-header text-white">
+            <h5 class="modal-title">📍 Endereços de Armazenamento</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body p-4">
+            <form id="form-endereco-est" class="mb-4">
+              <h6 class="fw-bold mb-3">➕ Novo Endereço</h6>
+              <div class="row g-2 mb-2">
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold">Instalação / Empresa *</label>
+                  <input type="text" id="end-est-instalacao" class="form-control form-control-sm" required placeholder="Ex: Matriz SP" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold">Galpão / Prédio</label>
+                  <input type="text" id="end-est-galpao" class="form-control form-control-sm" placeholder="Ex: Galpão A" />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label small fw-bold">Andar</label>
+                  <input type="text" id="end-est-andar" class="form-control form-control-sm" placeholder="Ex: Térreo" />
+                </div>
+              </div>
+              <div class="row g-2 mb-2">
+                <div class="col-md-3">
+                  <label class="form-label small fw-bold">Corredor</label>
+                  <input type="text" id="end-est-corredor" class="form-control form-control-sm" placeholder="Ex: A1" />
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label small fw-bold">Estante *</label>
+                  <input type="text" id="end-est-estante" class="form-control form-control-sm" required placeholder="Ex: E01" />
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label small fw-bold">Coluna *</label>
+                  <input type="text" id="end-est-coluna" class="form-control form-control-sm" required placeholder="Ex: C3" />
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label small fw-bold">Posição *</label>
+                  <input type="text" id="end-est-posicao" class="form-control form-control-sm" required placeholder="Ex: P2" />
+                </div>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small fw-bold">Observação</label>
+                <input type="text" id="end-est-descricao" class="form-control form-control-sm" placeholder="Descrição livre..." />
+              </div>
+              <button type="submit" class="btn btn-sm btn-success">Cadastrar Endereço</button>
+            </form>
+            <hr />
+            <h6 class="fw-bold mb-2">Endereços Cadastrados</h6>
+            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+              <table class="table table-sm table-hover align-middle mb-0">
+                <thead class="table-light sticky-top">
+                  <tr>
+                    <th>Instalação</th>
+                    <th>Galpão</th>
+                    <th>Corredor</th>
+                    <th>Estante</th>
+                    <th>Coluna</th>
+                    <th>Posição</th>
+                    <th class="text-center">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="enderecos-lista-est"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="./src/js/core/config.js"></script>
+    <script src="./src/js/core/auth.js"></script>
+    <script src="./src/js/core/storage.js"></script>
+    <script src="./src/js/core/roles.js"></script>
+    <script src="./src/js/core/modules.js"></script>
+    <script src="./src/js/core/theme.js"></script>
+    <script src="./src/js/core/params.js"></script>
+    <script src="./src/js/core/navbar.js"></script>
+    <script src="./src/js/core/estoque.js"></script>
+    <script src="./src/js/modules/produtos.js"></script>
+    <script src="./src/js/shared/productPicker.js"></script>
+    <script src="./src/js/pages/estoque.js"></script>
+    <script src="./src/js/core/inactivity.js"></script>
+  </body>
+</html>

@@ -37,6 +37,25 @@ const PARAMS_PADRAO = {
     periodoPadrao: "30d",
     separadorCsv: ";",
   },
+  produtos: {
+    permitirEstoqueNegativo: false,
+    codigoObrigatorio: false,
+    descricaoObrigatoria: false,
+    categorias: ["materiais", "equipamentos", "servicos", "insumos", "outros"],
+    unidadesPadrao: ["un", "kg", "m", "m2", "l", "cx", "pc", "hr"],
+  },
+  estoque: {
+    estoqueMinimoPadrao: 5,
+    exigirMotivo: true,
+    permitirTransferencia: true,
+    gerarFinanceiro: true,
+    alertarEstoqueBaixo: true,
+    limiteAlertasNavbar: 10,
+  },
+  entrada: {
+    diasVencimento: 30,
+    confirmarRecebimentoAutomatico: false,
+  },
 };
 
 const ParamsController = {
