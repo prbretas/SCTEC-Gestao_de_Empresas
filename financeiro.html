@@ -221,16 +221,23 @@
                 </div>
               </div>
               <div class="row g-3 mb-3">
-                <div class="col-md-6">
-                  <label class="form-label fw-bold">Proposta Vinculada</label>
+                <!-- Vinculo dinâmico: muda rótulo/dados conforme Natureza -->
+                <div class="col-md-6" id="vinculo-pedido-section">
+                  <label class="form-label fw-bold" id="lbl-vinculo-pedido">📄 Pedido de Venda Vinculado</label>
                   <select id="trans-proposta-vinculada" class="form-select">
-                    <option value="">— Nenhuma —</option>
+                    <option value="">— Nenhum —</option>
+                  </select>
+                </div>
+                <div class="col-md-6" id="vinculo-entrada-section" style="display:none;">
+                  <label class="form-label fw-bold">📥 Doc. de Entrada Vinculado</label>
+                  <select id="trans-entrada-vinculada" class="form-select">
+                    <option value="">— Nenhum —</option>
                   </select>
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label fw-bold">Oportunidade Vinculada</label>
+                  <label class="form-label fw-bold">🎯 Negócio (CRM) Vinculado</label>
                   <select id="trans-oportunidade-vinculada" class="form-select">
-                    <option value="">— Nenhuma —</option>
+                    <option value="">— Nenhum —</option>
                   </select>
                 </div>
               </div>

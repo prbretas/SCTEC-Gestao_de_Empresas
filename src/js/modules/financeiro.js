@@ -122,6 +122,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (window.AttachmentsController) AttachmentsController.carregar("trans-anexos-container", [], false);
     const itensSection = document.getElementById("trans-itens-section");
     if (itensSection) itensSection.classList.add("d-none");
+    _atualizarHintNatureza(); // Aplica seções de vínculo conforme natureza padrão
     _finSetModo("edicao");
     modal.show();
   });
@@ -174,6 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Atualiza selects de proposta/oportunidade ao mudar empresa
   document.getElementById("trans-empresa")?.addEventListener("change", (e) => {
     _preencherPropostasFinanceiro(e.target.value, null);
+    _preencherEntradasFinanceiro(e.target.value, null);
     _preencherOportunidadesFinanceiro(e.target.value, null);
   });
 
@@ -315,11 +317,51 @@ function _preencherParamsFinanceiro() {
 function _atualizarHintNatureza() {
   const selNatureza = document.getElementById("trans-natureza");
   const hint = document.getElementById("trans-natureza-hint");
-  if (!selNatureza || !hint) return;
+  const sectionPedido = document.getElementById("vinculo-pedido-section");
+  const sectionEntrada = document.getElementById("vinculo-entrada-section");
+  if (!selNatureza) return;
   const val = selNatureza.value;
-  if (val === "entrada") hint.textContent = "Vincula a: Pedido de Venda";
-  else if (val === "saida") hint.textContent = "Vincula a: Documento de Entrada";
-  else hint.textContent = "Vincula a: Pedido de Venda ou Doc. Entrada";
+
+  if (hint) {
+    if (val === "entrada") hint.textContent = "Vincula a: Documento de Entrada";
+    else if (val === "saida") hint.textContent = "Vincula a: Pedido de Venda";
+    else hint.textContent = "Vincula a: Pedido de Venda ou Doc. Entrada";
+  }
+
+  // Mostra/oculta seções de vínculo conforme natureza
+  if (sectionPedido && sectionEntrada) {
+    if (val === "entrada") {
+      sectionPedido.style.display = "none";
+      sectionEntrada.style.display = "";
+    } else if (val === "saida") {
+      sectionPedido.style.display = "";
+      sectionEntrada.style.display = "none";
+    } else {
+      sectionPedido.style.display = "";
+      sectionEntrada.style.display = "";
+    }
+  }
+
+  // Repopula selects
+  const empresaId = document.getElementById("trans-empresa")?.value || "";
+  if (val !== "entrada") _preencherPropostasFinanceiro(empresaId, null);
+  if (val !== "saida") _preencherEntradasFinanceiro(empresaId, null);
+}
+
+function _preencherEntradasFinanceiro(empresaId, entradaIdAtual) {
+  const sel = document.getElementById("trans-entrada-vinculada");
+  if (!sel || !window.EntradaStorage) return;
+  sel.innerHTML = `<option value="">— Nenhum —</option>`;
+  if (!empresaId) return;
+  EntradaStorage.buscarTodos()
+    .filter((d) => d.fornecedorId === empresaId)
+    .forEach((d) => {
+      const opt = document.createElement("option");
+      opt.value = d.id;
+      opt.textContent = `${d.numero || "—"} | ${d.data || ""} (${_fmt(d.total || 0)})`;
+      if (d.id === entradaIdAtual) opt.selected = true;
+      sel.appendChild(opt);
+    });
 }
 
 function _preencherEmpresas() {
@@ -358,6 +400,7 @@ function _coletar() {
     categoria: document.getElementById("trans-categoria").value,
     empresaId: document.getElementById("trans-empresa").value,
     propostaId: document.getElementById("trans-proposta-vinculada")?.value || null,
+    entradaId: document.getElementById("trans-entrada-vinculada")?.value || null,
     oportunidadeId: document.getElementById("trans-oportunidade-vinculada")?.value || null,
     obs: document.getElementById("trans-obs").value.trim(),
   };
@@ -554,6 +597,7 @@ function visualizarTransacao(id) {
 
   // Vínculos
   _preencherPropostasFinanceiro(t.empresaId, t.propostaId);
+  _preencherEntradasFinanceiro(t.empresaId, t.entradaId);
   _preencherOportunidadesFinanceiro(t.empresaId, t.oportunidadeId);
 
   // Exibe itens detalhados se existirem (NFe)
