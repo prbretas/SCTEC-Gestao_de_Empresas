@@ -245,11 +245,33 @@ function _preencherPropostas(empresaId, propostaIdAtual) {
   });
 }
 
+/**
+ * Retorna o conjunto de etapas que exigem pedido de venda vinculado,
+ * derivado do parâmetro CRM `propostaObrigatoriaEm` (#146).
+ * A regra: da etapa configurada em diante (na ordem de ETAPAS), a proposta
+ * passa a ser obrigatória. A etapa "perdido" nunca exige (negócio pode ser
+ * perdido a qualquer momento).
+ */
+function _etapasQueExigemProposta() {
+  const paramsCrm = window.ParamsController ? ParamsController.obter("crm") : {};
+  const etapaInicial = paramsCrm.propostaObrigatoriaEm || "negociacao";
+  const idxInicial = ETAPAS.findIndex((e) => e.id === etapaInicial);
+  // Se o parâmetro for inválido, cai no comportamento padrão (negociação em diante).
+  const idxRef = idxInicial === -1
+    ? ETAPAS.findIndex((e) => e.id === "negociacao")
+    : idxInicial;
+  return ETAPAS
+    .filter((e, i) => i >= idxRef && e.id !== "perdido")
+    .map((e) => e.id);
+}
+
 function _validarEtapaComProposta(novaEtapa, oportunidadeId) {
-  if (!["negociacao", "fechado"].includes(novaEtapa)) return true;
+  const etapasObrigatorias = _etapasQueExigemProposta();
+  if (!etapasObrigatorias.includes(novaEtapa)) return true;
   const op = CrmStorage.buscarTodos().find((o) => o.id === oportunidadeId);
   if (op && op.propostaId) return true;
-  alert(`⚠️ Para mover para "${novaEtapa === "negociacao" ? "Negociação" : "Fechado"}", é obrigatório vincular um pedido de venda ao negócio.\n\nAbra o negócio e selecione uma proposta no campo "Proposta Vinculada".`);
+  const etapaLabel = (ETAPAS.find((e) => e.id === novaEtapa) || {}).label || novaEtapa;
+  alert(`⚠️ Para mover para "${etapaLabel}", é obrigatório vincular um pedido de venda ao negócio.\n\nAbra o negócio e selecione uma proposta no campo "Proposta Vinculada".`);
   return false;
 }
 
