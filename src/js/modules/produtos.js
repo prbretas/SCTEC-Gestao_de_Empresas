@@ -42,7 +42,7 @@ const ProdutosStorage = {
   salvarTodos(lista) { localStorage.setItem(this._obterChave(), JSON.stringify(lista)); },
   adicionar(p) {
     const lista = this.buscarTodos();
-    p.id = Date.now().toString();
+    p.id = Date.now().toString() + Math.random().toString(36).slice(2);
     p.criadoPor = _obterIdentidadeSessaoProd();
     p.criadoEm = new Date().toISOString();
     p.criadoPorId = window.AuthService ? (AuthService.obterSessao()?.id || null) : null;

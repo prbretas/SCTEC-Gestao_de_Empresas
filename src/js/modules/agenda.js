@@ -46,7 +46,7 @@ const AgendaStorage = {
 
   adicionar(comp) {
     const lista = this.buscarTodos();
-    comp.id = Date.now().toString();
+    comp.id = Date.now().toString() + Math.random().toString(36).slice(2);
     comp.criadoPor = _obterIdentidadeSessao();
     comp.criadoEm = new Date().toISOString();
     comp.criadoPorId = window.AuthService ? (AuthService.obterSessao()?.id || null) : null;
