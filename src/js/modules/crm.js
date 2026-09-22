@@ -45,7 +45,7 @@ const CrmStorage = {
 
   adicionar(op) {
     const lista = this.buscarTodos();
-    op.id = Date.now().toString();
+    op.id = Date.now().toString() + Math.random().toString(36).slice(2);
     op.criadoPor = _obterIdentidadeSessao();
     op.criadoEm = new Date().toISOString();
     op.criadoPorId = window.AuthService ? (AuthService.obterSessao()?.id || null) : null;
