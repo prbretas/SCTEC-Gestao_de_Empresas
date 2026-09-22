@@ -69,6 +69,26 @@ const PropostasStorage = {
 const _fmt = (v) => Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 let _itensAtuais = [];
 
+// #140 — Estado de ordenação do modo linhas
+const _propSort = { coluna: "criadoEm", dir: "desc" };
+
+/** Retorna a data (YYYY-MM-DD) deslocada em `meses` a partir de hoje. */
+function _dataDeslocadaISO(meses) {
+  const d = new Date();
+  d.setMonth(d.getMonth() + meses);
+  // Ajuste local para YYYY-MM-DD sem sofrer com timezone do toISOString
+  const off = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - off).toISOString().slice(0, 10);
+}
+
+/** #140 — Preenche o filtro de data com o intervalo do último mês até hoje. */
+function _aplicarFiltroDataPadrao() {
+  const ini = document.getElementById("prop-filtro-inicio");
+  const fim = document.getElementById("prop-filtro-fim");
+  if (ini) ini.value = _dataDeslocadaISO(-1);
+  if (fim) fim.value = _dataDeslocadaISO(0);
+}
+
 // ─── Helpers de modo visualização/edição ───────────────────────────────────
 
 function _propSetModo(modo) {
@@ -108,13 +128,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const modalEl = document.getElementById("modal-proposta");
   const modal = new bootstrap.Modal(modalEl);
   _preencherEmpresas();
+  _aplicarFiltroDataPadrao(); // #140 — filtro de data default: último mês
   renderizarLista();
 
   // Filtros e toggle de visualização (#89)
   document.getElementById("btn-filtrar-prop")?.addEventListener("click", renderizarLista);
   document.getElementById("btn-limpar-filtro-prop")?.addEventListener("click", () => {
-    document.getElementById("prop-filtro-inicio").value = "";
-    document.getElementById("prop-filtro-fim").value = "";
+    // #140 — "limpar" retorna ao filtro padrão de 1 mês (não vazio)
+    _aplicarFiltroDataPadrao();
     document.getElementById("prop-filtro-status").value = "";
     renderizarLista();
   });
@@ -359,6 +380,48 @@ function _atualizarKpisPropostas(todas) {
   el("prop-kpi-valor", fmt(aceitas.reduce((s, p) => s + (p.total || 0), 0)));
 }
 
+/**
+ * #140 — Ordena a lista de propostas conforme _propSort (usado no modo linhas).
+ * Comparação numérica para "total", textual para "empresa" (nome resolvido) e
+ * demais colunas; datas/números de pedido comparados como string ordenável.
+ */
+function _ordenarPropostas(lista, empresas) {
+  const { coluna, dir } = _propSort;
+  const fator = dir === "asc" ? 1 : -1;
+  const nomeEmpresa = (p) => {
+    const e = empresas.find((x) => String(x.id) === String(p.empresaId));
+    return e ? e.nome : "";
+  };
+  const valor = (p) => {
+    switch (coluna) {
+      case "total": return Number(p.total || 0);
+      case "empresa": return nomeEmpresa(p);
+      case "numero": return p.numero || "";
+      case "titulo": return p.titulo || "";
+      case "status": return p.status || "";
+      case "criadoEm": return p.criadoEm || "";
+      default: return p[coluna] || "";
+    }
+  };
+  return lista.sort((a, b) => {
+    const va = valor(a);
+    const vb = valor(b);
+    if (typeof va === "number" && typeof vb === "number") return (va - vb) * fator;
+    return String(va).localeCompare(String(vb), "pt-BR", { numeric: true, sensitivity: "base" }) * fator;
+  });
+}
+
+/** #140 — Alterna a coluna/direção de ordenação e re-renderiza (modo linhas). */
+function ordenarPropostas(coluna) {
+  if (_propSort.coluna === coluna) {
+    _propSort.dir = _propSort.dir === "asc" ? "desc" : "asc";
+  } else {
+    _propSort.coluna = coluna;
+    _propSort.dir = "asc";
+  }
+  renderizarLista();
+}
+
 function renderizarLista() {
   const container = document.getElementById("propostas-lista");
   const vazio = document.getElementById("propostas-vazio");
@@ -388,15 +451,32 @@ function renderizarLista() {
   // Atualiza KPIs
   _atualizarKpisPropostas(todas);
 
-  const sorted = todas.sort((a, b) => (b.criadoEm || "").localeCompare(a.criadoEm || ""));
+  // Modo linhas: ordenação clicável por coluna (#140). Cards: sempre por criação (desc).
+  const emLinhas = window._propViewMode === "linhas";
+  const sorted = emLinhas
+    ? _ordenarPropostas(todas.slice(), empresas)
+    : todas.slice().sort((a, b) => (b.criadoEm || "").localeCompare(a.criadoEm || ""));
 
   if (sorted.length === 0) { container.innerHTML = ""; vazio?.classList.remove("d-none"); return; }
   vazio?.classList.add("d-none");
 
   // Modo linhas
-  if (window._propViewMode === "linhas") {
+  if (emLinhas) {
+    const cols = [
+      { chave: "numero", rotulo: "Nº Pedido" },
+      { chave: "titulo", rotulo: "Título" },
+      { chave: "empresa", rotulo: "Empresa" },
+      { chave: "status", rotulo: "Status" },
+      { chave: "total", rotulo: "Valor" },
+      { chave: "criadoEm", rotulo: "Criada" },
+    ];
+    const th = cols.map((c) => {
+      const ativo = _propSort.coluna === c.chave;
+      const seta = ativo ? (_propSort.dir === "asc" ? " ▲" : " ▼") : "";
+      return `<th role="button" style="cursor:pointer; user-select:none;" title="Ordenar por ${c.rotulo}" onclick="ordenarPropostas('${c.chave}')">${c.rotulo}${seta}</th>`;
+    }).join("");
     container.innerHTML = `<div class="col-12"><div class="table-responsive"><table class="table table-hover table-sm align-middle">
-      <thead class="table-light"><tr><th>#</th><th>Título</th><th>Empresa</th><th>Status</th><th>Valor</th><th>Criada</th></tr></thead>
+      <thead class="table-light"><tr>${th}</tr></thead>
       <tbody>${sorted.map((p) => {
         const emp = empresas.find((e) => String(e.id) === String(p.empresaId));
         const dataCriacao = p.criadoEm ? new Date(p.criadoEm).toLocaleDateString("pt-BR") : "—";
