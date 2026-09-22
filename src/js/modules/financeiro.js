@@ -38,7 +38,7 @@ const FinanceiroStorage = {
   salvarTodos(lista) { localStorage.setItem(this._obterChave(), JSON.stringify(lista)); },
   adicionar(t) {
     const lista = this.buscarTodos();
-    t.id = Date.now().toString();
+    t.id = Date.now().toString() + Math.random().toString(36).slice(2);
     t.criadoPor = _obterIdentidadeSessao();
     t.criadoEm = new Date().toISOString();
     t.criadoPorId = window.AuthService ? (AuthService.obterSessao()?.id || null) : null;

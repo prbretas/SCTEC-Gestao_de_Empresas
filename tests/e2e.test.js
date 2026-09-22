@@ -20,6 +20,9 @@ Object.defineProperty(global, "sessionStorage", { value: localStorageMock });
 global.crypto = { subtle: { digest: jest.fn() } };
 global.TextEncoder = class { encode(str) { return new Uint8Array(Buffer.from(str)); } };
 
+// Gera um ID único mesmo em chamadas no mesmo milissegundo (evita colisão de Date.now()).
+const _gerarIdUnico = () => Date.now().toString() + Math.random().toString(36).slice(2);
+
 beforeEach(() => { localStorageMock.clear(); });
 
 // ─── Testes de ProdutosStorage ──────────────────────────────────────────────
@@ -29,7 +32,7 @@ describe("ProdutosStorage", () => {
     _chave: "SCTEC_PRODUTOS_test",
     buscarTodos() { try { return JSON.parse(localStorage.getItem(this._chave) || "[]"); } catch { return []; } },
     salvarTodos(lista) { localStorage.setItem(this._chave, JSON.stringify(lista)); },
-    adicionar(p) { const lista = this.buscarTodos(); p.id = Date.now().toString(); lista.push(p); this.salvarTodos(lista); return p; },
+    adicionar(p) { const lista = this.buscarTodos(); p.id = _gerarIdUnico(); lista.push(p); this.salvarTodos(lista); return p; },
     atualizar(id, dados) { const lista = this.buscarTodos(); const idx = lista.findIndex((p) => p.id === id); if (idx !== -1) { lista[idx] = { ...lista[idx], ...dados, id }; this.salvarTodos(lista); } },
     excluir(id) { this.salvarTodos(this.buscarTodos().filter((p) => p.id !== id)); },
   };
@@ -154,7 +157,7 @@ describe("FinanceiroStorage", () => {
     _chave: "SCTEC_FINANCEIRO_test",
     buscarTodos() { try { return JSON.parse(localStorage.getItem(this._chave) || "[]"); } catch { return []; } },
     salvarTodos(lista) { localStorage.setItem(this._chave, JSON.stringify(lista)); },
-    adicionar(t) { const lista = this.buscarTodos(); t.id = Date.now().toString(); lista.push(t); this.salvarTodos(lista); return t; },
+    adicionar(t) { const lista = this.buscarTodos(); t.id = _gerarIdUnico(); lista.push(t); this.salvarTodos(lista); return t; },
     excluir(id) { this.salvarTodos(this.buscarTodos().filter((t) => t.id !== id)); },
   };
 
