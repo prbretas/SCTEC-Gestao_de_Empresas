@@ -70,6 +70,7 @@ module.exports = [
         PropostasStorage: 'readonly',
         ETAPAS: 'readonly',
         RolesController: 'readonly',
+        NIVEIS_HIERARQUICOS: 'readonly',
         IntegrationsController: 'readonly',
         ApprovalsController: 'readonly',
         AttachmentsController: 'readonly',

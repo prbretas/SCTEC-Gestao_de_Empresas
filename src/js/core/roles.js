@@ -8,6 +8,19 @@
 
 const ROLES_KEY_PREFIX = "SCTEC_ROLES_";
 
+/**
+ * Níveis hierárquicos dos papéis de trabalho (#142).
+ * Menor número = maior hierarquia. Um usuário vê registros do seu nível e abaixo.
+ */
+const NIVEIS_HIERARQUICOS = [
+  { nivel: 1, label: "Diretor" },
+  { nivel: 2, label: "Gerente" },
+  { nivel: 3, label: "Coordenador" },
+  { nivel: 4, label: "Funcionário" },
+  { nivel: 5, label: "Externo" },
+];
+const NIVEL_PADRAO = 4; // Funcionário (menor visibilidade por padrão)
+
 const RolesController = {
 
   // ─── Storage ──────────────────────────────────────────────────────────────
@@ -130,6 +143,7 @@ const RolesController = {
       codigoConvite: this._gerarCodigoConvitePapel(codigoBaseOrg, orgId),
       modulosPermitidos: null, // null = todos os módulos ativos não-adminOnly (fallback)
       podeVerTodos: false,     // false = usuário vê apenas seus próprios registros
+      nivel: NIVEL_PADRAO,     // #142 — nível hierárquico (1 = mais alto)
       dataCriacao: new Date().toISOString(),
     };
 
@@ -336,6 +350,45 @@ const RolesController = {
     return { ok: true };
   },
 
+  // ─── Níveis Hierárquicos (#142) ─────────────────────────────────────────────
+
+  /**
+   * Define o nível hierárquico de um papel (1 = mais alto).
+   * @param {string} orgId
+   * @param {string} papelId
+   * @param {number} nivel
+   * @returns {{ok: boolean, erro?: string}}
+   */
+  definirNivel(orgId, papelId, nivel) {
+    const n = parseInt(nivel, 10);
+    const niveisValidos = NIVEIS_HIERARQUICOS.map((x) => x.nivel);
+    if (!niveisValidos.includes(n)) {
+      return { ok: false, erro: "Nível inválido." };
+    }
+    const papeis = this.obterPorOrg(orgId);
+    const idx = papeis.findIndex((p) => p.id === papelId);
+    if (idx === -1) return { ok: false, erro: "Papel não encontrado." };
+    papeis[idx].nivel = n;
+    this.salvar(orgId, papeis);
+    return { ok: true };
+  },
+
+  /**
+   * Retorna o nível hierárquico de um usuário pelo ID.
+   * Admin = nível 1 (topo). Usuário sem papel/nível = NIVEL_PADRAO.
+   * @param {string} userId
+   * @returns {number}
+   */
+  obterNivelDoUsuario(userId) {
+    if (!window.AuthService) return NIVEL_PADRAO;
+    const usuario = AuthService.buscarPorId(userId);
+    if (!usuario) return NIVEL_PADRAO;
+    if (usuario.role === "admin") return 1;
+    if (!usuario.papelId) return NIVEL_PADRAO;
+    const papel = this.buscarPorId(usuario.orgId, usuario.papelId);
+    return (papel && Number.isInteger(papel.nivel)) ? papel.nivel : NIVEL_PADRAO;
+  },
+
   /**
    * Verifica se o usuário logado pode ver os registros de outros usuários.
    * Admin sempre pode. Papel com podeVerTodos: true pode.
@@ -352,10 +405,17 @@ const RolesController = {
   },
 
   /**
-   * Filtra uma lista de registros pela visibilidade do usuário logado.
-   * Admin e papéis com podeVerTodos: true veem tudo.
-   * Outros usuários veem apenas seus próprios registros.
-   * Registros sem criadoPorId (legados) são visíveis para todos (compatibilidade).
+   * Filtra uma lista de registros pela visibilidade do usuário logado (#142).
+   *
+   * Regras (em ordem):
+   * - Admin e papéis com podeVerTodos: true veem tudo.
+   * - Registros sem criadoPorId (legados) são visíveis para todos (compatibilidade).
+   * - Sempre vê os próprios registros.
+   * - Hierarquia: vê registros criados por usuários de nível estritamente
+   *   abaixo do seu (nível do criador > nível do usuário logado; menor número
+   *   = mais alto). Pares do mesmo nível não veem os registros um do outro.
+   * - Filial: se o usuário logado tem filialId, só vê registros de criadores da
+   *   mesma filial (criadores sem filial permanecem visíveis por compatibilidade).
    * @param {Array} registros
    * @returns {Array}
    */
@@ -364,8 +424,30 @@ const RolesController = {
     if (!window.AuthService) return registros;
     const sessao = AuthService.obterSessao();
     if (!sessao) return [];
-    return registros.filter((r) => !r.criadoPorId || r.criadoPorId === sessao.id);
+
+    const meuNivel = this.obterNivelDoUsuario(sessao.id);
+    const usuario = AuthService.buscarPorId(sessao.id);
+    const minhaFilial = usuario ? (usuario.filialId || null) : null;
+
+    return registros.filter((r) => {
+      if (!r.criadoPorId) return true;        // legado
+      if (r.criadoPorId === sessao.id) return true; // sempre vê os próprios
+
+      // Hierarquia: só vê registros de quem está estritamente abaixo do seu nível
+      const nivelCriador = this.obterNivelDoUsuario(r.criadoPorId);
+      if (nivelCriador <= meuNivel) return false;
+
+      // Filial: se tenho filial, o criador deve ser da mesma (ou sem filial)
+      if (minhaFilial) {
+        const criador = AuthService.buscarPorId(r.criadoPorId);
+        const filialCriador = criador ? (criador.filialId || null) : null;
+        if (filialCriador && filialCriador !== minhaFilial) return false;
+      }
+
+      return true;
+    });
   },
 };
 
 window.RolesController = RolesController;
+window.NIVEIS_HIERARQUICOS = NIVEIS_HIERARQUICOS;
