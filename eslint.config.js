@@ -84,6 +84,7 @@ module.exports = [
         EntradaStorage: 'readonly',
         ProductPickerModal: 'readonly',
         NumeracaoService: 'readonly',
+        FiliaisStorage: 'readonly',
         FinanceiroStorage: 'readonly',
         Event: 'readonly',
         // ── APIs do browser nao declaradas anteriormente ─────────────────────

@@ -16,6 +16,7 @@ const JS_PATH_MAP = {
   "navbar.js":     "core",
   "inactivity.js": "core",
   "modules.js":    "core",
+  "filiais.js":    "core",
   // pages
   "login.js":      "pages",
   "register.js":   "pages",
