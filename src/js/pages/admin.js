@@ -311,7 +311,7 @@ function renderizarPapeis() {
   const papeis = RolesController.obterPorOrg(sessao.orgId);
 
   if (papeis.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">Nenhum papel criado. Clique em "➕ Novo Papel" para começar.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Nenhum papel criado. Clique em "➕ Novo Papel" para começar.</td></tr>`;
     return;
   }
 
@@ -333,9 +333,13 @@ function renderizarPapeis() {
       ? `<span class="badge bg-info text-dark ms-1" title="Pode ver registros de todos">👁️ Ver todos</span>`
       : "";
 
+    const nivelInfo = (window.NIVEIS_HIERARQUICOS || []).find((n) => n.nivel === p.nivel);
+    const nivelLabel = nivelInfo ? `${nivelInfo.nivel} — ${nivelInfo.label}` : (p.nivel || "—");
+
     return `
       <tr>
         <td class="fw-semibold">${p.nome}</td>
+        <td><span class="badge bg-info text-dark">🪜 ${nivelLabel}</span></td>
         <td>
           <span class="font-monospace small">${p.codigoConvite}</span>
           <button class="btn btn-xs btn-outline-secondary ms-2"
@@ -388,10 +392,20 @@ function abrirFormPapel(id = "", nomeAtual = "") {
   const sessao = AuthService.obterSessao();
   let permitidos = null;
   let podeVerTodos = false;
+  let nivelAtual = 4; // NIVEL_PADRAO
   if (id && sessao) {
     const papel = RolesController.buscarPorId(sessao.orgId, id);
     permitidos = papel ? papel.modulosPermitidos : null;
     podeVerTodos = papel?.podeVerTodos === true;
+    if (papel && Number.isInteger(papel.nivel)) nivelAtual = papel.nivel;
+  }
+
+  // Popula o seletor de nível hierárquico (#142)
+  const selNivel = document.getElementById("input-papel-nivel");
+  if (selNivel && window.NIVEIS_HIERARQUICOS) {
+    selNivel.innerHTML = NIVEIS_HIERARQUICOS.map((n) =>
+      `<option value="${n.nivel}" ${n.nivel === nivelAtual ? "selected" : ""}>Nível ${n.nivel} — ${n.label}</option>`
+    ).join("");
   }
 
   // Renderiza checkboxes dos módulos (exclui adminOnly)
@@ -442,6 +456,7 @@ function salvarPapel() {
   const nome = document.getElementById("input-nome-papel")?.value.trim();
   const papelId = document.getElementById("input-papel-id")?.value;
   const podeVerTodos = document.getElementById("input-papel-ver-todos")?.checked === true;
+  const nivel = parseInt(document.getElementById("input-papel-nivel")?.value, 10) || 4;
 
   // Coleta os módulos marcados
   const checkboxes = document.querySelectorAll(".modulo-checkbox");
@@ -461,6 +476,7 @@ function salvarPapel() {
     if (resultado.ok) {
       RolesController.definirModulos(sessao.orgId, papelId, modulosPermitidos);
       RolesController.setPodeVerTodos(sessao.orgId, papelId, podeVerTodos);
+      RolesController.definirNivel(sessao.orgId, papelId, nivel);
     }
   } else {
     const org = AuthService.buscarOrgPorId(sessao.orgId);
@@ -468,6 +484,7 @@ function salvarPapel() {
     if (resultado.ok) {
       RolesController.definirModulos(sessao.orgId, resultado.papel.id, modulosPermitidos);
       RolesController.setPodeVerTodos(sessao.orgId, resultado.papel.id, podeVerTodos);
+      RolesController.definirNivel(sessao.orgId, resultado.papel.id, nivel);
     }
   }
 

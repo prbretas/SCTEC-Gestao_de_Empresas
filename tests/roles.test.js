@@ -404,3 +404,112 @@ describe("RolesController — podeVerTodos e isolamento de registros", () => {
     expect(resultado.map((r) => r.id)).toEqual(["1", "2"]);
   });
 });
+
+// ─── Níveis Hierárquicos (#142) ────────────────────────────────────────────
+
+describe("RolesController — Níveis hierárquicos (#142)", () => {
+  const ORG_ID = "77001";
+  const COD_BASE = "SCTEC-ORG-77001";
+
+  test("papel novo recebe nível padrão (4)", () => {
+    const r = RolesController.criar(ORG_ID, "Funcionario", COD_BASE);
+    expect(r.papel.nivel).toBe(4);
+  });
+
+  test("definirNivel altera o nível de um papel", () => {
+    const r = RolesController.criar(ORG_ID, "Gerente", COD_BASE);
+    const res = RolesController.definirNivel(ORG_ID, r.papel.id, 2);
+    expect(res.ok).toBe(true);
+    expect(RolesController.buscarPorId(ORG_ID, r.papel.id).nivel).toBe(2);
+  });
+
+  test("definirNivel rejeita nível inválido", () => {
+    const r = RolesController.criar(ORG_ID, "Invalido", COD_BASE);
+    const res = RolesController.definirNivel(ORG_ID, r.papel.id, 99);
+    expect(res.ok).toBe(false);
+  });
+
+  test("obterNivelDoUsuario: admin sempre nível 1", () => {
+    AuthService.salvarUsuarios([{ id: "adm", nome: "adm", role: "admin", orgId: ORG_ID }]);
+    expect(RolesController.obterNivelDoUsuario("adm")).toBe(1);
+  });
+
+  test("obterNivelDoUsuario: usuário sem papel usa nível padrão (4)", () => {
+    AuthService.salvarUsuarios([{ id: "sp", nome: "sp", role: "user", orgId: ORG_ID }]);
+    expect(RolesController.obterNivelDoUsuario("sp")).toBe(4);
+  });
+
+  test("obterNivelDoUsuario: reflete o nível do papel do usuário", () => {
+    const r = RolesController.criar(ORG_ID, "Diretor", COD_BASE);
+    RolesController.definirNivel(ORG_ID, r.papel.id, 1);
+    AuthService.salvarUsuarios([{ id: "dir", nome: "dir", role: "user", orgId: ORG_ID, papelId: r.papel.id }]);
+    expect(RolesController.obterNivelDoUsuario("dir")).toBe(1);
+  });
+
+  test("filtrarPorVisibilidade: gerente vê registros de funcionário abaixo, mas não de pares do mesmo nível", () => {
+    const pGerente = RolesController.criar(ORG_ID, "GerenteVis", COD_BASE);
+    RolesController.definirNivel(ORG_ID, pGerente.papel.id, 2);
+    const pFunc = RolesController.criar(ORG_ID, "FuncVis", COD_BASE);
+    RolesController.definirNivel(ORG_ID, pFunc.papel.id, 4);
+
+    AuthService.salvarUsuarios([
+      { id: "ger", nome: "ger", role: "user", orgId: ORG_ID, papelId: pGerente.papel.id },
+      { id: "func", nome: "func", role: "user", orgId: ORG_ID, papelId: pFunc.papel.id },
+      { id: "ger2", nome: "ger2", role: "user", orgId: ORG_ID, papelId: pGerente.papel.id },
+    ]);
+    sessionStorage.setItem("SCTEC_SESSION", JSON.stringify({
+      id: "ger", nome: "ger", role: "user", orgId: ORG_ID, papelId: pGerente.papel.id,
+    }));
+
+    const registros = [
+      { id: "r-own", criadoPorId: "ger" },   // próprio → visível
+      { id: "r-func", criadoPorId: "func" }, // nível abaixo → visível
+      { id: "r-peer", criadoPorId: "ger2" }, // mesmo nível → oculto
+    ];
+    const vis = RolesController.filtrarPorVisibilidade(registros).map((r) => r.id);
+    expect(vis).toContain("r-own");
+    expect(vis).toContain("r-func");
+    expect(vis).not.toContain("r-peer");
+  });
+
+  test("filtrarPorVisibilidade: funcionário não vê registros de nível acima", () => {
+    const pGerente = RolesController.criar(ORG_ID, "Ger2", COD_BASE);
+    RolesController.definirNivel(ORG_ID, pGerente.papel.id, 2);
+    const pFunc = RolesController.criar(ORG_ID, "Func2", COD_BASE);
+    RolesController.definirNivel(ORG_ID, pFunc.papel.id, 4);
+
+    AuthService.salvarUsuarios([
+      { id: "g", nome: "g", role: "user", orgId: ORG_ID, papelId: pGerente.papel.id },
+      { id: "f", nome: "f", role: "user", orgId: ORG_ID, papelId: pFunc.papel.id },
+    ]);
+    sessionStorage.setItem("SCTEC_SESSION", JSON.stringify({
+      id: "f", nome: "f", role: "user", orgId: ORG_ID, papelId: pFunc.papel.id,
+    }));
+
+    const registros = [{ id: "r-g", criadoPorId: "g" }];
+    expect(RolesController.filtrarPorVisibilidade(registros)).toHaveLength(0);
+  });
+
+  test("filtrarPorVisibilidade: filtra por filial vinculada ao usuário", () => {
+    const pGerente = RolesController.criar(ORG_ID, "GerFilial", COD_BASE);
+    RolesController.definirNivel(ORG_ID, pGerente.papel.id, 2);
+    const pFunc = RolesController.criar(ORG_ID, "FuncFilial", COD_BASE);
+    RolesController.definirNivel(ORG_ID, pFunc.papel.id, 4);
+
+    AuthService.salvarUsuarios([
+      { id: "gerA", nome: "gerA", role: "user", orgId: ORG_ID, papelId: pGerente.papel.id, filialId: "FIL_A" },
+      { id: "funcA", nome: "funcA", role: "user", orgId: ORG_ID, papelId: pFunc.papel.id, filialId: "FIL_A" },
+      { id: "funcB", nome: "funcB", role: "user", orgId: ORG_ID, papelId: pFunc.papel.id, filialId: "FIL_B" },
+    ]);
+    sessionStorage.setItem("SCTEC_SESSION", JSON.stringify({
+      id: "gerA", nome: "gerA", role: "user", orgId: ORG_ID, papelId: pGerente.papel.id,
+    }));
+
+    const registros = [
+      { id: "r-A", criadoPorId: "funcA" }, // abaixo + mesma filial → visível
+      { id: "r-B", criadoPorId: "funcB" }, // abaixo, mas outra filial → oculto
+    ];
+    const vis = RolesController.filtrarPorVisibilidade(registros).map((r) => r.id);
+    expect(vis).toEqual(["r-A"]);
+  });
+});

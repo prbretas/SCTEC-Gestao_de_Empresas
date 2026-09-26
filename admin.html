@@ -106,6 +106,13 @@
             <input type="hidden" id="input-papel-id" value="" />
           </div>
 
+          <!-- Nível hierárquico (#142) -->
+          <div class="mb-3">
+            <label for="input-papel-nivel" class="form-label small mb-1 fw-semibold">🪜 Nível Hierárquico</label>
+            <select id="input-papel-nivel" class="form-select form-select-sm" style="max-width:260px"></select>
+            <span class="text-muted small d-block mt-1">Cada usuário vê registros do seu nível e dos níveis abaixo. Menor número = maior hierarquia.</span>
+          </div>
+
           <!-- Módulos permitidos -->
           <div class="mb-3">
             <label class="form-label small mb-2 fw-semibold">🔓 Módulos Permitidos</label>
@@ -140,6 +147,7 @@
             <thead class="thead-sctec">
               <tr>
                 <th>Papel</th>
+                <th>Nível</th>
                 <th>Código de Convite</th>
                 <th>Módulos</th>
                 <th class="text-center">Usuários</th>
