@@ -15,7 +15,7 @@ const MODULOS_CATALOGO = [
   { id: "dashboard",   label: "Dashboard",          icon: "📊", url: "dashboard.html",   defaultActive: true },
   { id: "agenda",      label: "Agenda",             icon: "📅", url: "agenda.html",      defaultActive: true },
   { id: "crm",         label: "CRM / Funil",        icon: "🎯", url: "crm.html",         defaultActive: true },
-  { id: "propostas",   label: "Pedido de Venda",    icon: "📄", url: "propostas.html",   defaultActive: true },
+  { id: "propostas",   label: "Pedido de Venda",    icon: "📄", url: "pedido-de-venda.html", defaultActive: true },
   { id: "entrada",     label: "Documento de Entrada", icon: "📥", url: "entrada.html",   defaultActive: true },
   { id: "produtos",    label: "Produtos",           icon: "📦", url: "produtos.html",    defaultActive: true },
   { id: "estoque",     label: "Gestão de Estoque",  icon: "🏗️", url: "estoque.html",     defaultActive: true },
