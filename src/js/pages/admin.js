@@ -51,9 +51,15 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-salvar-papel")?.addEventListener("click", salvarPapel);
   document.getElementById("btn-cancelar-papel")?.addEventListener("click", fecharFormPapel);
 
+  // ─── Filiais (#143) ─────────────────────────────────────────────────────
+  document.getElementById("btn-nova-filial")?.addEventListener("click", () => abrirFormFilial());
+  document.getElementById("btn-salvar-filial")?.addEventListener("click", salvarFilial);
+  document.getElementById("btn-cancelar-filial")?.addEventListener("click", fecharFormFilial);
+
   renderizarUsuarios();
   renderizarPapeis();
   renderizarAprovacoes();
+  renderizarFiliais();
 
   // ─── Cadastrar Usuário pelo Admin (#110) ────────────────────────────────
   document.getElementById("btn-criar-usuario")?.addEventListener("click", () => {
@@ -119,11 +125,12 @@ function renderizarUsuarios() {
   const membros = todos.filter((u) => u.orgId === sessao.orgId);
 
   if (membros.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Nenhum usuário encontrado na organização.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">Nenhum usuário encontrado na organização.</td></tr>`;
     return;
   }
 
   const papeis = RolesController.obterPorOrg(sessao.orgId);
+  const filiais = window.FiliaisStorage ? FiliaisStorage.buscarTodos() : [];
 
   tbody.innerHTML = membros.map((u) => {
     const isAtivo = u.ativo !== false; // default true
@@ -155,6 +162,20 @@ function renderizarUsuarios() {
           ${opcoesPapeis}
         </select>`;
 
+    // Seletor de filial (#143)
+    const filialAtual = u.filialId || "";
+    const opcoesFiliais = filiais.map((f) =>
+      `<option value="${f.id}" ${filialAtual === f.id ? "selected" : ""}>${f.nome}</option>`
+    ).join("");
+    const seletorFilial = filiais.length === 0
+      ? `<span class="text-muted small">—</span>`
+      : `<select class="form-select form-select-sm" style="min-width:120px"
+            onchange="atribuirFilial('${u.id}', this.value)"
+            aria-label="Filial de ${u.nome}">
+          <option value="">— sem filial —</option>
+          ${opcoesFiliais}
+        </select>`;
+
     const acoes = isSelf
       ? `<span class="text-muted small">— você mesmo —</span>`
       : `
@@ -178,6 +199,7 @@ function renderizarUsuarios() {
         </td>
         <td>${roleBadge}</td>
         <td>${seletorPapel}</td>
+        <td>${seletorFilial}</td>
         <td class="small">${dataCad}</td>
         <td>${statusBadge}</td>
         <td class="text-center">${acoes}</td>
@@ -257,8 +279,10 @@ function removerUsuario(userId, nome) {
   usuarios[idx].orgId = null;
   usuarios[idx].role = "user";
   usuarios[idx].papelId = null;
+  usuarios[idx].filialId = null;
   AuthService.salvarUsuarios(usuarios);
   renderizarUsuarios();
+  renderizarFiliais();
 }
 
 /**
@@ -575,4 +599,173 @@ function rejeitarPendencia(pendenciaId) {
   }
   alert("❌ Rejeitado.");
   renderizarAprovacoes();
+}
+
+// ─── Empresas / Filiais (#143) ───────────────────────────────────────────────
+
+/**
+ * Renderiza a tabela de filiais da organização.
+ */
+function renderizarFiliais() {
+  const tbody = document.getElementById("admin-filiais-lista");
+  if (!tbody || !window.FiliaisStorage) return;
+
+  const sessao = AuthService.obterSessao();
+  const filiais = FiliaisStorage.buscarTodos();
+  const enderecos = window.EnderecosStorage ? EnderecosStorage.buscarTodos() : [];
+  const usuarios = sessao ? AuthService.obterUsuarios().filter((u) => u.orgId === sessao.orgId) : [];
+
+  if (filiais.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">Nenhuma filial cadastrada. Clique em "➕ Nova Filial" para começar.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filiais.map((f) => {
+    const nomesEnderecos = (f.enderecosEstoque || [])
+      .map((eid) => enderecos.find((e) => e.id === eid)?.nome)
+      .filter(Boolean);
+    const badgesEnd = nomesEnderecos.length
+      ? nomesEnderecos.map((n) => `<span class="badge bg-light text-dark border me-1">📦 ${n}</span>`).join("")
+      : `<span class="text-muted small">—</span>`;
+    const qtdUsuarios = usuarios.filter((u) => u.filialId === f.id).length;
+
+    return `
+      <tr>
+        <td class="fw-semibold">${f.nome}</td>
+        <td class="small">${f.cnpj || "—"}</td>
+        <td>${badgesEnd}</td>
+        <td class="text-center">
+          <span class="badge ${qtdUsuarios > 0 ? "bg-primary" : "bg-light text-dark border"}">
+            ${qtdUsuarios} usuário${qtdUsuarios !== 1 ? "s" : ""}
+          </span>
+        </td>
+        <td class="text-center">
+          <button class="btn btn-xs btn-outline-primary me-1"
+            onclick="editarFilial('${f.id}')" title="Editar filial">
+            ✏️ Editar
+          </button>
+          <button class="btn btn-xs btn-outline-danger"
+            onclick="excluirFilial('${f.id}', decodeURIComponent('${encodeURIComponent(f.nome)}'))"
+            title="Excluir filial">
+            🗑️ Excluir
+          </button>
+        </td>
+      </tr>`;
+  }).join("");
+}
+
+/**
+ * Abre o formulário de filial (criação ou edição).
+ * @param {string} [id] - se informado, modo edição
+ */
+function abrirFormFilial(id = "") {
+  const card = document.getElementById("card-form-filial");
+  if (!card) return;
+
+  const filial = id && window.FiliaisStorage ? FiliaisStorage.buscarPorId(id) : null;
+  document.getElementById("input-filial-id").value = id;
+  document.getElementById("input-nome-filial").value = filial ? filial.nome : "";
+  document.getElementById("input-cnpj-filial").value = filial ? filial.cnpj || "" : "";
+  document.getElementById("form-filial-titulo").textContent = id ? "Editar Filial" : "Nova Filial";
+
+  // Checkboxes de endereços de estoque
+  const container = document.getElementById("filial-enderecos-checkboxes");
+  const enderecos = window.EnderecosStorage ? EnderecosStorage.buscarTodos() : [];
+  const vinculados = filial ? filial.enderecosEstoque || [] : [];
+  if (container) {
+    container.innerHTML = enderecos.length
+      ? enderecos.map((e) => {
+        const checked = vinculados.includes(e.id) ? "checked" : "";
+        return `
+          <div class="form-check form-check-inline mb-1">
+            <input class="form-check-input filial-endereco-checkbox" type="checkbox"
+              id="filial-end-${e.id}" value="${e.id}" ${checked} />
+            <label class="form-check-label" for="filial-end-${e.id}">📦 ${e.nome}</label>
+          </div>`;
+      }).join("")
+      : `<span class="text-muted small">Nenhum endereço de estoque cadastrado.</span>`;
+  }
+
+  card.classList.remove("d-none");
+  document.getElementById("input-nome-filial").focus();
+}
+
+/**
+ * Fecha o formulário de filial sem salvar.
+ */
+function fecharFormFilial() {
+  const card = document.getElementById("card-form-filial");
+  if (!card) return;
+  card.classList.add("d-none");
+  document.getElementById("input-filial-id").value = "";
+  document.getElementById("input-nome-filial").value = "";
+  document.getElementById("input-cnpj-filial").value = "";
+  const container = document.getElementById("filial-enderecos-checkboxes");
+  if (container) container.innerHTML = "";
+}
+
+/**
+ * Salva a filial (cria ou edita) com os endereços de estoque selecionados.
+ */
+function salvarFilial() {
+  if (!window.FiliaisStorage) return;
+  const id = document.getElementById("input-filial-id")?.value;
+  const nome = document.getElementById("input-nome-filial")?.value.trim();
+  const cnpj = document.getElementById("input-cnpj-filial")?.value.trim();
+  const enderecosEstoque = Array.from(document.querySelectorAll(".filial-endereco-checkbox"))
+    .filter((cb) => cb.checked)
+    .map((cb) => cb.value);
+
+  const resultado = id
+    ? FiliaisStorage.atualizar(id, { nome, cnpj, enderecosEstoque })
+    : FiliaisStorage.adicionar({ nome, cnpj, enderecosEstoque });
+
+  if (!resultado.ok) {
+    alert(`⚠️ ${resultado.erro}`);
+    return;
+  }
+
+  fecharFormFilial();
+  renderizarFiliais();
+  renderizarUsuarios();
+}
+
+/**
+ * Abre o formulário em modo edição.
+ * @param {string} id
+ */
+function editarFilial(id) {
+  abrirFormFilial(id);
+}
+
+/**
+ * Exclui uma filial após confirmação.
+ * @param {string} id
+ * @param {string} nome
+ */
+function excluirFilial(id, nome) {
+  if (!window.FiliaisStorage) return;
+  if (!confirm(`Excluir a filial "${nome}"?`)) return;
+  const resultado = FiliaisStorage.excluir(id);
+  if (!resultado.ok) {
+    alert(`⚠️ ${resultado.erro}`);
+    return;
+  }
+  renderizarFiliais();
+  renderizarUsuarios();
+}
+
+/**
+ * Vincula (ou desvincula) um usuário a uma filial.
+ * @param {string} userId
+ * @param {string} filialId - string vazia para desvincular
+ */
+function atribuirFilial(userId, filialId) {
+  if (!window.FiliaisStorage) return;
+  const resultado = FiliaisStorage.vincularUsuario(userId, filialId || null);
+  if (!resultado.ok) {
+    alert(`⚠️ ${resultado.erro}`);
+  }
+  renderizarUsuarios();
+  renderizarFiliais();
 }
