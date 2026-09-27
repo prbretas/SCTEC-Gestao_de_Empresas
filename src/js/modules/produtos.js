@@ -301,6 +301,28 @@ function _prodSetModo(modo) {
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
+/**
+ * #139 — Renderiza a imagem principal do produto (primeiro anexo de imagem)
+ * na área de preview do modal. Exibe placeholder quando não há imagem.
+ * @param {Array} anexos - lista de anexos do produto
+ */
+function _renderImagemProduto(anexos = []) {
+  const container = document.getElementById("prod-imagem-preview");
+  if (!container) return;
+  const imagem = (anexos || []).find((a) => a.tipo && a.tipo.startsWith("image/") && a.base64);
+  if (imagem) {
+    container.innerHTML = `<img src="${imagem.base64}" alt="Imagem do produto: ${imagem.nome}"
+      style="max-height:180px;max-width:100%;object-fit:contain;border-radius:8px;border:1px solid var(--bs-border-color);" />`;
+  } else {
+    container.innerHTML = `<div class="d-flex flex-column align-items-center justify-content-center text-muted border rounded"
+      style="height:120px;background:var(--bs-tertiary-bg,#f8f9fa);"
+      role="img" aria-label="Produto sem imagem">
+      <span style="font-size:2.5rem;line-height:1;">🖼️</span>
+      <span class="small mt-1">Sem imagem</span>
+    </div>`;
+  }
+}
+
 function _preencherEmpresasProduto() {
   const sel = document.getElementById("prod-empresa");
   if (!sel || !window.EmpreendimentoStorage) return;
@@ -347,6 +369,7 @@ function _resetarFormProduto() {
   delete f.dataset.editId;
   delete f.dataset.modoVisualizacao;
   if (window.AttachmentsController) AttachmentsController.carregar("prod-anexos-container", [], false);
+  _renderImagemProduto([]); // #139 — reseta preview de imagem
   const secDisp = document.getElementById("prod-disponibilidade-section");
   if (secDisp) secDisp.classList.add("d-none");
 }
@@ -537,6 +560,9 @@ function visualizarProduto(id) {
   if (window.AttachmentsController) {
     AttachmentsController.carregar("prod-anexos-container", p.anexos || [], false);
   }
+
+  // #139 — Preview da imagem principal do produto
+  _renderImagemProduto(p.anexos || []);
 
   const auditoriaEl = document.getElementById("auditoria-prod");
   if (auditoriaEl) auditoriaEl.textContent = _formatarAuditoriaProd(p);
