@@ -2,6 +2,8 @@
 
 > **Status:** Estudo / Análise (não implementado)
 > **Objetivo:** Entender **como o projeto SCTEC (Gestão de Empreendimentos) poderia ser aproveitado como base para o MenteMX Pro**, mapeando o que é reutilizável, o que precisa ser criado do zero (novas rotinas, tabelas, telas) e quais as decisões arquiteturais envolvidas.
+>
+> **Atualização (decisão tomada):** foi decidido que o MenteMX Pro **deve reaproveitar o máximo possível** do SCTEC via **monorepo com `packages/core` (Opção C)**. O detalhamento dessa estratégia está na **PARTE II** deste documento (§12 em diante).
 > **Fontes:** `MENTEMXPRO-FILES/REQUIREMENTS.MD`, `DESIGN.MD`, `TASK.MD` (specs do MenteMX) + código atual do SCTEC.
 > **Escopo:** análise comparativa e roadmap conceitual. **Nenhum código é alterado.**
 
@@ -184,3 +186,101 @@ Navegador                             App RN/Expo
 O SCTEC e o MenteMX Pro são **produtos de domínios e plataformas diferentes** — o SCTEC **não é reaproveitável como aplicação** para o fim esportivo. Porém, o **maior valor reutilizável** está na **fundação técnica e metodológica**: os cinco estudos da issue #144 (backend/API, camada de abstração de dados, modelo relacional, segurança/LGPD e plano de persistência) descrevem exatamente o "encanamento" que o MenteMX exige (backend Node/PostgreSQL, sync, JWT, LGPD). Conceitualmente, o padrão **CRUD por coleção**, **multi-tenant → escopo por piloto**, **registro mãe→filho** (session→laps ~ pedido→itens) e **auditoria/timestamps** transferem-se bem.
 
 Recomenda-se tratar o MenteMX como **novo produto** (nova stack mobile + backend), **reaproveitando os padrões e estudos** do SCTEC — e, se desejado, um **`packages/core` compartilhado** para a lógica de fundação. **Nenhum código foi alterado; este é um documento de estudo para decisão.**
+
+---
+
+# 📦 PARTE II — Estratégia de Compartilhamento (Decisão: Opção C — Monorepo com `packages/core`)
+
+> **Decisão registrada:** o MenteMX Pro **deve reaproveitar o máximo possível** do que já existe no SCTEC. Esta parte detalha *o quê*, *como* e *em que ordem* compartilhar, adotando a **Opção C (monorepo + `packages/core`)**.
+
+## 12. Princípio de Reuso
+
+Reaproveitar **lógica de fundação e regras puras** (sem DOM, sem `localStorage`, sem framework), publicá-las num pacote comum e consumi-las tanto no **SCTEC web** quanto no **MenteMX mobile/backend**. **Não** se compartilha UI (Bootstrap web ≠ React Native) nem o domínio de negócio.
+
+```
+Compartilhável  = funções puras + contratos + validações + helpers de segurança
+Não compartilhável = telas/HTML, storages acoplados ao localStorage, regras de domínio específicas
+```
+
+## 13. Inventário: o que do SCTEC vai para o `packages/core`
+
+Levantado do código atual do SCTEC:
+
+| Origem no SCTEC | Item | Reuso no MenteMX | Ação de extração |
+|---|---|---|---|
+| `shared/utils.js` | `validarCNPJ`, `validarCPF`, `aplicarMascaraDocumento`, `aplicarMascaraTelefone`, `formatarDataHora` | Validação/formatação de perfil do piloto e cadastros | Extrair puro (sem DOM) |
+| `shared/utils.js` | Geração/parse **CSV** | Base para exportações tabulares | Extrair puro |
+| `core/auth.js` | `hashSenha` (migrar p/ bcrypt/argon2), `gerarId`, geração de código/convite | Auth do piloto, IDs únicos | Extrair + **fortalecer hash** |
+| `core/auth.js` | validações de cadastro (nome, tamanho, unicidade) | Cadastro de piloto | Extrair regras puras |
+| `core/roles.js` | `filtrarPorVisibilidade`, níveis (#142) | Times/coaches (fase futura) | Extrair como policy pura |
+| `#144 ESTUDO_STORAGE_PROVIDER` | contrato `StorageProvider` (list/get/insert/update/remove) | **Núcleo do offline-first** do MenteMX | Formalizar como interface `core` |
+| `#144 ESTUDO_BACKEND_API` | convenções REST, padrão `{ ok, data, error }`, JWT, erros | Backend do MenteMX | Reusar como padrão + middlewares |
+| padrão `criadoPor/criadoEm` | helpers de auditoria/timestamp | `created_at/updated_at/device_id` (sync LWW) | Extrair helper |
+| `shared/calculator.js` | utilitários numéricos (margem/arredondamento) | Base p/ formatação de métricas | Avaliar reuso |
+
+> Os **algoritmos do MenteMX** (Consistência/MX Score/Radar) **nascem** no `packages/core` (novos), mas seguindo o **mesmo estilo de função pura testável** que já usamos no SCTEC.
+
+## 14. Estrutura de Monorepo Proposta
+
+```
+mentemx-ecosystem/                 (ou evoluir o repo atual para monorepo)
+├── package.json                   # workspaces
+├── packages/
+│   └── core/                      # 🟢 COMPARTILHADO (TypeScript, funções puras)
+│       ├── validation/            # validarCNPJ/CPF, máscaras, e-mail
+│       ├── security/              # hash (argon2/bcrypt), gerarId, tokens
+│       ├── storage/               # contrato StorageProvider + InMemory
+│       ├── audit/                 # timestamps, device_id, LWW helpers
+│       ├── format/                # datas, moeda, CSV
+│       └── metrics/               # (novo) consistencia, mx-score, radar
+├── apps/
+│   ├── sctec-web/                 # SCTEC atual (consome @core)
+│   ├── mentemx-mobile/            # React Native/Expo (consome @core)
+│   └── mentemx-backend/           # Node/Express + PostgreSQL (consome @core)
+└── ...
+```
+
+- `packages/core` em **TypeScript** puro, sem dependência de browser/RN/node-específico.
+- Cada app importa `@core/*` — a mesma validação de CPF roda na web, no mobile e no backend.
+
+## 15. Impacto no SCTEC (pré-requisitos para compartilhar)
+
+Para o SCTEC **consumir** o `packages/core`, precisaria de mudanças de base (hoje é JS vanilla sem build):
+
+1. **Adotar TypeScript** (ou ao menos ESM com bundler) no SCTEC — mudança estrutural relevante.
+2. **Introduzir etapa de build** (o SCTEC hoje não tem bundler).
+3. **Extrair as funções puras** de `utils.js`/`auth.js` para `@core` e substituir os usos por imports.
+4. Manter compatibilidade: os `XStorage` continuam, mas passam a usar helpers de `@core`.
+
+> ⚠️ **Trade-off:** o maior benefício de reuso vem junto de uma **modernização do SCTEC** (TS + build + monorepo). Isso deve ser pesado: é a mudança mais cara desta estratégia.
+
+## 16. Faseamento do Compartilhamento
+
+1. **Fase 0 — Preparação**: criar o monorepo e `packages/core` (vazio) + toolchain TS/testes (Vitest/Jest + `fast-check`).
+2. **Fase 1 — Extrair o "sem risco"**: validações e formatação puras (`validarCPF/CNPJ`, máscaras, datas, CSV) → `@core/validation|format`. SCTEC passa a importar. Testes cobrindo.
+3. **Fase 2 — Segurança**: `@core/security` (hash forte, IDs, tokens) — alinhado ao `ESTUDO_SEGURANCA_LGPD_144.md`.
+4. **Fase 3 — StorageProvider**: formalizar o contrato de dados em `@core/storage` (usado pelo offline-first do MenteMX e pela #144 do SCTEC).
+5. **Fase 4 — Métricas MenteMX**: implementar `@core/metrics` (consistência/MX Score/Radar) — novo, com testes de propriedade.
+6. **Fase 5 — Backend compartilhado (opcional)**: padrões REST/middlewares/erros de `@core` reusados por `mentemx-backend` (e, se a #144 avançar, pelo backend do SCTEC).
+
+## 17. O que **não** compartilhar (fronteiras claras)
+
+- **UI**: telas do SCTEC (Bootstrap/HTML) não vão para o MenteMX (RN). Só *design tokens* (cores/contraste) poderiam ser compartilhados como dados.
+- **Domínio**: CRM, financeiro, estoque, propostas ≠ voltas, setups, eventos esportivos.
+- **Storages acoplados**: os `XStorage` atuais (presos ao `localStorage` síncrono) não vão direto; só o **contrato** abstraído vai.
+
+## 18. Riscos específicos da Opção C
+
+| Risco | Mitigação |
+|---|---|
+| Custo de modernizar o SCTEC (TS + build) | Fazer por fases; começar extraindo só o puro/sem risco |
+| Acoplar dois produtos cedo demais | `packages/core` só com o que for **genuinamente genérico** |
+| Divergência de versões entre apps | Monorepo com workspaces + versionamento único |
+| Regressão no SCTEC ao trocar por imports | Testes antes/depois de cada extração; feature-by-feature |
+| `core` "inchar" com regra de domínio | Regra de ouro: `core` = puro e genérico; domínio fica nos apps |
+
+## 19. Recomendação Final da Parte II
+
+Adotar a **Opção C incrementalmente**: montar o monorepo, criar o `packages/core` e **começar extraindo o de menor risco** (validações/formatação puras), medindo o esforço de adaptar o SCTEC (que exigirá TypeScript + build). O ganho é real — a mesma base de validação, segurança, contrato de storage e (novas) métricas servindo web, mobile e backend — mas vem acoplado à **modernização do SCTEC**, que é a decisão de investimento a validar antes de propagar. As **novas rotinas/tabelas do MenteMX** (§5 e §6) permanecem específicas do produto esportivo; o compartilhamento fica na **camada de fundação**.
+
+**Nenhum código foi alterado; este documento é de estudo para decisão.**
