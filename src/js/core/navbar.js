@@ -93,34 +93,16 @@ const NavbarController = {
     });
 
     // Indicador de alertas (tarefas vencidas + aprovações pendentes + estoque baixo)
-    const vencidas = window.TarefasController ? TarefasController.contarVencidasGlobal() : 0;
-    const aprovacoes = window.ApprovalsController ? ApprovalsController.contarPendentes() : 0;
-
-    // Alertas de estoque baixo
-    let estoqueBaixo = 0;
-    const paramsEstoque = window.ParamsController ? ParamsController.obter("estoque") : {};
-    if (paramsEstoque.alertarEstoqueBaixo && window.EstoqueStorage && window.ProdutosStorage) {
-      const posicoes = EstoqueStorage.buscarTodos();
-      estoqueBaixo = posicoes.filter((p) => p.quantidade <= (p.estoqueMin || paramsEstoque.estoqueMinimoPadrao || 5)).length;
-      if (paramsEstoque.limiteAlertasNavbar && estoqueBaixo > paramsEstoque.limiteAlertasNavbar) {
-        estoqueBaixo = paramsEstoque.limiteAlertasNavbar;
-      }
-    }
-
-    const totalAlertas = vencidas + aprovacoes + estoqueBaixo;
+    const totalAlertas = this._contarAlertas();
     const badgeAlertas = document.getElementById("badge-alertas-nav");
     if (badgeAlertas && totalAlertas > 0) {
       badgeAlertas.textContent = totalAlertas;
       badgeAlertas.classList.remove("d-none");
     }
 
+    // #145 — Popup de notificações detalhado (substitui o alert simples)
     document.getElementById("btn-alertas-nav")?.addEventListener("click", () => {
-      let msg = "🔔 Alertas:\n\n";
-      if (vencidas > 0) msg += `⚠️ ${vencidas} tarefa(s) vencida(s)\n`;
-      if (aprovacoes > 0) msg += `📋 ${aprovacoes} aprovação(ões) pendente(s)\n`;
-      if (estoqueBaixo > 0) msg += `📦 ${estoqueBaixo} posição(ões) de estoque abaixo do mínimo\n`;
-      if (totalAlertas === 0) msg += "✅ Nenhum alerta pendente!";
-      alert(msg);
+      NavbarController._abrirModalNotificacoes();
     });
 
     // Botão de parâmetros (admin only) — abre modal com config da rotina atual
@@ -212,6 +194,180 @@ const NavbarController = {
       bsModal.hide();
       alert("✅ Parâmetros salvos com sucesso!");
     });
+  },
+
+  // ─── Notificações (#145) ────────────────────────────────────────────────
+
+  /**
+   * Conta as posições de estoque abaixo do mínimo (respeitando parâmetros).
+   * @returns {number}
+   */
+  _contarEstoqueBaixo() {
+    const paramsEstoque = window.ParamsController ? ParamsController.obter("estoque") : {};
+    if (!paramsEstoque.alertarEstoqueBaixo || !window.EstoqueStorage) return 0;
+    const posicoes = EstoqueStorage.buscarTodos();
+    let baixo = posicoes.filter((p) => p.quantidade <= (p.estoqueMin || paramsEstoque.estoqueMinimoPadrao || 5)).length;
+    if (paramsEstoque.limiteAlertasNavbar && baixo > paramsEstoque.limiteAlertasNavbar) {
+      baixo = paramsEstoque.limiteAlertasNavbar;
+    }
+    return baixo;
+  },
+
+  /**
+   * Total de alertas para o badge do sino.
+   * @returns {number}
+   */
+  _contarAlertas() {
+    const vencidas = window.TarefasController ? TarefasController.contarVencidasGlobal() : 0;
+    const aprovacoes = window.ApprovalsController ? ApprovalsController.contarPendentes() : 0;
+    return vencidas + aprovacoes + this._contarEstoqueBaixo();
+  },
+
+  /**
+   * Resolve a URL da rotina a partir do catálogo de módulos.
+   * @param {string} moduloId
+   * @returns {string|null}
+   */
+  _urlDaRotina(moduloId) {
+    if (!window.MODULOS_CATALOGO) return null;
+    const mod = MODULOS_CATALOGO.find((m) => m.id === moduloId);
+    return mod ? mod.url : null;
+  },
+
+  /**
+   * Abre o popup de notificações com aprovações pendentes (por rotina),
+   * tarefas vencidas e estoque baixo. Cada aprovação é clicável e leva ao registro.
+   */
+  _abrirModalNotificacoes() {
+    const _fmt = (v) => Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    const pendentes = window.ApprovalsController ? ApprovalsController.buscarPendentes() : [];
+    const vencidas = window.TarefasController ? TarefasController.contarVencidasGlobal() : 0;
+    const estoqueBaixo = this._contarEstoqueBaixo();
+
+    // Rótulo legível da rotina de origem da aprovação
+    const rotuloRotina = (moduloId) => {
+      if (!window.MODULOS_CATALOGO) return moduloId;
+      const mod = MODULOS_CATALOGO.find((m) => m.id === moduloId);
+      return mod ? `${mod.icon} ${mod.label}` : moduloId;
+    };
+
+    // Seção de aprovações pendentes (clicáveis → registro)
+    let aprovacoesHtml = "";
+    if (pendentes.length > 0) {
+      aprovacoesHtml = pendentes.map((p) => {
+        const url = this._urlDaRotina(p.referenciaModulo);
+        const dataSol = p.dataSolicitacao ? new Date(p.dataSolicitacao).toLocaleString("pt-BR") : "—";
+        const link = url ? `${url}?ref=${encodeURIComponent(p.referenciaId)}` : "#";
+        return `
+          <div class="list-group-item list-group-item-action" role="button"
+            onclick="NavbarController._irParaRegistro('${link}')" style="cursor:pointer;">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="me-2">
+                <div class="small text-muted">${rotuloRotina(p.referenciaModulo)}</div>
+                <div class="fw-semibold">${p.descricao || "Aprovação pendente"}</div>
+                <div class="small text-muted">Solicitado por ${p.solicitanteNome || "—"} em ${dataSol}</div>
+              </div>
+              <span class="fw-bold text-success text-nowrap">${_fmt(p.valor)}</span>
+            </div>
+            <div class="mt-2 d-flex gap-2" onclick="event.stopPropagation()">
+              <button class="btn btn-xs btn-success" onclick="NavbarController._aprovarNotificacao('${p.id}')">✅ Aprovar</button>
+              <button class="btn btn-xs btn-outline-danger" onclick="NavbarController._rejeitarNotificacao('${p.id}')">❌ Rejeitar</button>
+              ${url ? `<button class="btn btn-xs btn-outline-primary ms-auto" onclick="NavbarController._irParaRegistro('${link}')">🔗 Ver registro</button>` : ""}
+            </div>
+          </div>`;
+      }).join("");
+    }
+
+    const secaoAprovacoes = `
+      <div class="fw-semibold small text-uppercase text-muted mb-2">📋 Aprovações pendentes (${pendentes.length})</div>
+      <div class="list-group mb-3">
+        ${aprovacoesHtml || '<div class="list-group-item text-muted small">Nenhuma aprovação pendente.</div>'}
+      </div>`;
+
+    const secaoOutros = `
+      <div class="fw-semibold small text-uppercase text-muted mb-2">🔔 Outros alertas</div>
+      <ul class="list-group mb-1">
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <span>⚠️ Tarefas vencidas</span>
+          <span class="badge ${vencidas > 0 ? "bg-warning text-dark" : "bg-light text-muted border"}">${vencidas}</span>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center" role="button"
+          onclick="${this._urlDaRotina("estoque") ? `NavbarController._irParaRegistro('${this._urlDaRotina("estoque")}')` : ""}" style="cursor:pointer;">
+          <span>📦 Estoque abaixo do mínimo</span>
+          <span class="badge ${estoqueBaixo > 0 ? "bg-danger" : "bg-light text-muted border"}">${estoqueBaixo}</span>
+        </li>
+      </ul>`;
+
+    let modalEl = document.getElementById("modal-notificacoes");
+    if (!modalEl) {
+      modalEl = document.createElement("div");
+      modalEl.id = "modal-notificacoes";
+      modalEl.className = "modal fade";
+      modalEl.tabIndex = -1;
+      document.body.appendChild(modalEl);
+    }
+    modalEl.innerHTML = `
+      <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
+          <div class="modal-header">
+            <h5 class="modal-title">🔔 Notificações</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          <div class="modal-body">
+            ${secaoAprovacoes}
+            ${secaoOutros}
+          </div>
+        </div>
+      </div>`;
+
+    new bootstrap.Modal(modalEl).show();
+  },
+
+  /**
+   * Navega para o registro/rotina de uma notificação.
+   * @param {string} url
+   */
+  _irParaRegistro(url) {
+    if (url && url !== "#") window.location.href = url;
+  },
+
+  /**
+   * Aprova uma pendência a partir do popup e atualiza a tela.
+   * @param {string} pendenciaId
+   */
+  _aprovarNotificacao(pendenciaId) {
+    if (!window.ApprovalsController) return;
+    if (!confirm("Aprovar esta solicitação? A entrada financeira será gerada automaticamente.")) return;
+    const r = ApprovalsController.aprovar(pendenciaId);
+    if (!r.ok) { alert(`⚠️ ${r.erro}`); return; }
+    alert("✅ Aprovado! Entrada financeira gerada.");
+    this._abrirModalNotificacoes();
+    const badge = document.getElementById("badge-alertas-nav");
+    const total = this._contarAlertas();
+    if (badge) {
+      badge.textContent = total;
+      badge.classList.toggle("d-none", total === 0);
+    }
+  },
+
+  /**
+   * Rejeita uma pendência a partir do popup e atualiza a tela.
+   * @param {string} pendenciaId
+   */
+  _rejeitarNotificacao(pendenciaId) {
+    if (!window.ApprovalsController) return;
+    const motivo = prompt("Motivo da rejeição (opcional):");
+    if (motivo === null) return;
+    const r = ApprovalsController.rejeitar(pendenciaId, motivo);
+    if (!r.ok) { alert(`⚠️ ${r.erro}`); return; }
+    alert("❌ Rejeitado.");
+    this._abrirModalNotificacoes();
+    const badge = document.getElementById("badge-alertas-nav");
+    const total = this._contarAlertas();
+    if (badge) {
+      badge.textContent = total;
+      badge.classList.toggle("d-none", total === 0);
+    }
   },
 };
 

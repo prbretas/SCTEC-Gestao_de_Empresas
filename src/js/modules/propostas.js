@@ -131,6 +131,12 @@ document.addEventListener("DOMContentLoaded", () => {
   _aplicarFiltroDataPadrao(); // #140 — filtro de data default: último mês
   renderizarLista();
 
+  // #145 — abre o registro automaticamente quando vindo de uma notificação (?ref=<id>)
+  const refProposta = new URLSearchParams(window.location.search).get("ref");
+  if (refProposta) {
+    setTimeout(() => visualizarProposta(refProposta), 100);
+  }
+
   // Filtros e toggle de visualização (#89)
   document.getElementById("btn-filtrar-prop")?.addEventListener("click", renderizarLista);
   document.getElementById("btn-limpar-filtro-prop")?.addEventListener("click", () => {

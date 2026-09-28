@@ -126,6 +126,12 @@ document.addEventListener("DOMContentLoaded", () => {
   _preencherEmpresas();
   renderizarKanban();
 
+  // #145 — abre o negócio automaticamente quando vindo de uma notificação (?ref=<id>)
+  const refOportunidade = new URLSearchParams(window.location.search).get("ref");
+  if (refOportunidade) {
+    setTimeout(() => visualizarOportunidade(refOportunidade), 100);
+  }
+
   document.getElementById("btn-nova-oportunidade").addEventListener("click", () => {
     _resetarForm();
     document.getElementById("titulo-modal-oportunidade").textContent = "🎯 Novo Negócio";
