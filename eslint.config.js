@@ -22,6 +22,7 @@ module.exports = [
         sessionStorage: 'readonly',
         location: 'readonly',
         history: 'readonly',
+        URLSearchParams: 'readonly',
         navigator: 'readonly',
         fetch: 'readonly',
         alert: 'readonly',

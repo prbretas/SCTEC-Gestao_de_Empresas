@@ -63,7 +63,7 @@ const ApprovalsController = {
     const sessao = window.AuthService ? AuthService.obterSessao() : null;
 
     const pendencia = {
-      id: Date.now().toString(),
+      id: Date.now().toString() + Math.random().toString(36).slice(2),
       tipo: dados.tipo,
       referenciaId: dados.referenciaId,
       referenciaModulo: dados.referenciaModulo,
