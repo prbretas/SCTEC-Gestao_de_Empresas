@@ -317,7 +317,8 @@ function _adicionarLinhaItemEntrada(item = {}) {
         hiddenProdId.value = produto.id;
         inputDesc.value = produto.nome;
         inputDesc.setAttribute("readonly", "readonly");
-        inputValor.value = produto.preco || 0;
+        // #163 — Entrada (compra) sugere o VALOR DE COMPRA do produto (fallback: preco)
+        inputValor.value = produto.valorCompra || produto.preco || 0;
         toggleBtn.textContent = "🔓";
         toggleBtn.title = "Digitar manualmente";
         _recalcularTotalEntrada();

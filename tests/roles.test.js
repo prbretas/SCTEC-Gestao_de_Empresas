@@ -513,3 +513,68 @@ describe("RolesController — Níveis hierárquicos (#142)", () => {
     expect(vis).toEqual(["r-A"]);
   });
 });
+
+// ─── Filiais vinculadas ao papel (#166) ─────────────────────────────────────
+
+describe("RolesController — Filiais no papel (#166)", () => {
+  const ORG_ID = "88001";
+  const COD_BASE = "SCTEC-ORG-88001";
+
+  test("papel novo nasce com filiais vazio", () => {
+    const r = RolesController.criar(ORG_ID, "Vendas", COD_BASE);
+    expect(Array.isArray(r.papel.filiais)).toBe(true);
+    expect(r.papel.filiais).toHaveLength(0);
+  });
+
+  test("definirFiliais grava as filiais do papel", () => {
+    const r = RolesController.criar(ORG_ID, "Vendas2", COD_BASE);
+    const res = RolesController.definirFiliais(ORG_ID, r.papel.id, ["FIL_A", "FIL_B"]);
+    expect(res.ok).toBe(true);
+    expect(RolesController.buscarPorId(ORG_ID, r.papel.id).filiais).toEqual(["FIL_A", "FIL_B"]);
+  });
+
+  test("obterFiliaisDoUsuario: filiais do papel têm precedência sobre a do usuário", () => {
+    const r = RolesController.criar(ORG_ID, "ComFilial", COD_BASE);
+    RolesController.definirFiliais(ORG_ID, r.papel.id, ["FIL_A", "FIL_B"]);
+    AuthService.salvarUsuarios([
+      { id: "u-pf", nome: "u", role: "user", orgId: ORG_ID, papelId: r.papel.id, filialId: "FIL_C" },
+    ]);
+    expect(RolesController.obterFiliaisDoUsuario("u-pf")).toEqual(["FIL_A", "FIL_B"]);
+  });
+
+  test("obterFiliaisDoUsuario: sem filiais no papel, usa a filial do usuário", () => {
+    const r = RolesController.criar(ORG_ID, "SemFilialPapel", COD_BASE);
+    AuthService.salvarUsuarios([
+      { id: "u-uf", nome: "u", role: "user", orgId: ORG_ID, papelId: r.papel.id, filialId: "FIL_X" },
+    ]);
+    expect(RolesController.obterFiliaisDoUsuario("u-uf")).toEqual(["FIL_X"]);
+  });
+
+  test("filtrarPorVisibilidade: papel multi-filial vê criadores de qualquer filial do conjunto", () => {
+    const pGer = RolesController.criar(ORG_ID, "GerMulti", COD_BASE);
+    RolesController.definirNivel(ORG_ID, pGer.papel.id, 2);
+    RolesController.definirFiliais(ORG_ID, pGer.papel.id, ["FIL_A", "FIL_B"]);
+    const pFunc = RolesController.criar(ORG_ID, "FuncMulti", COD_BASE);
+    RolesController.definirNivel(ORG_ID, pFunc.papel.id, 4);
+
+    AuthService.salvarUsuarios([
+      { id: "ger", nome: "ger", role: "user", orgId: ORG_ID, papelId: pGer.papel.id },
+      { id: "fa", nome: "fa", role: "user", orgId: ORG_ID, papelId: pFunc.papel.id, filialId: "FIL_A" },
+      { id: "fb", nome: "fb", role: "user", orgId: ORG_ID, papelId: pFunc.papel.id, filialId: "FIL_B" },
+      { id: "fc", nome: "fc", role: "user", orgId: ORG_ID, papelId: pFunc.papel.id, filialId: "FIL_C" },
+    ]);
+    sessionStorage.setItem("SCTEC_SESSION", JSON.stringify({
+      id: "ger", nome: "ger", role: "user", orgId: ORG_ID, papelId: pGer.papel.id,
+    }));
+
+    const registros = [
+      { id: "r-a", criadoPorId: "fa" }, // FIL_A no conjunto → visível
+      { id: "r-b", criadoPorId: "fb" }, // FIL_B no conjunto → visível
+      { id: "r-c", criadoPorId: "fc" }, // FIL_C fora → oculto
+    ];
+    const vis = RolesController.filtrarPorVisibilidade(registros).map((x) => x.id);
+    expect(vis).toContain("r-a");
+    expect(vis).toContain("r-b");
+    expect(vis).not.toContain("r-c");
+  });
+});

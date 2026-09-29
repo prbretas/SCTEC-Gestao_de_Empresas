@@ -22,7 +22,7 @@ const MODULOS_CATALOGO = [
   { id: "financeiro",  label: "Financeiro",         icon: "💰", url: "financeiro.html",  defaultActive: true },
   { id: "relatorios",  label: "Relatórios",         icon: "📑", url: "relatorios.html",  defaultActive: true },
   { id: "settings",    label: "Configurações",      icon: "⚙️", url: "settings.html",    defaultActive: true, adminOnly: true },
-  { id: "admin",       label: "Gerenciar Usuários", icon: "👑", url: "admin.html",       defaultActive: true, adminOnly: true },
+  { id: "admin",       label: "Painel do Administrador", icon: "👑", url: "admin.html",       defaultActive: true, adminOnly: true },
 ];
 
 const ModulesController = {

@@ -194,7 +194,7 @@
 - Lista todos os membros da organização com nickname#ID, perfil, data e status
 - Ações: ativar/desativar acesso, promover/rebaixar perfil, remover da org
 - Proteção: não permite remover o único Admin
-- Card "Gerenciar Usuários" visível na home apenas para Admin
+- Card "Painel Administrador" visível na home apenas para Admin
 - **Arquivos:** `admin.html`, `js/admin.js`, `home.html`, `js/home.js`
 - **Commit:** pendente neste sprint
 

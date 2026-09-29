@@ -144,6 +144,7 @@ const RolesController = {
       modulosPermitidos: null, // null = todos os módulos ativos não-adminOnly (fallback)
       podeVerTodos: false,     // false = usuário vê apenas seus próprios registros
       nivel: NIVEL_PADRAO,     // #142 — nível hierárquico (1 = mais alto)
+      filiais: [],             // #166 — filiais vinculadas ao papel ([] = sem restrição por filial)
       dataCriacao: new Date().toISOString(),
     };
 
@@ -389,6 +390,44 @@ const RolesController = {
     return (papel && Number.isInteger(papel.nivel)) ? papel.nivel : NIVEL_PADRAO;
   },
 
+  // ─── Filiais vinculadas ao papel (#166) ─────────────────────────────────────
+
+  /**
+   * Define as filiais vinculadas a um papel (multi-seleção).
+   * @param {string} orgId
+   * @param {string} papelId
+   * @param {Array<string>} filialIds - [] = sem restrição por filial
+   * @returns {{ok: boolean, erro?: string}}
+   */
+  definirFiliais(orgId, papelId, filialIds) {
+    const papeis = this.obterPorOrg(orgId);
+    const idx = papeis.findIndex((p) => p.id === papelId);
+    if (idx === -1) return { ok: false, erro: "Papel não encontrado." };
+    papeis[idx].filiais = Array.isArray(filialIds) ? filialIds.filter(Boolean) : [];
+    this.salvar(orgId, papeis);
+    return { ok: true };
+  },
+
+  /**
+   * Retorna o conjunto de filiais "efetivas" de um usuário para visibilidade (#166).
+   * Precedência: filiais do PAPEL (se houver) senão a filial do próprio usuário.
+   * Conjunto vazio = sem restrição por filial.
+   * @param {string} userId
+   * @returns {Array<string>}
+   */
+  obterFiliaisDoUsuario(userId) {
+    if (!window.AuthService) return [];
+    const usuario = AuthService.buscarPorId(userId);
+    if (!usuario) return [];
+    if (usuario.papelId) {
+      const papel = this.buscarPorId(usuario.orgId, usuario.papelId);
+      if (papel && Array.isArray(papel.filiais) && papel.filiais.length) {
+        return papel.filiais;
+      }
+    }
+    return usuario.filialId ? [usuario.filialId] : [];
+  },
+
   /**
    * Verifica se o usuário logado pode ver os registros de outros usuários.
    * Admin sempre pode. Papel com podeVerTodos: true pode.
@@ -414,8 +453,11 @@ const RolesController = {
    * - Hierarquia: vê registros criados por usuários de nível estritamente
    *   abaixo do seu (nível do criador > nível do usuário logado; menor número
    *   = mais alto). Pares do mesmo nível não veem os registros um do outro.
-   * - Filial: se o usuário logado tem filialId, só vê registros de criadores da
-   *   mesma filial (criadores sem filial permanecem visíveis por compatibilidade).
+   * - Filial (#166): considera o conjunto de filiais EFETIVAS do usuário —
+   *   as filiais do papel (multi-seleção) têm precedência; senão a filial do
+   *   próprio usuário. Se o usuário tem filiais efetivas, só vê registros de
+   *   criadores cuja filial esteja nesse conjunto (criadores sem filial
+   *   permanecem visíveis por compatibilidade). Conjunto vazio = sem restrição.
    * @param {Array} registros
    * @returns {Array}
    */
@@ -426,8 +468,7 @@ const RolesController = {
     if (!sessao) return [];
 
     const meuNivel = this.obterNivelDoUsuario(sessao.id);
-    const usuario = AuthService.buscarPorId(sessao.id);
-    const minhaFilial = usuario ? (usuario.filialId || null) : null;
+    const minhasFiliais = this.obterFiliaisDoUsuario(sessao.id); // [] = sem restrição
 
     return registros.filter((r) => {
       if (!r.criadoPorId) return true;        // legado
@@ -437,11 +478,12 @@ const RolesController = {
       const nivelCriador = this.obterNivelDoUsuario(r.criadoPorId);
       if (nivelCriador <= meuNivel) return false;
 
-      // Filial: se tenho filial, o criador deve ser da mesma (ou sem filial)
-      if (minhaFilial) {
+      // Filial: se tenho filiais efetivas, o criador deve pertencer a uma delas
+      // (criadores sem filial permanecem visíveis por compatibilidade)
+      if (minhasFiliais.length) {
         const criador = AuthService.buscarPorId(r.criadoPorId);
         const filialCriador = criador ? (criador.filialId || null) : null;
-        if (filialCriador && filialCriador !== minhaFilial) return false;
+        if (filialCriador && !minhasFiliais.includes(filialCriador)) return false;
       }
 
       return true;
