@@ -133,12 +133,11 @@ function renderizarUsuarios() {
   const membros = todos.filter((u) => u.orgId === sessao.orgId);
 
   if (membros.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">Nenhum usuário encontrado na organização.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Nenhum usuário encontrado na organização.</td></tr>`;
     return;
   }
 
   const papeis = RolesController.obterPorOrg(sessao.orgId);
-  const filiais = window.FiliaisStorage ? FiliaisStorage.buscarTodos() : [];
 
   tbody.innerHTML = membros.map((u) => {
     const isAtivo = u.ativo !== false; // default true
@@ -170,20 +169,6 @@ function renderizarUsuarios() {
           ${opcoesPapeis}
         </select>`;
 
-    // Seletor de filial (#143)
-    const filialAtual = u.filialId || "";
-    const opcoesFiliais = filiais.map((f) =>
-      `<option value="${f.id}" ${filialAtual === f.id ? "selected" : ""}>${f.nome}</option>`
-    ).join("");
-    const seletorFilial = filiais.length === 0
-      ? `<span class="text-muted small">—</span>`
-      : `<select class="form-select form-select-sm" style="min-width:120px"
-            onchange="atribuirFilial('${u.id}', this.value)"
-            aria-label="Filial de ${u.nome}">
-          <option value="">— sem filial —</option>
-          ${opcoesFiliais}
-        </select>`;
-
     const acoes = isSelf
       ? `<span class="text-muted small">— você mesmo —</span>`
       : `
@@ -207,7 +192,6 @@ function renderizarUsuarios() {
         </td>
         <td>${roleBadge}</td>
         <td>${seletorPapel}</td>
-        <td>${seletorFilial}</td>
         <td class="small">${dataCad}</td>
         <td>${statusBadge}</td>
         <td class="text-center">${acoes}</td>
@@ -319,12 +303,13 @@ function renderizarPapeis() {
   const papeis = RolesController.obterPorOrg(sessao.orgId);
 
   if (papeis.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Nenhum papel criado. Clique em "➕ Novo Papel" para começar.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">Nenhum papel criado. Clique em "➕ Novo Papel" para começar.</td></tr>`;
     return;
   }
 
   // Módulos disponíveis para papéis (exclui adminOnly)
   const modulosDisponiveis = MODULOS_CATALOGO.filter((m) => !m.adminOnly);
+  const filiaisOrg = window.FiliaisStorage ? FiliaisStorage.buscarTodos() : [];
 
   tbody.innerHTML = papeis.map((p) => {
     const qtdUsuarios = RolesController.contarUsuariosPorPapel(sessao.orgId, p.id);
@@ -344,10 +329,20 @@ function renderizarPapeis() {
     const nivelInfo = (window.NIVEIS_HIERARQUICOS || []).find((n) => n.nivel === p.nivel);
     const nivelLabel = nivelInfo ? `${nivelInfo.nivel} — ${nivelInfo.label}` : (p.nivel || "—");
 
+    // #166 — Filiais vinculadas ao papel
+    const filiaisPapel = Array.isArray(p.filiais) ? p.filiais : [];
+    const badgesFiliais = filiaisPapel.length
+      ? filiaisPapel.map((fid) => {
+        const f = filiaisOrg.find((x) => x.id === fid);
+        return `<span class="badge bg-light text-dark border me-1 mb-1">🏢 ${f ? f.nome : "?"}</span>`;
+      }).join("")
+      : `<span class="text-muted small">Todas</span>`;
+
     return `
       <tr>
         <td class="fw-semibold">${p.nome}</td>
         <td><span class="badge bg-info text-dark">🪜 ${nivelLabel}</span></td>
+        <td>${badgesFiliais}</td>
         <td>
           <span class="font-monospace small">${p.codigoConvite}</span>
           <button class="btn btn-xs btn-outline-secondary ms-2"
@@ -591,6 +586,10 @@ function renderizarFiliais() {
   const filiais = FiliaisStorage.buscarTodos();
   const enderecos = window.EnderecosStorage ? EnderecosStorage.buscarTodos() : [];
   const usuarios = sessao ? AuthService.obterUsuarios().filter((u) => u.orgId === sessao.orgId) : [];
+  // Mapa papelId → filiais do papel (para contar usuários por filial via papel)
+  const papeis = sessao && window.RolesController ? RolesController.obterPorOrg(sessao.orgId) : [];
+  const filiaisPorPapel = {};
+  papeis.forEach((p) => { filiaisPorPapel[p.id] = Array.isArray(p.filiais) ? p.filiais : []; });
 
   if (filiais.length === 0) {
     tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Nenhuma filial cadastrada. Clique em "➕ Nova Filial" para começar.</td></tr>`;
@@ -604,7 +603,8 @@ function renderizarFiliais() {
     const badgesEnd = nomesEnderecos.length
       ? nomesEnderecos.map((n) => `<span class="badge bg-light text-dark border me-1">📦 ${n}</span>`).join("")
       : `<span class="text-muted small">—</span>`;
-    const qtdUsuarios = usuarios.filter((u) => u.filialId === f.id).length;
+    // Conta usuários cujo PAPEL inclui esta filial (funil por papel de trabalho)
+    const qtdUsuarios = usuarios.filter((u) => u.papelId && (filiaisPorPapel[u.papelId] || []).includes(f.id)).length;
     const enderecoPrincipal = _formatarEnderecoFilial(f.endereco);
 
     return `
@@ -763,21 +763,6 @@ function excluirFilial(id, nome) {
   }
   renderizarFiliais();
   renderizarUsuarios();
-}
-
-/**
- * Vincula (ou desvincula) um usuário a uma filial.
- * @param {string} userId
- * @param {string} filialId - string vazia para desvincular
- */
-function atribuirFilial(userId, filialId) {
-  if (!window.FiliaisStorage) return;
-  const resultado = FiliaisStorage.vincularUsuario(userId, filialId || null);
-  if (!resultado.ok) {
-    alert(`⚠️ ${resultado.erro}`);
-  }
-  renderizarUsuarios();
-  renderizarFiliais();
 }
 
 // ─── Fonte de Dados: toggle localStorage ↔ banco (#144, Fase 3) ───────────────

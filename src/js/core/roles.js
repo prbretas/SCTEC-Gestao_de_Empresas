@@ -410,7 +410,8 @@ const RolesController = {
 
   /**
    * Retorna o conjunto de filiais "efetivas" de um usuário para visibilidade (#166).
-   * Precedência: filiais do PAPEL (se houver) senão a filial do próprio usuário.
+   * A visibilidade por filial é determinada EXCLUSIVAMENTE pelo papel de trabalho
+   * (funil por papel) — a filial não é mais definida por usuário.
    * Conjunto vazio = sem restrição por filial.
    * @param {string} userId
    * @returns {Array<string>}
@@ -418,14 +419,9 @@ const RolesController = {
   obterFiliaisDoUsuario(userId) {
     if (!window.AuthService) return [];
     const usuario = AuthService.buscarPorId(userId);
-    if (!usuario) return [];
-    if (usuario.papelId) {
-      const papel = this.buscarPorId(usuario.orgId, usuario.papelId);
-      if (papel && Array.isArray(papel.filiais) && papel.filiais.length) {
-        return papel.filiais;
-      }
-    }
-    return usuario.filialId ? [usuario.filialId] : [];
+    if (!usuario || !usuario.papelId) return [];
+    const papel = this.buscarPorId(usuario.orgId, usuario.papelId);
+    return (papel && Array.isArray(papel.filiais)) ? papel.filiais : [];
   },
 
   /**
