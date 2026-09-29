@@ -90,6 +90,7 @@ module.exports = [
         StorageConfig: 'readonly',
         LocalStorageProvider: 'readonly',
         ApiProvider: 'readonly',
+        MigracaoService: 'readonly',
         FiliaisStorage: 'readonly',
         FinanceiroStorage: 'readonly',
         Event: 'readonly',

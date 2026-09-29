@@ -20,6 +20,7 @@ const JS_PATH_MAP = {
   "filiais.js":    "core",
   "storage-provider.js": "core",
   "api-provider.js": "core",
+  "migracao.js":   "core",
   // pages
   "login.js":      "pages",
   "register.js":   "pages",

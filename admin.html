@@ -269,7 +269,21 @@
 
           <div class="alert alert-warning small mt-3 mb-0">
             ⚠️ Ao trocar a fonte de dados, os dados <strong>não</strong> são migrados automaticamente entre localStorage e banco.
-            Use a mesma fonte de forma consistente. A migração de dados é uma etapa separada (ver estudos da issue #144).
+            Use a mesma fonte de forma consistente. Use a área de <strong>Backup / Migração</strong> abaixo para exportar e importar seus dados.
+          </div>
+
+          <!-- BACKUP / MIGRAÇÃO DE DADOS (#144, Fase 4) -->
+          <hr class="my-4" />
+          <h3 class="h6 mb-2">💼 Backup / Migração de dados</h3>
+          <p class="text-muted small mb-3">
+            Exporte todos os dados da organização em um arquivo JSON (backup ou transferência para outra fonte)
+            e importe-os de volta quando precisar. A importação <strong>substitui</strong> as coleções presentes no arquivo.
+          </p>
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <button class="btn btn-sm btn-outline-primary" id="btn-exportar-dados" type="button">⬇️ Exportar dados (JSON)</button>
+            <button class="btn btn-sm btn-outline-secondary" id="btn-importar-dados" type="button">⬆️ Importar dados (JSON)</button>
+            <input type="file" id="input-importar-dados" accept="application/json,.json" class="d-none" />
+            <span id="migracao-status" class="small text-muted"></span>
           </div>
         </div>
       </div>
@@ -398,6 +412,7 @@ npm start                     # http://localhost:3000 (API em /api/v1)</code></p
     <script src="./src/js/core/filiais.js"></script>
     <script src="./src/js/core/storage-provider.js"></script>
     <script src="./src/js/core/api-provider.js"></script>
+    <script src="./src/js/core/migracao.js"></script>
     <script src="./src/js/pages/admin.js"></script>
     <script src="./src/js/core/inactivity.js"></script>
   </body>

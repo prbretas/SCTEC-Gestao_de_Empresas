@@ -25,17 +25,34 @@ function _formatarAuditoria(registro) {
 }
 
 const FinanceiroStorage = {
-  _obterChave() {
+  _colecao: "financeiro",
+  _orgId() {
     if (window.AuthService) {
       const s = AuthService.obterSessao();
-      if (s) return `SCTEC_FINANCEIRO_${s.orgId || s.id}`;
+      if (s) return s.orgId || s.id;
     }
-    return "SCTEC_FINANCEIRO_local";
+    return "local";
+  },
+  _obterChave() {
+    return `SCTEC_FINANCEIRO_${this._orgId()}`;
+  },
+  _temProvider() {
+    return !!(window.StorageProvider && typeof StorageProvider.listSync === "function");
   },
   buscarTodos() {
+    // #144 Fase 4 — delega ao StorageProvider (fast-path sync) com fallback localStorage
+    if (this._temProvider()) {
+      try { return StorageProvider.listSync(this._colecao, this._orgId()); } catch { /* fallback abaixo */ }
+    }
     try { return JSON.parse(localStorage.getItem(this._obterChave()) || "[]"); } catch { return []; }
   },
-  salvarTodos(lista) { localStorage.setItem(this._obterChave(), JSON.stringify(lista)); },
+  salvarTodos(lista) {
+    if (this._temProvider()) {
+      StorageProvider.replaceAllSync(this._colecao, this._orgId(), lista);
+      return;
+    }
+    localStorage.setItem(this._obterChave(), JSON.stringify(lista));
+  },
   adicionar(t) {
     const lista = this.buscarTodos();
     t.id = Date.now().toString() + Math.random().toString(36).slice(2);

@@ -26,20 +26,38 @@ function _formatarAuditoria(registro) {
 }
 
 const CrmStorage = {
-  _obterChave() {
+  _colecao: "crm",
+
+  _orgId() {
     if (window.AuthService) {
       const sessao = AuthService.obterSessao();
-      if (sessao) return `SCTEC_CRM_${sessao.orgId || sessao.id}`;
+      if (sessao) return sessao.orgId || sessao.id;
     }
-    return "SCTEC_CRM_local";
+    return "local";
+  },
+
+  _obterChave() {
+    return `SCTEC_CRM_${this._orgId()}`;
+  },
+
+  _temProvider() {
+    return !!(window.StorageProvider && typeof StorageProvider.listSync === "function");
   },
 
   buscarTodos() {
+    // #144 Fase 4 — delega ao StorageProvider (fast-path sync) com fallback localStorage
+    if (this._temProvider()) {
+      try { return StorageProvider.listSync(this._colecao, this._orgId()); } catch { /* fallback abaixo */ }
+    }
     try { return JSON.parse(localStorage.getItem(this._obterChave()) || "[]"); }
     catch { return []; }
   },
 
   salvarTodos(lista) {
+    if (this._temProvider()) {
+      StorageProvider.replaceAllSync(this._colecao, this._orgId(), lista);
+      return;
+    }
     localStorage.setItem(this._obterChave(), JSON.stringify(lista));
   },
 

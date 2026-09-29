@@ -29,17 +29,34 @@ function _formatarAuditoriaProd(registro) {
 // ─── Storage de Produtos (apenas cadastro) ──────────────────────────────────
 
 const ProdutosStorage = {
-  _obterChave() {
+  _colecao: "produtos",
+  _orgId() {
     if (window.AuthService) {
       const s = AuthService.obterSessao();
-      if (s) return `SCTEC_PRODUTOS_${s.orgId || s.id}`;
+      if (s) return s.orgId || s.id;
     }
-    return "SCTEC_PRODUTOS_local";
+    return "local";
+  },
+  _obterChave() {
+    return `SCTEC_PRODUTOS_${this._orgId()}`;
+  },
+  _temProvider() {
+    return !!(window.StorageProvider && typeof StorageProvider.listSync === "function");
   },
   buscarTodos() {
+    // #144 Fase 4 — delega ao StorageProvider (fast-path sync) com fallback localStorage
+    if (this._temProvider()) {
+      try { return StorageProvider.listSync(this._colecao, this._orgId()); } catch { /* fallback abaixo */ }
+    }
     try { return JSON.parse(localStorage.getItem(this._obterChave()) || "[]"); } catch { return []; }
   },
-  salvarTodos(lista) { localStorage.setItem(this._obterChave(), JSON.stringify(lista)); },
+  salvarTodos(lista) {
+    if (this._temProvider()) {
+      StorageProvider.replaceAllSync(this._colecao, this._orgId(), lista);
+      return;
+    }
+    localStorage.setItem(this._obterChave(), JSON.stringify(lista));
+  },
   adicionar(p) {
     const lista = this.buscarTodos();
     p.id = Date.now().toString() + Math.random().toString(36).slice(2);

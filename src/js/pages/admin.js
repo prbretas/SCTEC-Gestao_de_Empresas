@@ -64,6 +64,13 @@ document.addEventListener("DOMContentLoaded", () => {
     r.addEventListener("change", _atualizarVisibilidadeConfigApi)
   );
 
+  // ─── Backup / Migração de dados (#144, Fase 4) ──────────────────────────
+  document.getElementById("btn-exportar-dados")?.addEventListener("click", exportarDados);
+  document.getElementById("btn-importar-dados")?.addEventListener("click", () =>
+    document.getElementById("input-importar-dados")?.click()
+  );
+  document.getElementById("input-importar-dados")?.addEventListener("change", importarDados);
+
   renderizarUsuarios();
   renderizarPapeis();
   renderizarFiliais();
@@ -856,4 +863,81 @@ async function testarConexaoApi() {
       status.className = "small d-block mt-1 text-danger";
     }
   }
+}
+
+// ─── Backup / Migração de dados (#144, Fase 4) ────────────────────────────────
+
+/**
+ * Exporta todas as coleções da organização atual em um arquivo JSON e dispara
+ * o download no navegador.
+ */
+function exportarDados() {
+  const status = document.getElementById("migracao-status");
+  if (!window.MigracaoService) {
+    if (status) { status.textContent = "⚠️ Serviço de migração indisponível."; status.className = "small text-warning"; }
+    return;
+  }
+  try {
+    const json = MigracaoService.exportarTudo();
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const carimbo = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `sctec-backup-${carimbo}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    if (status) { status.textContent = "✅ Backup exportado."; status.className = "small text-success"; }
+  } catch {
+    if (status) { status.textContent = "❌ Falha ao exportar os dados."; status.className = "small text-danger"; }
+  }
+}
+
+/**
+ * Importa dados a partir de um arquivo JSON selecionado pelo usuário.
+ * Pede confirmação antes de substituir as coleções.
+ */
+function importarDados(evento) {
+  const input = evento.target;
+  const arquivo = input.files && input.files[0];
+  const status = document.getElementById("migracao-status");
+  if (!arquivo) return;
+
+  if (!window.MigracaoService) {
+    if (status) { status.textContent = "⚠️ Serviço de migração indisponível."; status.className = "small text-warning"; }
+    input.value = "";
+    return;
+  }
+
+  const confirmar = confirm(
+    "A importação substitui os dados das coleções presentes no arquivo. Deseja continuar?"
+  );
+  if (!confirmar) { input.value = ""; return; }
+
+  const leitor = new FileReader();
+  leitor.onload = () => {
+    try {
+      const resultado = MigracaoService.importarTudo(String(leitor.result));
+      if (status) {
+        status.textContent = `✅ Importado: ${resultado.totalRegistros} registro(s) em ${resultado.importadas.length} coleção(ões). A página será recarregada.`;
+        status.className = "small text-success";
+      }
+      alert("✅ Dados importados com sucesso. A página será recarregada.");
+      window.location.reload();
+    } catch (erro) {
+      if (status) {
+        status.textContent = `❌ Falha ao importar: ${erro.message || "arquivo inválido"}.`;
+        status.className = "small text-danger";
+      }
+    } finally {
+      input.value = "";
+    }
+  };
+  leitor.onerror = () => {
+    if (status) { status.textContent = "❌ Não foi possível ler o arquivo."; status.className = "small text-danger"; }
+    input.value = "";
+  };
+  leitor.readAsText(arquivo);
 }
