@@ -1,0 +1,20 @@
+# compose.yaml — PostgreSQL para o backend SCTEC (#144 Fase 2).
+# Subir com Podman:  podman machine start   (uma vez)
+#                    podman compose -f server/compose.yaml up -d
+# O schema é aplicado automaticamente na primeira subida (initdb).
+services:
+  db:
+    image: docker.io/library/postgres:16
+    container_name: sctec-postgres
+    environment:
+      POSTGRES_USER: sctec
+      POSTGRES_PASSWORD: troque-esta-senha
+      POSTGRES_DB: sctec
+    ports:
+      - "5432:5432"
+    volumes:
+      - sctec_pgdata:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+
+volumes:
+  sctec_pgdata:

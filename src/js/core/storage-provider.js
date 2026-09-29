@@ -121,9 +121,12 @@ const StorageConfig = {
     } catch { /* ambiente sem localStorage */ }
   },
 
-  /** Retorna o provider ativo. Na Fase 1 sempre o local. */
+  /**
+   * Retorna o provider ativo conforme o modo.
+   * "api" → ApiProvider (Fase 2, se carregado); senão cai no local.
+   */
   provider() {
-    // Fase 2: if (this.modo() === "api" && window.ApiProvider) return window.ApiProvider;
+    if (this.modo() === "api" && window.ApiProvider) return window.ApiProvider;
     return LocalStorageProvider;
   },
 };

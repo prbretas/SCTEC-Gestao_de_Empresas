@@ -18,6 +18,7 @@ const JS_PATH_MAP = {
   "modules.js":    "core",
   "filiais.js":    "core",
   "storage-provider.js": "core",
+  "api-provider.js": "core",
   // pages
   "login.js":      "pages",
   "register.js":   "pages",
