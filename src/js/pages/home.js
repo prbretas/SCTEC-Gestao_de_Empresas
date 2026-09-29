@@ -37,11 +37,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // #172 — Cria a Filial 01 no primeiro uso (idempotente) e #173 — seletor de filial ativa
+  // #172 — Cria a Filial 01 no primeiro uso (idempotente) e #177 — seleção de filial via popup
   if (window.FiliaisStorage) {
     FiliaisStorage.garantirFilialPadrao();
-    FiliaisStorage.garantirFilialAtiva();
-    _renderizarSeletorFilial();
+    _inicializarFilialAtiva();
   }
 
   // Renderiza cards de módulos dinamicamente
@@ -112,34 +111,96 @@ function _renderizarCards(sessao) {
 }
 
 /**
- * #173 — Renderiza o seletor de filial ativa na Home.
- * Mostra apenas as filiais que o usuário pode acessar (pelas filiais do papel).
- * Se houver apenas uma, seleciona automaticamente e mantém o seletor informativo.
+ * #177 — Inicializa a filial ativa na Home.
+ * - 0 filiais disponíveis: não mostra badge nem popup.
+ * - 1 filial: seleciona automaticamente (sem popup) e mostra o badge.
+ * - 2+ filiais: se ainda não há filial ativa válida, abre o popup de seleção.
+ * O badge no header é clicável para reabrir o popup.
  */
-function _renderizarSeletorFilial() {
+function _inicializarFilialAtiva() {
   const container = document.getElementById("home-filial-container");
-  const select = document.getElementById("home-filial-select");
-  if (!container || !select || !window.FiliaisStorage) return;
+  if (!container || !window.FiliaisStorage) return;
 
   const disponiveis = FiliaisStorage.filiaisDisponiveisParaUsuario();
 
-  // Sem filiais para escolher → não exibe o seletor
   if (!disponiveis.length) {
     container.style.display = "none";
+    FiliaisStorage.definirFilialAtiva(null);
     return;
   }
 
+  // 1 filial → auto-seleciona sem popup
+  if (disponiveis.length === 1) {
+    FiliaisStorage.definirFilialAtiva(disponiveis[0].id);
+    _atualizarBadgeFilial();
+    return;
+  }
+
+  // 2+ filiais: se já há uma ativa válida, só mostra o badge; senão abre o popup
   const ativaId = FiliaisStorage.obterFilialAtivaId();
-  select.innerHTML = disponiveis
-    .map((f) => `<option value="${f.id}" ${f.id === ativaId ? "selected" : ""}>${f.nome}</option>`)
-    .join("");
+  const jaValida = ativaId && disponiveis.some((f) => f.id === ativaId);
+  _atualizarBadgeFilial();
 
-  container.style.display = "";
+  // Badge clicável reabre o popup
+  const badge = document.getElementById("home-filial-badge");
+  if (badge) badge.onclick = () => _abrirPopupFilial(disponiveis);
 
-  // Se só há uma opção, mantém selecionada e desabilita a troca
-  select.disabled = disponiveis.length === 1;
+  if (!jaValida) {
+    _abrirPopupFilial(disponiveis);
+  }
+}
 
-  select.onchange = () => {
-    FiliaisStorage.definirFilialAtiva(select.value);
+/**
+ * Atualiza o badge da filial ativa no cabeçalho da Home.
+ */
+function _atualizarBadgeFilial() {
+  const container = document.getElementById("home-filial-container");
+  const nomeEl = document.getElementById("home-filial-nome");
+  if (!container || !nomeEl || !window.FiliaisStorage) return;
+  const ativa = FiliaisStorage.obterFilialAtiva();
+  if (ativa) {
+    nomeEl.textContent = ativa.nome;
+    container.style.display = "";
+  } else {
+    container.style.display = "none";
+  }
+}
+
+/**
+ * #177 — Abre o popup (modal) de seleção de filial.
+ * @param {Array} disponiveis - filiais que o usuário pode escolher
+ */
+function _abrirPopupFilial(disponiveis) {
+  const modalEl = document.getElementById("modal-selecao-filial");
+  const lista = document.getElementById("modal-filial-lista");
+  const btnConfirmar = document.getElementById("btn-confirmar-filial");
+  if (!modalEl || !lista || !btnConfirmar || !window.bootstrap) return;
+
+  const ativaId = FiliaisStorage.obterFilialAtivaId();
+  let selecionadaId = ativaId && disponiveis.some((f) => f.id === ativaId) ? ativaId : null;
+
+  lista.innerHTML = disponiveis.map((f) => `
+    <button type="button" class="list-group-item list-group-item-action ${f.id === selecionadaId ? "active" : ""}"
+      data-filial-id="${f.id}">🏢 ${f.nome}</button>`).join("");
+
+  btnConfirmar.disabled = !selecionadaId;
+
+  lista.querySelectorAll("[data-filial-id]").forEach((item) => {
+    item.addEventListener("click", () => {
+      selecionadaId = item.getAttribute("data-filial-id");
+      lista.querySelectorAll("[data-filial-id]").forEach((i) => i.classList.remove("active"));
+      item.classList.add("active");
+      btnConfirmar.disabled = false;
+    });
+  });
+
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+  btnConfirmar.onclick = () => {
+    if (!selecionadaId) return;
+    FiliaisStorage.definirFilialAtiva(selecionadaId);
+    _atualizarBadgeFilial();
+    modal.hide();
   };
+
+  modal.show();
 }
