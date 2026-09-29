@@ -28,6 +28,13 @@ const NavbarController = {
     // Nome do sistema
     const nomesSistema = config.nomeSistema || "SCTEC";
 
+    // #174 — Filial ativa (se houver) exibida no header
+    let labelFilial = "";
+    if (window.FiliaisStorage) {
+      const filialAtiva = FiliaisStorage.obterFilialAtiva();
+      if (filialAtiva) labelFilial = filialAtiva.nome;
+    }
+
     // Nome da rotina — usa o mapeamento do catálogo se não for passado
     let labelRotina = nomeRotina;
     if (!labelRotina && paginaAtual && window.MODULOS_CATALOGO) {
@@ -46,6 +53,7 @@ const NavbarController = {
             <div class="d-flex align-items-center gap-2">
               ${logoHtml}
               <span class="text-white fw-semibold d-none d-md-inline" style="font-size:.9rem;">${nomesSistema}</span>
+              ${labelFilial ? `<span class="text-white-50 d-none d-md-inline mx-1">›</span><span class="text-white d-none d-md-inline" style="font-size:.85rem;">🏢 ${labelFilial}</span>` : ""}
               ${labelRotina ? `<span class="text-white-50 d-none d-md-inline mx-1">›</span><span class="text-white" style="font-size:.85rem;">${labelRotina}</span>` : ""}
             </div>
 

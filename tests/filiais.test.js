@@ -6,6 +6,7 @@ const { loadFull } = require("./helpers/loadModule");
 beforeAll(() => {
   loadFull("auth.js");
   loadFull("storage.js");
+  loadFull("roles.js");
   loadFull("filiais.js");
 });
 
@@ -169,5 +170,64 @@ describe("FiliaisStorage — Endereço principal da filial (#164)", () => {
     });
     expect(filial.endereco.logradouro).toBe("Rua C");
     expect(filial.enderecosEstoque).toEqual(["end_geral"]);
+  });
+});
+
+describe("FiliaisStorage — Filial padrão e filial ativa (#172, #173)", () => {
+  test("garantirFilialPadrao cria 'Filial 01' quando não há filiais", () => {
+    expect(FiliaisStorage.buscarTodos()).toHaveLength(0);
+    const criada = FiliaisStorage.garantirFilialPadrao();
+    expect(criada).not.toBeNull();
+    expect(criada.nome).toBe("Filial 01");
+    expect(FiliaisStorage.buscarTodos()).toHaveLength(1);
+  });
+
+  test("garantirFilialPadrao é idempotente (não duplica se já há filial)", () => {
+    FiliaisStorage.adicionar({ nome: "Matriz" });
+    const r = FiliaisStorage.garantirFilialPadrao();
+    expect(r).toBeNull();
+    expect(FiliaisStorage.buscarTodos()).toHaveLength(1);
+  });
+
+  test("definir/obter filial ativa na sessão", () => {
+    const { filial } = FiliaisStorage.adicionar({ nome: "Filial X" });
+    FiliaisStorage.definirFilialAtiva(filial.id);
+    expect(FiliaisStorage.obterFilialAtivaId()).toBe(filial.id);
+    expect(FiliaisStorage.obterFilialAtiva().nome).toBe("Filial X");
+  });
+
+  test("filial ativa é isolada por organização", () => {
+    const { filial } = FiliaisStorage.adicionar({ nome: "Da ORG_FIL" });
+    FiliaisStorage.definirFilialAtiva(filial.id);
+    // troca de org na sessão → não enxerga a filial ativa da outra org
+    sessionStorage.setItem("SCTEC_SESSION", JSON.stringify({ id: "22", orgId: "ORG_OUTRA", role: "admin" }));
+    expect(FiliaisStorage.obterFilialAtivaId()).toBeNull();
+  });
+
+  test("garantirFilialAtiva auto-seleciona quando há exatamente uma disponível", () => {
+    const { filial } = FiliaisStorage.adicionar({ nome: "Única" });
+    const ativa = FiliaisStorage.garantirFilialAtiva();
+    expect(ativa.id).toBe(filial.id);
+    expect(FiliaisStorage.obterFilialAtivaId()).toBe(filial.id);
+  });
+
+  test("garantirFilialAtiva não escolhe sozinha quando há várias (admin vê todas)", () => {
+    FiliaisStorage.adicionar({ nome: "F1" });
+    FiliaisStorage.adicionar({ nome: "F2" });
+    const ativa = FiliaisStorage.garantirFilialAtiva();
+    expect(ativa).toBeNull(); // sem seleção prévia e >1 opção → não auto-seleciona
+  });
+
+  test("filiaisDisponiveisParaUsuario restringe pelas filiais do papel", () => {
+    const ORG = "ORG_FIL";
+    const f1 = FiliaisStorage.adicionar({ nome: "F1" }).filial;
+    FiliaisStorage.adicionar({ nome: "F2" });
+    const papel = RolesController.criar(ORG, "Vendedor", "SCTEC-ORG-FIL");
+    RolesController.definirFiliais(ORG, papel.papel.id, [f1.id]);
+    AuthService.salvarUsuarios([{ id: "u1", nome: "u", role: "user", orgId: ORG, papelId: papel.papel.id }]);
+    sessionStorage.setItem("SCTEC_SESSION", JSON.stringify({ id: "u1", orgId: ORG, role: "user", papelId: papel.papel.id }));
+
+    const disp = FiliaisStorage.filiaisDisponiveisParaUsuario();
+    expect(disp.map((f) => f.nome)).toEqual(["F1"]);
   });
 });

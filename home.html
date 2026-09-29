@@ -51,6 +51,12 @@
           <small id="home-codigo-convite" class="text-muted mt-2 fw-bold" style="display:none;font-size:.75rem;letter-spacing:.5px;"></small>
         </div>
 
+        <!-- Seletor de filial ativa (#173) -->
+        <div class="mb-4 text-center" id="home-filial-container" style="display:none;">
+          <label for="home-filial-select" class="form-label small text-muted mb-1">🏢 Filial ativa</label>
+          <select id="home-filial-select" class="form-select form-select-sm mx-auto" style="max-width:320px;"></select>
+        </div>
+
         <!-- Cards de Navegação — renderizados dinamicamente por modules.js -->
         <div class="row g-4 justify-content-center" id="cards-grid"></div>
 
@@ -64,6 +70,7 @@
     <script src="./src/js/core/auth.js"></script>
     <script src="./src/js/core/roles.js"></script>
     <script src="./src/js/core/modules.js"></script>
+    <script src="./src/js/core/filiais.js"></script>
     <script src="./src/js/pages/home.js"></script>
     <script src="./src/js/core/inactivity.js"></script>
   </body>

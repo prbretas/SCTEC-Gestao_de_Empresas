@@ -37,6 +37,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // #172 — Cria a Filial 01 no primeiro uso (idempotente) e #173 — seletor de filial ativa
+  if (window.FiliaisStorage) {
+    FiliaisStorage.garantirFilialPadrao();
+    FiliaisStorage.garantirFilialAtiva();
+    _renderizarSeletorFilial();
+  }
+
   // Renderiza cards de módulos dinamicamente
   _renderizarCards(sessao);
 
@@ -102,4 +109,37 @@ function _renderizarCards(sessao) {
       gridAdmin.style.display = "none";
     }
   }
+}
+
+/**
+ * #173 — Renderiza o seletor de filial ativa na Home.
+ * Mostra apenas as filiais que o usuário pode acessar (pelas filiais do papel).
+ * Se houver apenas uma, seleciona automaticamente e mantém o seletor informativo.
+ */
+function _renderizarSeletorFilial() {
+  const container = document.getElementById("home-filial-container");
+  const select = document.getElementById("home-filial-select");
+  if (!container || !select || !window.FiliaisStorage) return;
+
+  const disponiveis = FiliaisStorage.filiaisDisponiveisParaUsuario();
+
+  // Sem filiais para escolher → não exibe o seletor
+  if (!disponiveis.length) {
+    container.style.display = "none";
+    return;
+  }
+
+  const ativaId = FiliaisStorage.obterFilialAtivaId();
+  select.innerHTML = disponiveis
+    .map((f) => `<option value="${f.id}" ${f.id === ativaId ? "selected" : ""}>${f.nome}</option>`)
+    .join("");
+
+  container.style.display = "";
+
+  // Se só há uma opção, mantém selecionada e desabilita a troca
+  select.disabled = disponiveis.length === 1;
+
+  select.onchange = () => {
+    FiliaisStorage.definirFilialAtiva(select.value);
+  };
 }
