@@ -20,6 +20,10 @@
     "testMatch": [
       "**/tests/**/*.test.js"
     ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/server/"
+    ],
     "coverageReporters": [
       "text",
       "lcov"
