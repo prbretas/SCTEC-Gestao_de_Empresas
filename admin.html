@@ -56,7 +56,6 @@
                 <th>Usuário</th>
                 <th>Perfil</th>
                 <th>Papel de Trabalho</th>
-                <th>Filial</th>
                 <th>Cadastrado em</th>
                 <th>Status</th>
                 <th class="text-center">Ações</th>
@@ -137,6 +136,7 @@
               <tr>
                 <th>Papel</th>
                 <th>Nível</th>
+                <th>Filiais</th>
                 <th>Código de Convite</th>
                 <th>Módulos</th>
                 <th class="text-center">Usuários</th>
@@ -233,6 +233,8 @@
           <p class="text-muted small mb-3">
             Escolha onde os dados do sistema são armazenados. <strong>localStorage</strong> é indicado para testes
             (dados no navegador); <strong>Banco de dados</strong> usa a API/servidor (produção).
+            Não sabe como configurar o banco?
+            <a href="#" id="link-doc-banco" data-bs-toggle="modal" data-bs-target="#modal-doc-banco">📖 documentação aqui</a>.
           </p>
 
           <div class="mb-3">
@@ -268,6 +270,61 @@
           <div class="alert alert-warning small mt-3 mb-0">
             ⚠️ Ao trocar a fonte de dados, os dados <strong>não</strong> são migrados automaticamente entre localStorage e banco.
             Use a mesma fonte de forma consistente. A migração de dados é uma etapa separada (ver estudos da issue #144).
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL: Documentação de conexão ao banco -->
+      <div class="modal fade" id="modal-doc-banco" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">📖 Como conectar ao banco de dados — passo a passo</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+              <p class="text-muted small">Guia rápido para ligar o SCTEC ao PostgreSQL via backend. Detalhes completos em <code>docs/GUIA_CONEXAO_BANCO_144.md</code>.</p>
+
+              <h6 class="fw-bold mt-3">1. Pré-requisitos</h6>
+              <p class="small mb-2">Node.js 18+ e Podman instalados. Confira no terminal: <code>node --version</code>, <code>podman --version</code>.</p>
+
+              <h6 class="fw-bold mt-3">2. Subir o PostgreSQL (Podman)</h6>
+              <pre class="bg-light border rounded p-2 small mb-2"><code>podman machine start
+podman compose -f server/compose.yaml up -d
+podman ps   # deve listar "sctec-postgres" na porta 5432</code></pre>
+              <p class="small mb-2">O schema (<code>server/db/schema.sql</code>) é aplicado automaticamente na primeira subida.</p>
+
+              <h6 class="fw-bold mt-3">3. Configurar e rodar o backend</h6>
+              <pre class="bg-light border rounded p-2 small mb-2"><code>cd server
+Copy-Item .env.example .env   # ajuste JWT_SECRET e a senha do banco
+npm install
+npm start                     # http://localhost:3000 (API em /api/v1)</code></pre>
+              <p class="small mb-2">Teste a saúde: <code>curl http://localhost:3000/api/v1/health</code> → deve responder <code>up</code>.</p>
+
+              <h6 class="fw-bold mt-3">4. Criar o primeiro usuário (org + admin)</h6>
+              <pre class="bg-light border rounded p-2 small mb-2"><code>POST /api/v1/auth/register
+{ "nome":"Admin", "email":"admin@exemplo.com", "senha":"secreta123", "nomeOrg":"Minha Empresa" }</code></pre>
+              <p class="small mb-2">Guarde o <strong>token</strong> retornado.</p>
+
+              <h6 class="fw-bold mt-3">5. Apontar o SCTEC para o banco</h6>
+              <ol class="small mb-2">
+                <li>Aqui em <strong>Fonte de Dados</strong>, selecione <strong>Banco de dados</strong>.</li>
+                <li>Informe a URL <code>http://localhost:3000/api/v1</code> e clique em <strong>Testar conexão</strong>.</li>
+                <li>Clique em <strong>Salvar fonte de dados</strong> (a página recarrega).</li>
+                <li>No console do navegador (F12), informe o token: <code>ApiProvider.definirToken("SEU_TOKEN")</code>.</li>
+              </ol>
+
+              <h6 class="fw-bold mt-3">6. Verificar</h6>
+              <p class="small mb-2">Crie um Pedido de Venda e confirme no banco:</p>
+              <pre class="bg-light border rounded p-2 small mb-2"><code>podman exec -it sctec-postgres psql -U sctec -d sctec -c "SELECT id, titulo, total FROM pedidos_venda;"</code></pre>
+
+              <div class="alert alert-info small mb-0">
+                Para voltar ao modo de testes, selecione <strong>localStorage</strong> e salve. Lembre-se: os dados <strong>não migram</strong> automaticamente entre as fontes.
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
           </div>
         </div>
       </div>

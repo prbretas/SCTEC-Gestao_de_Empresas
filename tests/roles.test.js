@@ -493,11 +493,12 @@ describe("RolesController — Níveis hierárquicos (#142)", () => {
   test("filtrarPorVisibilidade: filtra por filial vinculada ao usuário", () => {
     const pGerente = RolesController.criar(ORG_ID, "GerFilial", COD_BASE);
     RolesController.definirNivel(ORG_ID, pGerente.papel.id, 2);
+    RolesController.definirFiliais(ORG_ID, pGerente.papel.id, ["FIL_A"]); // filial vem do PAPEL
     const pFunc = RolesController.criar(ORG_ID, "FuncFilial", COD_BASE);
     RolesController.definirNivel(ORG_ID, pFunc.papel.id, 4);
 
     AuthService.salvarUsuarios([
-      { id: "gerA", nome: "gerA", role: "user", orgId: ORG_ID, papelId: pGerente.papel.id, filialId: "FIL_A" },
+      { id: "gerA", nome: "gerA", role: "user", orgId: ORG_ID, papelId: pGerente.papel.id },
       { id: "funcA", nome: "funcA", role: "user", orgId: ORG_ID, papelId: pFunc.papel.id, filialId: "FIL_A" },
       { id: "funcB", nome: "funcB", role: "user", orgId: ORG_ID, papelId: pFunc.papel.id, filialId: "FIL_B" },
     ]);
@@ -542,12 +543,13 @@ describe("RolesController — Filiais no papel (#166)", () => {
     expect(RolesController.obterFiliaisDoUsuario("u-pf")).toEqual(["FIL_A", "FIL_B"]);
   });
 
-  test("obterFiliaisDoUsuario: sem filiais no papel, usa a filial do usuário", () => {
+  test("obterFiliaisDoUsuario: sem filiais no papel = sem restrição (a filial do usuário é ignorada)", () => {
     const r = RolesController.criar(ORG_ID, "SemFilialPapel", COD_BASE);
     AuthService.salvarUsuarios([
       { id: "u-uf", nome: "u", role: "user", orgId: ORG_ID, papelId: r.papel.id, filialId: "FIL_X" },
     ]);
-    expect(RolesController.obterFiliaisDoUsuario("u-uf")).toEqual(["FIL_X"]);
+    // A visibilidade por filial é definida apenas pelo papel; filialId do usuário não conta mais.
+    expect(RolesController.obterFiliaisDoUsuario("u-uf")).toEqual([]);
   });
 
   test("filtrarPorVisibilidade: papel multi-filial vê criadores de qualquer filial do conjunto", () => {
