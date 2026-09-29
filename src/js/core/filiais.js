@@ -168,6 +168,100 @@ const FiliaisStorage = {
     AuthService.salvarUsuarios(usuarios);
     return { ok: true };
   },
+
+  // ─── Filial padrão e filial ativa (#172, #173) ─────────────────────────────
+
+  /**
+   * #172 — Garante que exista ao menos uma filial na organização.
+   * Se não houver nenhuma, cria a "Filial 01" (idempotente). Requer sessão ativa.
+   * @returns {Object|null} a filial padrão criada, ou null se já havia filiais
+   */
+  garantirFilialPadrao() {
+    if (this.buscarTodos().length > 0) return null;
+    const r = this.adicionar({ nome: "Filial 01" });
+    return r.ok ? r.filial : null;
+  },
+
+  /**
+   * #173 — Filiais que o usuário logado pode acessar.
+   * Baseado nas filiais do papel (RolesController). Se o papel não tem restrição
+   * (ou é admin/sem papel), retorna todas as filiais da organização.
+   * @returns {Array<Object>}
+   */
+  filiaisDisponiveisParaUsuario() {
+    const todas = this.buscarTodos();
+    if (!window.AuthService) return todas;
+    const sessao = AuthService.obterSessao();
+    if (!sessao) return [];
+    if (window.RolesController) {
+      const ids = RolesController.obterFiliaisDoUsuario(sessao.id);
+      if (Array.isArray(ids) && ids.length) {
+        return todas.filter((f) => ids.includes(f.id));
+      }
+    }
+    return todas; // sem restrição = todas
+  },
+
+  /** Chave de sessão da filial ativa, isolada por org. */
+  _chaveFilialAtiva() {
+    const orgId = this._obterOrgId();
+    return `SCTEC_FILIAL_ATIVA_${orgId}`;
+  },
+
+  _obterOrgId() {
+    if (window.AuthService) {
+      const s = AuthService.obterSessao();
+      if (s) return s.orgId || s.id;
+    }
+    return "local";
+  },
+
+  /**
+   * #173 — Retorna o ID da filial ativa da sessão (ou null).
+   * @returns {string|null}
+   */
+  obterFilialAtivaId() {
+    try { return sessionStorage.getItem(this._chaveFilialAtiva()) || null; } catch { return null; }
+  },
+
+  /**
+   * #173/#174 — Retorna a filial ativa (objeto) ou null.
+   * @returns {Object|null}
+   */
+  obterFilialAtiva() {
+    const id = this.obterFilialAtivaId();
+    return id ? this.buscarPorId(id) : null;
+  },
+
+  /**
+   * #173 — Define a filial ativa da sessão.
+   * @param {string|null} filialId
+   */
+  definirFilialAtiva(filialId) {
+    try {
+      if (filialId) sessionStorage.setItem(this._chaveFilialAtiva(), filialId);
+      else sessionStorage.removeItem(this._chaveFilialAtiva());
+    } catch { /* sem sessionStorage */ }
+  },
+
+  /**
+   * #173 — Garante que haja uma filial ativa coerente com as disponíveis.
+   * Se a ativa atual for inválida/ausente e houver exatamente uma disponível,
+   * seleciona-a automaticamente. Retorna a filial ativa resultante (ou null).
+   * @returns {Object|null}
+   */
+  garantirFilialAtiva() {
+    const disponiveis = this.filiaisDisponiveisParaUsuario();
+    const atualId = this.obterFilialAtivaId();
+    const aindaValida = atualId && disponiveis.some((f) => f.id === atualId);
+    if (aindaValida) return this.buscarPorId(atualId);
+    if (disponiveis.length === 1) {
+      this.definirFilialAtiva(disponiveis[0].id);
+      return disponiveis[0];
+    }
+    if (!disponiveis.length) this.definirFilialAtiva(null);
+    return this.obterFilialAtiva();
+  },
 };
 
 window.FiliaisStorage = FiliaisStorage;
