@@ -2,6 +2,7 @@
  * admin.js — Painel de controle do Administrador.
  * Permite gerenciar usuários da organização: ativar/desativar, alterar perfil, remover, atribuir papel.
  * Permite criar, editar e excluir papéis de trabalho.
+ * Empresa/ filial e seus endereços
  * Acesso exclusivo ao Admin.
  */
 
@@ -400,11 +401,13 @@ function abrirFormPapel(id = "", nomeAtual = "") {
   let permitidos = null;
   let podeVerTodos = false;
   let nivelAtual = 4; // NIVEL_PADRAO
+  let filiaisPapel = []; // #166
   if (id && sessao) {
     const papel = RolesController.buscarPorId(sessao.orgId, id);
     permitidos = papel ? papel.modulosPermitidos : null;
     podeVerTodos = papel?.podeVerTodos === true;
     if (papel && Number.isInteger(papel.nivel)) nivelAtual = papel.nivel;
+    if (papel && Array.isArray(papel.filiais)) filiaisPapel = papel.filiais;
   }
 
   // Popula o seletor de nível hierárquico (#142)
@@ -431,6 +434,23 @@ function abrirFormPapel(id = "", nomeAtual = "") {
     }).join("");
   }
 
+  // #166 — Renderiza checkboxes de empresas/filiais vinculadas ao papel
+  const containerFiliais = document.getElementById("filiais-papel-checkboxes");
+  if (containerFiliais) {
+    const filiais = window.FiliaisStorage ? FiliaisStorage.buscarTodos() : [];
+    containerFiliais.innerHTML = filiais.length
+      ? filiais.map((f) => {
+        const checked = filiaisPapel.includes(f.id) ? "checked" : "";
+        return `
+          <div class="form-check form-check-inline mb-2">
+            <input class="form-check-input filial-papel-checkbox" type="checkbox"
+              id="filial-papel-${f.id}" value="${f.id}" ${checked} />
+            <label class="form-check-label" for="filial-papel-${f.id}">🏢 ${f.nome}</label>
+          </div>`;
+      }).join("")
+      : `<span class="text-muted small">Nenhuma filial cadastrada.</span>`;
+  }
+
   // Define estado do checkbox podeVerTodos
   const cbVerTodos = document.getElementById("input-papel-ver-todos");
   if (cbVerTodos) cbVerTodos.checked = podeVerTodos;
@@ -449,6 +469,8 @@ function fecharFormPapel() {
   document.getElementById("input-papel-id").value = "";
   const containerModulos = document.getElementById("modulos-papel-checkboxes");
   if (containerModulos) containerModulos.innerHTML = "";
+  const containerFiliaisPapel = document.getElementById("filiais-papel-checkboxes");
+  if (containerFiliaisPapel) containerFiliaisPapel.innerHTML = "";
   const cbVerTodos = document.getElementById("input-papel-ver-todos");
   if (cbVerTodos) cbVerTodos.checked = false;
 }
@@ -477,6 +499,11 @@ function salvarPapel() {
     ? null
     : modulosMarcados;
 
+  // #166 — Coleta as filiais marcadas ([] = sem restrição por filial)
+  const filiaisMarcadas = Array.from(document.querySelectorAll(".filial-papel-checkbox"))
+    .filter((cb) => cb.checked)
+    .map((cb) => cb.value);
+
   let resultado;
   if (papelId) {
     resultado = RolesController.editar(sessao.orgId, papelId, nome);
@@ -484,6 +511,7 @@ function salvarPapel() {
       RolesController.definirModulos(sessao.orgId, papelId, modulosPermitidos);
       RolesController.setPodeVerTodos(sessao.orgId, papelId, podeVerTodos);
       RolesController.definirNivel(sessao.orgId, papelId, nivel);
+      RolesController.definirFiliais(sessao.orgId, papelId, filiaisMarcadas);
     }
   } else {
     const org = AuthService.buscarOrgPorId(sessao.orgId);
@@ -492,6 +520,7 @@ function salvarPapel() {
       RolesController.definirModulos(sessao.orgId, resultado.papel.id, modulosPermitidos);
       RolesController.setPodeVerTodos(sessao.orgId, resultado.papel.id, podeVerTodos);
       RolesController.definirNivel(sessao.orgId, resultado.papel.id, nivel);
+      RolesController.definirFiliais(sessao.orgId, resultado.papel.id, filiaisMarcadas);
     }
   }
 
@@ -564,7 +593,7 @@ function renderizarFiliais() {
   const usuarios = sessao ? AuthService.obterUsuarios().filter((u) => u.orgId === sessao.orgId) : [];
 
   if (filiais.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">Nenhuma filial cadastrada. Clique em "➕ Nova Filial" para começar.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Nenhuma filial cadastrada. Clique em "➕ Nova Filial" para começar.</td></tr>`;
     return;
   }
 
@@ -576,11 +605,13 @@ function renderizarFiliais() {
       ? nomesEnderecos.map((n) => `<span class="badge bg-light text-dark border me-1">📦 ${n}</span>`).join("")
       : `<span class="text-muted small">—</span>`;
     const qtdUsuarios = usuarios.filter((u) => u.filialId === f.id).length;
+    const enderecoPrincipal = _formatarEnderecoFilial(f.endereco);
 
     return `
       <tr>
         <td class="fw-semibold">${f.nome}</td>
         <td class="small">${f.cnpj || "—"}</td>
+        <td class="small">${enderecoPrincipal}</td>
         <td>${badgesEnd}</td>
         <td class="text-center">
           <span class="badge ${qtdUsuarios > 0 ? "bg-primary" : "bg-light text-dark border"}">
@@ -616,6 +647,15 @@ function abrirFormFilial(id = "") {
   document.getElementById("input-cnpj-filial").value = filial ? filial.cnpj || "" : "";
   document.getElementById("form-filial-titulo").textContent = id ? "Editar Filial" : "Nova Filial";
 
+  // #164 — Endereço principal (postal) da filial
+  const end = (filial && filial.endereco) || {};
+  const setVal = (elId, v) => { const el = document.getElementById(elId); if (el) el.value = v || ""; };
+  setVal("input-filial-logradouro", end.logradouro);
+  setVal("input-filial-numero", end.numero);
+  setVal("input-filial-municipio", end.municipio);
+  setVal("input-filial-uf", end.uf);
+  setVal("input-filial-cep", end.cep);
+
   // Checkboxes de endereços de estoque
   const container = document.getElementById("filial-enderecos-checkboxes");
   const enderecos = window.EnderecosStorage ? EnderecosStorage.buscarTodos() : [];
@@ -648,8 +688,23 @@ function fecharFormFilial() {
   document.getElementById("input-filial-id").value = "";
   document.getElementById("input-nome-filial").value = "";
   document.getElementById("input-cnpj-filial").value = "";
+  ["input-filial-logradouro", "input-filial-numero", "input-filial-municipio", "input-filial-uf", "input-filial-cep"]
+    .forEach((elId) => { const el = document.getElementById(elId); if (el) el.value = ""; });
   const container = document.getElementById("filial-enderecos-checkboxes");
   if (container) container.innerHTML = "";
+}
+
+/**
+ * #164 — Formata o endereço principal da filial para exibição na tabela.
+ * @param {Object} end
+ * @returns {string}
+ */
+function _formatarEnderecoFilial(end) {
+  if (!end) return `<span class="text-muted">—</span>`;
+  const linha1 = [end.logradouro, end.numero].filter(Boolean).join(", ");
+  const linha2 = [end.municipio, end.uf].filter(Boolean).join(" - ");
+  const partes = [linha1, linha2, end.cep].filter(Boolean);
+  return partes.length ? partes.join(" · ") : `<span class="text-muted">—</span>`;
 }
 
 /**
@@ -663,10 +718,17 @@ function salvarFilial() {
   const enderecosEstoque = Array.from(document.querySelectorAll(".filial-endereco-checkbox"))
     .filter((cb) => cb.checked)
     .map((cb) => cb.value);
+  const endereco = {
+    logradouro: document.getElementById("input-filial-logradouro")?.value.trim() || "",
+    numero: document.getElementById("input-filial-numero")?.value.trim() || "",
+    municipio: document.getElementById("input-filial-municipio")?.value.trim() || "",
+    uf: document.getElementById("input-filial-uf")?.value.trim() || "",
+    cep: document.getElementById("input-filial-cep")?.value.trim() || "",
+  };
 
   const resultado = id
-    ? FiliaisStorage.atualizar(id, { nome, cnpj, enderecosEstoque })
-    : FiliaisStorage.adicionar({ nome, cnpj, enderecosEstoque });
+    ? FiliaisStorage.atualizar(id, { nome, cnpj, enderecosEstoque, endereco })
+    : FiliaisStorage.adicionar({ nome, cnpj, enderecosEstoque, endereco });
 
   if (!resultado.ok) {
     alert(`⚠️ ${resultado.erro}`);

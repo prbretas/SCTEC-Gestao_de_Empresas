@@ -129,3 +129,45 @@ describe("FiliaisStorage — Isolamento por organização", () => {
     expect(FiliaisStorage.buscarTodos()).toHaveLength(0);
   });
 });
+
+describe("FiliaisStorage — Endereço principal da filial (#164)", () => {
+  test("adicionar guarda o endereço postal informado", () => {
+    const r = FiliaisStorage.adicionar({
+      nome: "Matriz End",
+      endereco: { logradouro: "Rua A", numero: "100", municipio: "Floripa", uf: "SC", cep: "88000-000" },
+    });
+    expect(r.ok).toBe(true);
+    expect(r.filial.endereco.logradouro).toBe("Rua A");
+    expect(r.filial.endereco.municipio).toBe("Floripa");
+    expect(r.filial.endereco.uf).toBe("SC");
+  });
+
+  test("adicionar sem endereço cria objeto de endereço vazio (não quebra)", () => {
+    const r = FiliaisStorage.adicionar({ nome: "Sem Endereco" });
+    expect(r.ok).toBe(true);
+    expect(r.filial.endereco).toBeDefined();
+    expect(r.filial.endereco.logradouro).toBe("");
+  });
+
+  test("atualizar mescla o endereço preservando campos não enviados", () => {
+    const { filial } = FiliaisStorage.adicionar({
+      nome: "Merge End",
+      endereco: { logradouro: "Rua B", municipio: "Blumenau", uf: "SC" },
+    });
+    FiliaisStorage.atualizar(filial.id, { endereco: { numero: "50" } });
+    const atual = FiliaisStorage.buscarPorId(filial.id);
+    expect(atual.endereco.numero).toBe("50");
+    expect(atual.endereco.logradouro).toBe("Rua B"); // preservado
+    expect(atual.endereco.municipio).toBe("Blumenau"); // preservado
+  });
+
+  test("endereço postal é independente dos endereços de estoque", () => {
+    const { filial } = FiliaisStorage.adicionar({
+      nome: "Independente",
+      endereco: { logradouro: "Rua C" },
+      enderecosEstoque: ["end_geral"],
+    });
+    expect(filial.endereco.logradouro).toBe("Rua C");
+    expect(filial.enderecosEstoque).toEqual(["end_geral"]);
+  });
+});

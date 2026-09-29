@@ -38,7 +38,7 @@ body:
         - Financeiro
         - Propostas
         - Configurações
-        - Admin (Gerenciar Usuários)
+        - Admin (Painel do Administrador)
         - Múltiplos módulos
         - Infraestrutura / CI
     validations:

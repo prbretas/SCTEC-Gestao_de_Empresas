@@ -67,6 +67,15 @@ const FiliaisStorage = {
       id: Date.now().toString() + Math.random().toString(36).slice(2),
       nome,
       cnpj: (filial.cnpj || "").trim(),
+      // #164 — Endereço principal (postal) da empresa/filial (distinto dos endereços de estoque)
+      endereco: {
+        logradouro: (filial.endereco?.logradouro || "").trim(),
+        numero: (filial.endereco?.numero || "").trim(),
+        municipio: (filial.endereco?.municipio || "").trim(),
+        uf: (filial.endereco?.uf || "").trim(),
+        cep: (filial.endereco?.cep || "").trim(),
+      },
+      // Locais de estoque vinculados a esta filial (IDs em EnderecosStorage)
       enderecosEstoque: Array.isArray(filial.enderecosEstoque) ? filial.enderecosEstoque : [],
       criadoEm: new Date().toISOString(),
     };
@@ -103,6 +112,10 @@ const FiliaisStorage = {
       enderecosEstoque: Array.isArray(dados.enderecosEstoque)
         ? dados.enderecosEstoque
         : lista[idx].enderecosEstoque || [],
+      // #164 — mescla o endereço postal preservando o existente quando não informado
+      endereco: dados.endereco
+        ? { ...(lista[idx].endereco || {}), ...dados.endereco }
+        : (lista[idx].endereco || {}),
       atualizadoEm: new Date().toISOString(),
     };
     this.salvarTodos(lista);
