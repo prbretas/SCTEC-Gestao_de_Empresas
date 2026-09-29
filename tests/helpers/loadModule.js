@@ -17,6 +17,7 @@ const JS_PATH_MAP = {
   "inactivity.js": "core",
   "modules.js":    "core",
   "filiais.js":    "core",
+  "storage-provider.js": "core",
   // pages
   "login.js":      "pages",
   "register.js":   "pages",

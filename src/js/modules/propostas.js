@@ -25,45 +25,110 @@ function _formatarAuditoria(registro) {
   return texto;
 }
 
+/**
+ * PropostasStorage — módulo PILOTO da migração para StorageProvider (#144).
+ *
+ * Delega a persistência ao StorageProvider (coleção "propostas") quando ele
+ * está disponível, caindo para o localStorage direto como fallback (ex.: telas
+ * que não carregam storage-provider.js). A API síncrona (buscarTodos/adicionar/
+ * atualizar/excluir) é mantida para compatibilidade com os consumidores atuais
+ * (crm, financeiro, dashboard, relatórios, integrações). Métodos *_async foram
+ * adicionados para demonstrar o caminho assíncrono do provider.
+ */
 const PropostasStorage = {
-  _obterChave() {
+  _colecao: "propostas",
+
+  _orgId() {
     if (window.AuthService) {
       const s = AuthService.obterSessao();
-      if (s) return `SCTEC_PROPOSTAS_${s.orgId || s.id}`;
+      if (s) return s.orgId || s.id;
     }
-    return "SCTEC_PROPOSTAS_local";
+    return "local";
   },
+
+  _obterChave() {
+    return `SCTEC_PROPOSTAS_${this._orgId()}`;
+  },
+
+  _temProvider() {
+    return !!(window.StorageProvider && typeof StorageProvider.listSync === "function");
+  },
+
   buscarTodos() {
+    if (this._temProvider()) {
+      try { return StorageProvider.listSync(this._colecao, this._orgId()); } catch { /* fallback abaixo */ }
+    }
     try { return JSON.parse(localStorage.getItem(this._obterChave()) || "[]"); } catch { return []; }
   },
-  salvarTodos(lista) { localStorage.setItem(this._obterChave(), JSON.stringify(lista)); },
+
+  salvarTodos(lista) {
+    if (this._temProvider()) {
+      StorageProvider.replaceAllSync(this._colecao, this._orgId(), lista);
+      return;
+    }
+    localStorage.setItem(this._obterChave(), JSON.stringify(lista));
+  },
+
   adicionar(p) {
-    const lista = this.buscarTodos();
-    p.id = Date.now().toString() + Math.random().toString(36).slice(2);
+    p.id = (window.StorageProvider ? StorageProvider.gerarId() : Date.now().toString() + Math.random().toString(36).slice(2));
     p.criadoPor = _obterIdentidadeSessao();
     p.criadoEm = new Date().toISOString();
     p.criadoPorId = window.AuthService ? (AuthService.obterSessao()?.id || null) : null;
+    if (this._temProvider()) {
+      return StorageProvider.insertSync(this._colecao, this._orgId(), p);
+    }
+    const lista = this.buscarTodos();
     lista.push(p);
     this.salvarTodos(lista);
     return p;
   },
+
   atualizar(id, dados) {
+    const atual = this.buscarTodos().find((p) => p.id === id);
+    if (!atual) return;
+    const merge = {
+      ...dados,
+      atualizadoPor: _obterIdentidadeSessao(),
+      atualizadoEm: new Date().toISOString(),
+      criadoPor: atual.criadoPor,
+      criadoEm: atual.criadoEm,
+    };
+    if (this._temProvider()) {
+      StorageProvider.updateSync(this._colecao, this._orgId(), id, merge);
+      return;
+    }
     const lista = this.buscarTodos();
     const idx = lista.findIndex((p) => p.id === id);
     if (idx !== -1) {
-      lista[idx] = {
-        ...lista[idx],
-        ...dados,
-        id,
-        atualizadoPor: _obterIdentidadeSessao(),
-        atualizadoEm: new Date().toISOString(),
-        criadoPor: lista[idx].criadoPor,
-        criadoEm: lista[idx].criadoEm,
-      };
+      lista[idx] = { ...lista[idx], ...merge, id };
       this.salvarTodos(lista);
     }
   },
-  excluir(id) { this.salvarTodos(this.buscarTodos().filter((p) => p.id !== id)); },
+
+  excluir(id) {
+    if (this._temProvider()) {
+      StorageProvider.removeSync(this._colecao, this._orgId(), id);
+      return;
+    }
+    this.salvarTodos(this.buscarTodos().filter((p) => p.id !== id));
+  },
+
+  // ── Caminho assíncrono (piloto da migração para banco via API — Fase 2) ────
+  async buscarTodosAsync() {
+    if (window.StorageProvider) {
+      const { data } = await StorageProvider.list(this._colecao, this._orgId());
+      return data;
+    }
+    return this.buscarTodos();
+  },
+  async adicionarAsync(p) {
+    p.id = (window.StorageProvider ? StorageProvider.gerarId() : Date.now().toString());
+    p.criadoPor = _obterIdentidadeSessao();
+    p.criadoEm = new Date().toISOString();
+    p.criadoPorId = window.AuthService ? (AuthService.obterSessao()?.id || null) : null;
+    if (window.StorageProvider) return StorageProvider.insert(this._colecao, this._orgId(), p);
+    return this.adicionar(p);
+  },
 };
 
 const _fmt = (v) => Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
