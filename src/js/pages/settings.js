@@ -24,6 +24,8 @@ document.addEventListener("DOMContentLoaded", () => {
   carregarFormulario(configAtual);
   initEventos();
   renderizarModulos();
+  renderizarParametrosCentral(); // #175 — tela central de parâmetros
+  document.querySelector("#btn-salvar-params-central")?.addEventListener("click", salvarParametrosCentral);
 });
 
 function carregarFormulario(config) {
@@ -253,4 +255,93 @@ function toggleModulo(moduleId, ativo) {
   if (window.ModulesController) {
     ModulesController.definir(moduleId, ativo);
   }
+}
+
+// ─── Tela central de Parâmetros do sistema (#175) ─────────────────────────────
+
+/** Rótulo legível de uma rotina (usa o catálogo de módulos quando possível). */
+function _rotuloRotina(rotina) {
+  if (window.MODULOS_CATALOGO) {
+    const mod = MODULOS_CATALOGO.find((m) => m.id === rotina);
+    if (mod) return `${mod.icon} ${mod.label}`;
+  }
+  return rotina.charAt(0).toUpperCase() + rotina.slice(1);
+}
+
+/** Transforma uma chave camelCase em rótulo legível. */
+function _rotuloCampo(key) {
+  return key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase());
+}
+
+/**
+ * #175 — Renderiza todos os parâmetros de todas as rotinas, agrupados por rotina.
+ * Lê de ParamsController.obterTodos() (fonte única, sincronizada com cada rotina).
+ */
+function renderizarParametrosCentral() {
+  const container = document.querySelector("#params-central-lista");
+  if (!container || !window.ParamsController) return;
+
+  const todos = ParamsController.obterTodos();
+  const rotinas = Object.keys(todos);
+
+  container.innerHTML = rotinas.map((rotina) => {
+    const params = todos[rotina] || {};
+    const campos = Object.entries(params).map(([key, value]) => {
+      const label = _rotuloCampo(key);
+      const idAttr = `pc-${rotina}-${key}`;
+      const dataAttrs = `data-rotina="${rotina}" data-key="${key}"`;
+      if (typeof value === "boolean") {
+        return `<div class="col-md-6"><div class="form-check form-switch">
+          <input class="form-check-input pc-field" type="checkbox" id="${idAttr}" ${dataAttrs} data-type="boolean" ${value ? "checked" : ""} />
+          <label class="form-check-label small" for="${idAttr}">${label}</label>
+        </div></div>`;
+      }
+      if (typeof value === "number") {
+        return `<div class="col-md-6"><label class="form-label small mb-1" for="${idAttr}">${label}</label>
+          <input type="number" class="form-control form-control-sm pc-field" id="${idAttr}" ${dataAttrs} data-type="number" value="${value}" /></div>`;
+      }
+      if (Array.isArray(value)) {
+        return `<div class="col-12"><label class="form-label small mb-1" for="${idAttr}">${label}</label>
+          <input type="text" class="form-control form-control-sm pc-field" id="${idAttr}" ${dataAttrs} data-type="array" value="${value.join(", ")}" />
+          <div class="form-text small">Separe por vírgula</div></div>`;
+      }
+      return `<div class="col-md-6"><label class="form-label small mb-1" for="${idAttr}">${label}</label>
+        <input type="text" class="form-control form-control-sm pc-field" id="${idAttr}" ${dataAttrs} data-type="string" value="${value}" /></div>`;
+    }).join("");
+
+    return `<div class="border rounded p-3 mb-3">
+      <div class="fw-semibold mb-2">${_rotuloRotina(rotina)} <span class="text-muted small">(${rotina})</span></div>
+      <div class="row g-2">${campos || '<div class="text-muted small">Sem parâmetros.</div>'}</div>
+    </div>`;
+  }).join("");
+}
+
+/**
+ * #175 — Salva os parâmetros editados na tela central.
+ * Agrupa por rotina e grava via ParamsController.salvar (sincroniza com a rotina).
+ */
+function salvarParametrosCentral() {
+  if (!window.ParamsController) return;
+  const porRotina = {};
+  document.querySelectorAll(".pc-field").forEach((el) => {
+    const rotina = el.dataset.rotina;
+    const key = el.dataset.key;
+    const tipo = el.dataset.type;
+    if (!porRotina[rotina]) porRotina[rotina] = {};
+    if (tipo === "boolean") porRotina[rotina][key] = el.checked;
+    else if (tipo === "number") porRotina[rotina][key] = parseFloat(el.value) || 0;
+    else if (tipo === "array") porRotina[rotina][key] = el.value.split(",").map((s) => s.trim()).filter(Boolean);
+    else porRotina[rotina][key] = el.value;
+  });
+
+  Object.keys(porRotina).forEach((rotina) => ParamsController.salvar(rotina, porRotina[rotina]));
+
+  const msg = document.querySelector("#params-central-msg");
+  if (msg) {
+    msg.textContent = "✅ Parâmetros salvos e sincronizados com as rotinas.";
+    msg.className = "small mt-2 text-success";
+    setTimeout(() => { msg.textContent = ""; }, 4000);
+  }
+  // Re-renderiza para refletir normalizações (ex.: arrays)
+  renderizarParametrosCentral();
 }
