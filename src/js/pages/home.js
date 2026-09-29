@@ -118,13 +118,13 @@ function _renderizarCards(sessao) {
  * O badge no header é clicável para reabrir o popup.
  */
 function _inicializarFilialAtiva() {
-  const container = document.getElementById("home-filial-container");
-  if (!container || !window.FiliaisStorage) return;
+  const badge = document.getElementById("home-filial-badge");
+  if (!badge || !window.FiliaisStorage) return;
 
   const disponiveis = FiliaisStorage.filiaisDisponiveisParaUsuario();
 
   if (!disponiveis.length) {
-    container.style.display = "none";
+    badge.classList.add("d-none");
     FiliaisStorage.definirFilialAtiva(null);
     return;
   }
@@ -142,8 +142,7 @@ function _inicializarFilialAtiva() {
   _atualizarBadgeFilial();
 
   // Badge clicável reabre o popup
-  const badge = document.getElementById("home-filial-badge");
-  if (badge) badge.onclick = () => _abrirPopupFilial(disponiveis);
+  badge.onclick = () => _abrirPopupFilial(disponiveis);
 
   if (!jaValida) {
     _abrirPopupFilial(disponiveis);
@@ -151,18 +150,18 @@ function _inicializarFilialAtiva() {
 }
 
 /**
- * Atualiza o badge da filial ativa no cabeçalho da Home.
+ * Atualiza o badge da filial ativa no header da Home.
  */
 function _atualizarBadgeFilial() {
-  const container = document.getElementById("home-filial-container");
+  const badge = document.getElementById("home-filial-badge");
   const nomeEl = document.getElementById("home-filial-nome");
-  if (!container || !nomeEl || !window.FiliaisStorage) return;
+  if (!badge || !nomeEl || !window.FiliaisStorage) return;
   const ativa = FiliaisStorage.obterFilialAtiva();
   if (ativa) {
     nomeEl.textContent = ativa.nome;
-    container.style.display = "";
+    badge.classList.remove("d-none");
   } else {
-    container.style.display = "none";
+    badge.classList.add("d-none");
   }
 }
 

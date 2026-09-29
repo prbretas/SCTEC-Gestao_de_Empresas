@@ -28,6 +28,9 @@
       <div class="container d-flex justify-content-between align-items-center">
         <span class="navbar-brand h1 mb-0" id="navbar-brand-home">🏭 SCTEC - Gestão Empresarial</span>
         <div class="d-flex align-items-center gap-3">
+          <!-- Filial ativa (#177) — clicável para trocar via popup -->
+          <button type="button" id="home-filial-badge" class="btn btn-outline-light btn-sm d-none"
+            title="Clique para trocar de filial">🏢 <span id="home-filial-nome">—</span> <span class="small">(trocar)</span></button>
           <div class="form-check form-switch text-light mb-0">
             <input class="form-check-input" type="checkbox" id="dark-mode-switch" />
             <label class="form-check-label small">Modo Escuro</label>
@@ -49,12 +52,6 @@
           <span id="home-role-badge" class="badge bg-secondary ms-2"></span>
           <br>
           <small id="home-codigo-convite" class="text-muted mt-2 fw-bold" style="display:none;font-size:.75rem;letter-spacing:.5px;"></small>
-        </div>
-
-        <!-- Filial ativa (#177) — clicável para trocar via popup -->
-        <div class="mb-4 text-center" id="home-filial-container" style="display:none;">
-          <button type="button" id="home-filial-badge" class="btn btn-outline-primary btn-sm"
-            title="Clique para trocar de filial">🏢 <span id="home-filial-nome">—</span> <span class="text-muted small">(trocar)</span></button>
         </div>
 
         <!-- Cards de Navegação — renderizados dinamicamente por modules.js -->
