@@ -190,6 +190,54 @@
           </table>
         </div>
       </div>
+
+      <!-- SEÇÃO DE FONTE DE DADOS (#144, Fase 3) -->
+      <div class="d-flex justify-content-between align-items-center mt-5 mb-3">
+        <h2 class="h5 mb-0">🗄️ Fonte de Dados</h2>
+      </div>
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+          <p class="text-muted small mb-3">
+            Escolha onde os dados do sistema são armazenados. <strong>localStorage</strong> é indicado para testes
+            (dados no navegador); <strong>Banco de dados</strong> usa a API/servidor (produção).
+          </p>
+
+          <div class="mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="storage-mode" id="storage-mode-local" value="local" />
+              <label class="form-check-label" for="storage-mode-local">
+                💾 <strong>localStorage</strong> <span class="text-muted small">(testes — dados neste navegador)</span>
+              </label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="storage-mode" id="storage-mode-api" value="api" />
+              <label class="form-check-label" for="storage-mode-api">
+                🗃️ <strong>Banco de dados</strong> <span class="badge bg-warning text-dark ms-1">preview</span>
+                <span class="text-muted small d-block">Requer o backend em execução (ver <code>server/README.md</code>).</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="mb-3" id="storage-api-config">
+            <label for="storage-api-base" class="form-label small fw-semibold">URL da API</label>
+            <div class="input-group input-group-sm" style="max-width:520px;">
+              <input type="text" id="storage-api-base" class="form-control" placeholder="http://localhost:3000/api/v1" />
+              <button class="btn btn-outline-secondary" id="btn-testar-conexao" type="button">🔌 Testar conexão</button>
+            </div>
+            <span id="storage-conexao-status" class="small d-block mt-1"></span>
+          </div>
+
+          <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-sm btn-success" id="btn-salvar-storage-mode" type="button">💾 Salvar fonte de dados</button>
+            <span id="storage-mode-atual" class="text-muted small"></span>
+          </div>
+
+          <div class="alert alert-warning small mt-3 mb-0">
+            ⚠️ Ao trocar a fonte de dados, os dados <strong>não</strong> são migrados automaticamente entre localStorage e banco.
+            Use a mesma fonte de forma consistente. A migração de dados é uma etapa separada (ver estudos da issue #144).
+          </div>
+        </div>
+      </div>
     </main>
 
     <!-- MODAL: Cadastrar Novo Usuário (#110) -->
@@ -258,6 +306,8 @@
     <script src="./src/js/core/navbar.js"></script>
     <script src="./src/js/core/estoque.js"></script>
     <script src="./src/js/core/filiais.js"></script>
+    <script src="./src/js/core/storage-provider.js"></script>
+    <script src="./src/js/core/api-provider.js"></script>
     <script src="./src/js/pages/admin.js"></script>
     <script src="./src/js/core/inactivity.js"></script>
   </body>

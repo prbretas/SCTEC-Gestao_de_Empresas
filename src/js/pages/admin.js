@@ -56,9 +56,17 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-salvar-filial")?.addEventListener("click", salvarFilial);
   document.getElementById("btn-cancelar-filial")?.addEventListener("click", fecharFormFilial);
 
+  // ─── Fonte de Dados (#144, Fase 3) ──────────────────────────────────────
+  document.getElementById("btn-salvar-storage-mode")?.addEventListener("click", salvarFonteDados);
+  document.getElementById("btn-testar-conexao")?.addEventListener("click", testarConexaoApi);
+  document.querySelectorAll("input[name='storage-mode']").forEach((r) =>
+    r.addEventListener("change", _atualizarVisibilidadeConfigApi)
+  );
+
   renderizarUsuarios();
   renderizarPapeis();
   renderizarFiliais();
+  inicializarFonteDados();
 
   // ─── Cadastrar Usuário pelo Admin (#110) ────────────────────────────────
   document.getElementById("btn-criar-usuario")?.addEventListener("click", () => {
@@ -708,4 +716,97 @@ function atribuirFilial(userId, filialId) {
   }
   renderizarUsuarios();
   renderizarFiliais();
+}
+
+// ─── Fonte de Dados: toggle localStorage ↔ banco (#144, Fase 3) ───────────────
+
+/**
+ * Inicializa a seção de fonte de dados com o modo e a URL atuais.
+ */
+function inicializarFonteDados() {
+  if (!window.StorageConfig) return;
+  const modo = StorageConfig.modo();
+  const radio = document.getElementById(modo === "api" ? "storage-mode-api" : "storage-mode-local");
+  if (radio) radio.checked = true;
+
+  const inputBase = document.getElementById("storage-api-base");
+  if (inputBase && window.ApiProvider) {
+    inputBase.value = ApiProvider._base();
+  }
+
+  _atualizarVisibilidadeConfigApi();
+  _atualizarLabelModoAtual(modo);
+}
+
+/**
+ * Mostra/oculta a configuração da API conforme o modo selecionado.
+ */
+function _atualizarVisibilidadeConfigApi() {
+  const selecionado = document.querySelector("input[name='storage-mode']:checked");
+  const modo = selecionado ? selecionado.value : "local";
+  const bloco = document.getElementById("storage-api-config");
+  if (bloco) bloco.style.display = modo === "api" ? "" : "none";
+}
+
+/**
+ * Atualiza o rótulo com o modo atualmente ativo.
+ * @param {string} modo
+ */
+function _atualizarLabelModoAtual(modo) {
+  const el = document.getElementById("storage-mode-atual");
+  if (el) el.textContent = `Fonte ativa: ${modo === "api" ? "Banco de dados (API)" : "localStorage"}`;
+}
+
+/**
+ * Salva o modo escolhido e a URL da API. Recarrega para reinicializar os providers.
+ */
+function salvarFonteDados() {
+  if (!window.StorageConfig) return;
+  const selecionado = document.querySelector("input[name='storage-mode']:checked");
+  const modo = selecionado ? selecionado.value : "local";
+
+  if (modo === "api" && window.ApiProvider) {
+    const base = document.getElementById("storage-api-base")?.value.trim();
+    if (!base) {
+      alert("⚠️ Informe a URL da API para usar o banco de dados.");
+      return;
+    }
+    ApiProvider.definirBase(base);
+  }
+
+  StorageConfig.definirModo(modo);
+  _atualizarLabelModoAtual(modo);
+
+  const aviso = modo === "api"
+    ? "Fonte de dados definida como Banco de dados (API). A página será recarregada."
+    : "Fonte de dados definida como localStorage. A página será recarregada.";
+  alert(`✅ ${aviso}`);
+  window.location.reload();
+}
+
+/**
+ * Testa a conexão com a API via healthcheck.
+ */
+async function testarConexaoApi() {
+  const status = document.getElementById("storage-conexao-status");
+  const base = document.getElementById("storage-api-base")?.value.trim();
+  if (!base) {
+    if (status) { status.textContent = "⚠️ Informe a URL da API."; status.className = "small d-block mt-1 text-warning"; }
+    return;
+  }
+  if (status) { status.textContent = "⏳ Testando..."; status.className = "small d-block mt-1 text-muted"; }
+  try {
+    const res = await fetch(`${base.replace(/\/$/, "")}/health`);
+    const body = await res.json();
+    if (res.ok && body && body.ok) {
+      if (status) { status.textContent = "✅ Conexão OK — servidor respondeu."; status.className = "small d-block mt-1 text-success"; }
+    } else {
+      throw new Error("Resposta inesperada");
+    }
+  } catch {
+    if (status) {
+      status.textContent = "❌ Falha na conexão. Verifique se o backend está em execução (server/README.md).";
+      status.className = "small d-block mt-1 text-danger";
+    }
+  }
 }
