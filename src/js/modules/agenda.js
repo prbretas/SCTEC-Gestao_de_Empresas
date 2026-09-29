@@ -26,12 +26,22 @@ function _formatarAuditoria(registro) {
 }
 
 const AgendaStorage = {
-  _obterChave() {
+  _colecao: "agenda",
+
+  _orgId() {
     if (window.AuthService) {
       const sessao = AuthService.obterSessao();
-      if (sessao) return `SCTEC_AGENDA_${sessao.orgId || sessao.id}`;
+      if (sessao) return sessao.orgId || sessao.id;
     }
-    return "SCTEC_AGENDA_local";
+    return "local";
+  },
+
+  _obterChave() {
+    return `SCTEC_AGENDA_${this._orgId()}`;
+  },
+
+  _temProvider() {
+    return !!(window.StorageProvider && typeof StorageProvider.listSync === "function");
   },
 
   buscarTodos() {
